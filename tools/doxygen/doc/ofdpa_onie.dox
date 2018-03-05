@@ -1,0 +1,54 @@
+/*!
+\page ONIE_INFO ONIE
+
+\li \subpage ONIE_OVERVIEW
+\li \subpage ONIE_SUPPORTED_PLATFORMS
+\li \subpage ONIE_OFDPA_INSTALLER
+\li \subpage ONIE_INSTALLATION_PROCESS
+
+\page ONIE_OVERVIEW Overview
+
+Traditionally, ODM switches have been delivered from the ODM with a network operating system (NOS)
+pre-installed.  Changing this NOS to a different NOS has always been a challenge for the end
+user, and has typically involved editing the boot sequence or changing u-boot parameters.  ONIE
+attempts to solve this problem by providing an environment where the switch searches for
+NOS's to install a boot time, with the NOS installation file being in a pre-defined format.
+
+OF-DPA supports ONIE by providing an ONIE installer.  This installer will install the OF-DPA
+system and the associated OpenFlow 1.3 agent.
+
+For more information on ONIE the reader is directed to http://onie.github.io/onie/docs/index.html.
+
+\page ONIE_SUPPORTED_PLATFORMS Supported Platforms
+
+ONIE is supported on the following platforms:
+ - Quanta LY2 (p2020_qc)
+
+\page ONIE_OFDPA_INSTALLER ONIE OFDPA Installer
+
+ONIE installer/NOS is packaged with all the ofdpa files a switch would require to
+run the applications and uImage specific to a platform.
+
+Following are the files packaged in the NOS:
+
+\li ofdpa
+\li ofagentapp
+\li linux-kernel-bde.ko
+\li linux-user-bde.ko
+\li librpc_client.so.1
+\li client applications
+
+When the NOS is booting, it copies all the above files to the persistent storage and starts uImage.
+The uImage in turn runs through a startup script which auto-boots the "ofagentapp" with
+the criteria mentioned in \ref OFAGENT_AUTOMATIC_BOOTUP
+
+\page ONIE_INSTALLATION_PROCESS ONIE Installation Process
+
+\li Copy the LY2 ONIE installer (Ex: onie-installer-quanta_ly2 for LY2) into the http server using
+any copy mechanism (tftp, scp, etc.).
+
+\li If the switch is not pre-installed with ONIE image, download and install the same at the u-boot prompt.
+
+\li Once the switch is reset with ONIE image (ONIE kernel and u-boot) installed, it tries to locate the installer using discovery methods. Once the installer is located, the switch reboots again and ONIE kernel
+executes NOS.
+*/

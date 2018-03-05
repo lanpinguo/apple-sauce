@@ -1,0 +1,100 @@
+/*!
+\page OFDPA_FEATURE_CONSTRAINTS Feature Constraints
+
+This section lists the feature constraints and limitations on the OF-DPA reference platforms.
+
+\section OFDPA_FEATURE_VXLAN VXLAN
+
+\li VxLAN Tunnelling is only supported on the BCM56850 and the BCM56960.
+
+\section OFDPA_FEATURE_IPV6MAC ACL Matches on IPv6 Addresses and MAC Address
+
+\li Matching both IPv6 addresses and MAC address in an ACL rule is only supported on the BCM56850.
+On all other switches except the BCM88375, the IPv6 Flow Label can be matched instead of MAC addresses.
+
+\section OFDPA_FEATURE_IPV6PORTS ACL Matches on IPv6 Addresses and L4 Ports
+
+\li Matching both IPv6 addresses and L4 ports in an ACL rule is not supported on the BCM88375.
+
+\section OFDPA_FEATURE_TERM_MAC_NO_INPORT_MATCH Termination MAC Flow Table
+
+\li Matching on IN_PORT is not supported on the following switches:
+- BCM56150
+- BCM88375
+
+The Dune family of switches (BCM88xxx) has the following requirements for the Termination MAC flow table:
+- The VLAN ID is required for all entries (including multicast).
+- The unicast entry for a VLAN must be created before multicast entries.
+- No more than one unique unicast MAC address per VLAN.
+
+\section OFDPA_FEATURE_L3_HOST_ECMP_GROUP Using L3 ECMP Group Entries
+
+\li For Unicast Routing flow entries with an exact match on the IP
+address (host entries), the Group write action may use an L3 ECMP
+group only on the following switches:
+- BCM56850
+- BCM56960
+- BCM88375
+
+\section OFDPA_FEATURE_MPLS_SUPPORTED MPLS Support
+
+\li MPLS is not supported on the following switches:
+- BCM56150
+- BCM56340
+- BCM88375
+
+\section OFDPA_FEATURE_MPLS_NO_INPORT_MATCH MPLS Flow Tables
+
+\li On all supported platforms, MPLS flows may not specify IN_PORT as a match field. The IN_PORT field must match 'all'. This is due
+to the operation of the hardware.
+
+\section OFDPA_FEATURE_THREELABELS MPLS 0 Flow Table
+
+\li The MPLS 0 Flow table is only supported on the following switches:
+ - BCM56260
+ - BCM56450
+ - BCM56547
+ - BCM56643
+
+\section OFDPA_FEATURE_MPLSECMP MPLS ECMP Groups
+
+\li The MPLS ECMP Group table is only supported on the following switches:
+ - BCM56260
+ - BCM56450
+ - BCM56547
+ - BCM56643
+
+\section OFDPA_FEATURE_OAM OAM
+
+\li OAM is only supported on the following switches:
+ - BCM56260
+ - BCM56450
+\li CCM counters are not supported.
+\li CCM based loss measurement is only supported for BHH MEGs and is not supported for Ethernet MEGs.
+
+\section OFDPA_FEATURE_SERVICE_METER L2 Policer Flow Table
+
+\li The L2 Policer Flow table is only supported on the following switches:
+ - BCM56260
+ - BCM56450
+ - BCM56547
+ - BCM56643
+
+\section OFDPA_FEATURE_FLOW_STATS Flow Statistics
+
+\li Flow statistics are only supported for the following flow tables:
+ - ACL Policy Flow table
+
+\section OFDPA_FEATURE_VLAN_FLOW VLAN flow entry for MPLS-TP VPWS Tunnel Initiation flow
+
+\li In the following switches, to configure an MPLS VPWS Initiation flow the MPLS L2 Port Flow entry should be made before adding the VLAN Flow entry:
+ - BCM56547
+ - BCM56640
+
+\section The Size of Traffic Class
+
+\li The size of Traffic Class is limited to 3 bits in the following switch:
+ - BCM56150
+
+\li For the rest of the switches Traffic Class is 4 bits long.
+*/

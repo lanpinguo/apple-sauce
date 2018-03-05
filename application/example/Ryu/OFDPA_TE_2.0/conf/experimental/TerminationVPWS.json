@@ -1,0 +1,10 @@
+{
+"working_set" :
+    [
+    "termination/vpws_add_l2_unfiltered_interface_group.json",
+    "termination/vpws_add_mpls_flow_tunnel.json",
+    "termination/vpws_add_mpls_flow_vpn.json",
+    "termination/vpws_add_termination_mac_flow.json",
+    "termination/vpws_add_vlan_flow.json"
+    ]
+}

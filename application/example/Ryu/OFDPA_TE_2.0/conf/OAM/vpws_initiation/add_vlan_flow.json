@@ -1,0 +1,48 @@
+{
+"flow_mod":
+    {
+    "_name": "add_vlan_flow",
+    "_description": "Initiation: add VLAN flow",
+    "table": "TABLE_VLAN",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "in_port": "5",
+        "vlan_vid": "0x1065, 0x1fff"
+        },
+    "instructions":
+        [
+            {
+            "apply": 
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "set_field":
+                                {
+                                "ofdpa_oxm_mpls_l2_port": "0x1"
+                                }
+                            },
+                            {
+                            "set_field":
+                                {
+                                "tunnel_id": "0x10001 "
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "goto":
+                {
+                "table": "TABLE_MPLS_L2_PORT"
+                }
+            }
+        ]
+    }
+}

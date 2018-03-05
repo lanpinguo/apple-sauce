@@ -1,0 +1,69 @@
+{
+"group_mod":
+        {
+        "_name" : "add_mpls_l2_vpn_group",
+        "_description" : "",
+        "cmd" : "add",
+        "type" : "indirect",
+        "group_id" : "0x91000000",
+        "buckets":
+            [
+                {
+                "weight" : "0",
+                "watch_port" : "any",
+                "watch_group" : "any",
+                "actions" :
+                    [
+                        {
+                        "push_mpls" :
+                            {
+                            "ethertype" : "0x8847"
+                            }
+                        },                      
+                        {
+                        "ofdpa_push_l2_header" : ""
+                        },
+                        {
+                        "ofdpa_push_cw" : ""
+                        }, 
+                        {
+                        "set_field":
+                            {
+                            "mpls_label" : "0x0ff"
+                            }
+                        },
+                        {
+                        "set_field" :
+                            {
+                            "mpls_bos" : "1"
+                            }
+                        },
+                        {
+                        "set_field" :
+                            {
+                            "mpls_tc" : "4"
+                            }
+                        },
+                        {
+                        "set_mpls_ttl":
+                            {
+                            "mpls_ttl" : "14"
+                            }
+                        },
+                        {
+                        "ofdpa_oam_lm_tx_count": 
+                            {
+                            "lmep_id": "100"
+                            }
+                        },                        
+                        {
+                        "group" :
+                            {
+                            "group_id" : "0x93000000"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+}

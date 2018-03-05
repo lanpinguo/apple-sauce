@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+        echo "Usage: $(basename $0) <base path> <target path>"
+        exit 1
+fi
+
+relative=$(perl -MFile::Spec -e 'print File::Spec->abs2rel("'$2'","'$1'")')
+
+echo $relative

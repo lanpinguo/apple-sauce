@@ -1,0 +1,654 @@
+/*!
+\page PLATFORM_PORT_MAPPING Physical Port Layout on Supported Platforms
+The OF-DPA source code provides support for multiple switch models. For each of these models, initialization code programs the hardware to set the
+speed of the switch's physical ports and how they map to OpenFlow port numbers. The following sections show the mapping for these switches.
+
+- \subpage PPM_HU2_SVK
+- \subpage PPM_SB2_SVK
+- \subpage PPM_HX4_SVK
+- \subpage PPM_KT2_SVK
+- \subpage PPM_AP2_SVK
+- \subpage PPM_TR3_SVK
+- \subpage PPM_TDP_SVK
+- \subpage PPM_TD2_SVK
+- \subpage PPM_TH_SVK
+- \subpage PPM_QMX_SVK
+- \subpage PPM_ACCTON_AS6700
+- \subpage PPM_QUANTA_LY2
+- \subpage PPM_QUANTA_LY8
+- \subpage PPM_CEL_REDSTONE_XP
+
+\page PPM_HU2_SVK BCM956150K SVK
+
+The front panel ports are configured to provide:
+\li 24 - 1Gbps ports
+\li 4 - 10Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 1Gbps |
+|  2    |  2       | 1Gbps |
+|  3    |  3       | 1Gbps |
+|  4    |  4       | 1Gbps |
+|  5    |  5       | 1Gbps |
+|  6    |  6       | 1Gbps |
+|  7    |  7       | 1Gbps |
+|  8    |  8       | 1Gbps |
+|  9    |  9       | 1Gbps |
+| 10    | 10       | 1Gbps |
+| 11    | 11       | 1Gbps |
+| 12    | 12       | 1Gbps |
+| 13    | 13       | 1Gbps |
+| 14    | 14       | 1Gbps |
+| 15    | 15       | 1Gbps |
+| 16    | 16       | 1Gbps |
+| 17    | 17       | 1Gbps |
+| 18    | 18       | 1Gbps |
+| 19    | 19       | 1Gbps |
+| 20    | 20       | 1Gbps |
+| 21    | 21       | 1Gbps |
+| 22    | 22       | 1Gbps |
+| 23    | 23       | 1Gbps |
+| 24    | 24       | 1Gbps |
+| 25    | 25       | 10Gbps |
+| 26    | 26       | 10Gbps |
+| 27    | 27       | 10Gbps |
+| 28    | 28       | 10Gbps |
+| 29    | inactive |        |
+| 30    | inactive |        |
+| 31    | inactive |        |
+| 32    | inactive |        |
+
+\page PPM_SB2_SVK BCM956260K SVK
+
+Front panel ports 1, 2 and 6 in the left hand group each provide four 1Gbps links.\n
+Front panel ports 3 through 5 in the left hand group are not used.\n
+Front panel port 1 on the right hand side uses only lanes 0 and 2 for two 10Gbps links.
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+| 1     | 1-4      | 1Gbps |
+| 2     | 5-8      | 1Gbps |
+| 6     | 9-12     | 1Gbps |
+| 1(right)| 13-14  | 10Gbps |
+
+\page PPM_HX4_SVK BCM956340K SVK
+
+The front panel ports are configured to provide:
+\li 48 - 1Gbps ports
+\li 4 - 10Gbps ports
+\li 2 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 1Gbps |
+|  2    |  2       | 1Gbps |
+|  3    |  3       | 1Gbps |
+|  4    |  4       | 1Gbps |
+|  5    |  5       | 1Gbps |
+|  6    |  6       | 1Gbps |
+|  7    |  7       | 1Gbps |
+|  8    |  8       | 1Gbps |
+|  9    |  9       | 1Gbps |
+| 10    | 10       | 1Gbps |
+| 11    | 11       | 1Gbps |
+| 12    | 12       | 1Gbps |
+| 13    | 13       | 1Gbps |
+| 14    | 14       | 1Gbps |
+| 15    | 15       | 1Gbps |
+| 16    | 16       | 1Gbps |
+| 17    | 17       | 1Gbps |
+| 18    | 18       | 1Gbps |
+| 19    | 19       | 1Gbps |
+| 20    | 20       | 1Gbps |
+| 21    | 21       | 1Gbps |
+| 22    | 22       | 1Gbps |
+| 23    | 23       | 1Gbps |
+| 24    | 24       | 1Gbps |
+| 25    | 25       | 1Gbps |
+| 26    | 26       | 1Gbps |
+| 27    | 27       | 1Gbps |
+| 28    | 28       | 1Gbps |
+| 29    | 29       | 1Gbps |
+| 30    | 30       | 1Gbps |
+| 31    | 31       | 1Gbps |
+| 32    | 32       | 1Gbps |
+| 33    | 33       | 1Gbps |
+| 34    | 34       | 1Gbps |
+| 35    | 35       | 1Gbps |
+| 36    | 36       | 1Gbps |
+| 37    | 37       | 1Gbps |
+| 38    | 38       | 1Gbps |
+| 39    | 39       | 1Gbps |
+| 40    | 40       | 1Gbps |
+| 41    | 41       | 1Gbps |
+| 42    | 42       | 1Gbps |
+| 43    | 43       | 1Gbps |
+| 44    | 44       | 1Gbps |
+| 45    | 45       | 1Gbps |
+| 46    | 46       | 1Gbps |
+| 47    | 47       | 1Gbps |
+| 48    | 48       | 1Gbps |
+| 49    | 49-52    | 10Gbps |
+| 50    | 53       | 40Gbps |
+| 51    | 54       | 40Gbps |
+
+\page PPM_KT2_SVK BCM956450K SVK
+
+Front panel ports 1 through 8 use all four lanes for a single 10Gbps link.\n
+Front panel ports 9 and 10 use only lane 0 for a single 10Gbps link.
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+| 1     |     1    | 10Gbps |
+| 2     |     2    | 10Gbps |
+| 3     |     3    | 10Gbps |
+| 4     |     4    | 10Gbps |
+| 5     |     5    | 10Gbps |
+| 6     |     6    | 10Gbps |
+| 7     |     7    | 10Gbps |
+| 8     |     8    | 10Gbps |
+| 9     |     9    | 10Gbps |
+| 10    |    10    | 10Gbps |
+
+\page PPM_AP2_SVK BCM956540K SVK
+
+The front panel ports are configured to provide:
+\li 49 - 1Gbps ports
+
+The rear panel ports are configured to provide:
+\li 2 - 40Gbps ports
+\li 2 - 20Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 1Gbps |
+|  2    |  2       | 1Gbps |
+|  3    |  3       | 1Gbps |
+|  4    |  4       | 1Gbps |
+|  5    |  5       | 1Gbps |
+|  6    |  6       | 1Gbps |
+|  7    |  7       | 1Gbps |
+|  8    |  8       | 1Gbps |
+|  9    |  9       | 1Gbps |
+| 10    | 10       | 1Gbps |
+| 11    | 11       | 1Gbps |
+| 12    | 12       | 1Gbps |
+| 13    | 13       | 1Gbps |
+| 14    | 14       | 1Gbps |
+| 15    | 15       | 1Gbps |
+| 16    | 16       | 1Gbps |
+| 17    | 17       | 1Gbps |
+| 18    | 18       | 1Gbps |
+| 19    | 19       | 1Gbps |
+| 20    | 20       | 1Gbps |
+| 21    | 21       | 1Gbps |
+| 22    | 22       | 1Gbps |
+| 23    | 23       | 1Gbps |
+| 24    | 24       | 1Gbps |
+| 25    | 25       | 1Gbps |
+| 26    | 26       | 1Gbps |
+| 27    | 27       | 1Gbps |
+| 28    | 28       | 1Gbps |
+| 29    | 29       | 1Gbps |
+| 30    | 30       | 1Gbps |
+| 31    | 31       | 1Gbps |
+| 32    | 32       | 1Gbps |
+| 33    | 33       | 1Gbps |
+| 34    | 34       | 1Gbps |
+| 35    | 35       | 1Gbps |
+| 36    | 36       | 1Gbps |
+| 37    | 37       | 1Gbps |
+| 38    | 38       | 1Gbps |
+| 39    | 39       | 1Gbps |
+| 40    | 40       | 1Gbps |
+| 41    | 41       | 1Gbps |
+| 42    | 42       | 1Gbps |
+| 43    | 43       | 1Gbps |
+| 44    | 44       | 1Gbps |
+| 45    | 45       | 1Gbps |
+| 46    | 46       | 1Gbps |
+| 47    | 47       | 1Gbps |
+| 48    | 48       | 1Gbps |
+| 49    | 49       | 1Gbps |
+
+| Rear Panel Port  | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+| 50    | 50       | 40Gbps |
+| 51    | 51       | 40Gbps |
+| 52    | 52       | 20Gbps |
+| 53    | 53       | 20Gbps |
+
+\page PPM_TR3_SVK BCM956643K SVK
+
+The front panel ports are configured to provide:
+\li 48 - 1Gbps ports
+
+The rear panel ports are configured to provide:
+\li 4 - 10Gbps ports
+\li 4 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 1Gbps |
+|  2    |  2       | 1Gbps |
+|  3    |  3       | 1Gbps |
+|  4    |  4       | 1Gbps |
+|  5    |  5       | 1Gbps |
+|  6    |  6       | 1Gbps |
+|  7    |  7       | 1Gbps |
+|  8    |  8       | 1Gbps |
+|  9    |  9       | 1Gbps |
+| 10    | 10       | 1Gbps |
+| 11    | 11       | 1Gbps |
+| 12    | 12       | 1Gbps |
+| 13    | 13       | 1Gbps |
+| 14    | 14       | 1Gbps |
+| 15    | 15       | 1Gbps |
+| 16    | 16       | 1Gbps |
+| 17    | 17       | 1Gbps |
+| 18    | 18       | 1Gbps |
+| 19    | 19       | 1Gbps |
+| 20    | 20       | 1Gbps |
+| 21    | 21       | 1Gbps |
+| 22    | 22       | 1Gbps |
+| 23    | 23       | 1Gbps |
+| 24    | 24       | 1Gbps |
+| 25    | 25       | 1Gbps |
+| 26    | 26       | 1Gbps |
+| 27    | 27       | 1Gbps |
+| 28    | 28       | 1Gbps |
+| 29    | 29       | 1Gbps |
+| 30    | 30       | 1Gbps |
+| 31    | 31       | 1Gbps |
+| 32    | 32       | 1Gbps |
+| 33    | 33       | 1Gbps |
+| 34    | 34       | 1Gbps |
+| 35    | 35       | 1Gbps |
+| 36    | 36       | 1Gbps |
+| 37    | 37       | 1Gbps |
+| 38    | 38       | 1Gbps |
+| 39    | 39       | 1Gbps |
+| 40    | 40       | 1Gbps |
+| 41    | 41       | 1Gbps |
+| 42    | 42       | 1Gbps |
+| 43    | 43       | 1Gbps |
+| 44    | 44       | 1Gbps |
+| 45    | 45       | 1Gbps |
+| 46    | 46       | 1Gbps |
+| 47    | 47       | 1Gbps |
+| 48    | 48       | 1Gbps |
+| 49    | inactive |       |
+
+| Rear Panel Port  | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+| 50    | 49-52    | 10Gbps |
+| 51    | 53       | 40Gbps |
+| 52    | 54       | 40Gbps |
+| 53    | 55       | 40Gbps |
+| 54    | 56       | 40Gbps |
+
+\page PPM_TDP_SVK BCM956846K SVK
+
+The front panel ports are configured to provide:
+\li 48 - 10Gbps ports
+\li 4 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    | inactive |        |
+|  2    | 1-4      | 10Gbps |
+|  3    | 5-8      | 10Gbps |
+|  4    | 9-12     | 10Gbps |
+|  5    | 13-16    | 10Gbps |
+|  6    | 17-20    | 10Gbps |
+|  7    | 21-24    | 10Gbps |
+|  8    | 25-28    | 10Gbps |
+|  9    | 29-32    | 10Gbps |
+| 10    | 33-36    | 10Gbps |
+| 11    | 37-40    | 10Gbps |
+| 12    | 41-44    | 10Gbps |
+| 13    | 45-48    | 10Gbps |
+| 14    | inactive |        |
+| 15    | 49       | 40Gbps |
+| 16    | 50       | 40Gbps |
+| 17    | 51       | 40Gbps |
+| 18    | 52       | 40Gbps |
+
+\page PPM_TD2_SVK BCM956850K SVK
+
+The front panel ports are configured to provide:
+\li 72 - 10Gbps ports
+\li 6 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    | 1-4      | 10Gbps |
+|  2    | 5-8      | 10Gbps |
+|  3    | 9-12     | 10Gbps |
+|  4    | 13-16    | 10Gbps |
+|  5    | 17-20    | 10Gbps |
+|  6    | 21-24    | 10Gbps |
+|  7    | inactive |        |
+|  8    | inactive |        |
+|  9    | 25-28    | 10Gbps |
+| 10    | 29-32    | 10Gbps |
+| 11    | 33-36    | 10Gbps |
+| 12    | 37-40    | 10Gbps |
+| 13    | 41-44    | 10Gbps |
+| 14    | 45-48    | 10Gbps |
+| 15    | inactive |        |
+| 16    | inactive |        |
+| 17    | 49-52    | 10Gbps |
+| 18    | 53-56    | 10Gbps |
+| 19    | 57-60    | 10Gbps |
+| 20    | 61-64    | 10Gbps |
+| 21    | 65-68    | 10Gbps |
+| 22    | 69-72    | 10Gbps |
+| 23    | inactive |        |
+| 24    | inactive |        |
+| 25    | 73       | 40Gbps |
+| 26    | 74       | 40Gbps |
+| 27    | 75       | 40Gbps |
+| 28    | 76       | 40Gbps |
+| 29    | 77       | 40Gbps |
+| 30    | 78       | 40Gbps |
+| 31    | inactive |        |
+| 32    | inactive |        |
+
+\page PPM_TH_SVK BCM956960K SVK
+
+The front panel ports are configured to provide:
+\li 64 - 10Gbps ports
+\li 16 - 25Gbps ports
+\li 4 - 40Gbps ports
+\li 8 - 100Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    | 1-4      | 10Gbps |
+|  2    | 5-8      | 10Gbps |
+|  3    | 9-12     | 10Gbps |
+|  4    | 13-16    | 10Gbps |
+|  5    | 17-20    | 10Gbps |
+|  6    | 21-24    | 10Gbps |
+|  7    | 25-28    | 10Gbps |
+|  8    | 29-32    | 10Gbps |
+|  9    | 33-36    | 10Gbps |
+| 10    | 37-40    | 10Gbps |
+| 11    | 41-44    | 10Gbps |
+| 12    | 45-48    | 10Gbps |
+| 13    | 49-52    | 10Gbps |
+| 14    | 53-56    | 10Gbps |
+| 15    | 57-60    | 10Gbps |
+| 16    | 61-64    | 10Gbps |
+| 17    | 65-68    | 25Gbps |
+| 18    | 69-72    | 25Gbps |
+| 19    | 73-76    | 25Gbps |
+| 20    | 77-80    | 25Gbps |
+| 21    | 81       | 40Gbps |
+| 22    | 82       | 40Gbps |
+| 23    | 83       | 40Gbps |
+| 24    | 84       | 40Gbps |
+| 25    | 85       | 100Gbps |
+| 26    | 86       | 100Gbps |
+| 27    | 87       | 100Gbps |
+| 28    | 88       | 100Gbps |
+| 29    | 89       | 100Gbps |
+| 30    | 90       | 100Gbps |
+| 31    | 91       | 100Gbps |
+| 32    | 92       | 100Gbps |
+
+\page PPM_QMX_SVK BCM988375K SVK
+
+The front panel ports are configured to provide:
+\li 40 - 10Gbps ports
+\li 2 - 100Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    | 1-4      | 10Gbps |
+|  2    | 5-8      | 10Gbps |
+|  3    | 9-12     | 10Gbps |
+|  4    | 13-16    | 10Gbps |
+|  5    | 17-20    | 10Gbps |
+|  6    | 21-24    | 10Gbps |
+|  7    | 25-28    | 10Gbps |
+|  8    | 29-32    | 10Gbps |
+|  9    | 33-36    | 10Gbps |
+| 10    | 37-40    | 10Gbps |
+| 11    | 41       | 100Gbps |
+| 12    | 42       | 100Gbps |
+| 13    | inactive |        |
+| 14    | inactive |        |
+| 15    | inactive |        |
+| 16    | inactive |        |
+| 17    | inactive |        |
+| 18    | inactive |        |
+
+\page PPM_ACCTON_AS6700 Accton AS6700
+
+The front panel ports are configured to provide:
+\li 80 - 10Gbps ports
+\li 12 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    | 1-4      | 10Gbps |
+|  2    | 5-8      | 10Gbps |
+|  3    | 9-12     | 10Gbps |
+|  4    | 13-16    | 10Gbps |
+|  5    | 17-20    | 10Gbps |
+|  6    | 21-24    | 10Gbps |
+|  7    | 25-28    | 10Gbps |
+|  8    | 29-32    | 10Gbps |
+|  9    | 33-36    | 10Gbps |
+| 10    | 37-40    | 10Gbps |
+| 11    | 41-44    | 10Gbps |
+| 12    | 45-48    | 10Gbps |
+| 13    | 49-52    | 10Gbps |
+| 14    | 53-56    | 10Gbps |
+| 15    | 57-60    | 10Gbps |
+| 16    | 61-64    | 10Gbps |
+| 17    | 65-68    | 10Gbps |
+| 18    | 69-72    | 10Gbps |
+| 19    | 73-76    | 10Gbps |
+| 20    | 77-80    | 10Gbps |
+| 21    | 81       | 40Gbps |
+| 22    | 82       | 40Gbps |
+| 23    | 83       | 40Gbps |
+| 24    | 84       | 40Gbps |
+| 25    | 85       | 40Gbps |
+| 26    | 86       | 40Gbps |
+| 27    | 87       | 40Gbps |
+| 28    | 88       | 40Gbps |
+| 29    | 89       | 40Gbps |
+| 30    | 90       | 40Gbps |
+| 31    | 91       | 40Gbps |
+| 32    | 92       | 40Gbps |
+
+\page PPM_QUANTA_LY2 Quanta LY2
+
+The front panel ports are configured to provide:
+\li 48 - 10Gbps ports
+\li 4 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 10Gbps |
+|  2    |  2       | 10Gbps |
+|  3    |  3       | 10Gbps |
+|  4    |  4       | 10Gbps |
+|  5    |  5       | 10Gbps |
+|  6    |  6       | 10Gbps |
+|  7    |  7       | 10Gbps |
+|  8    |  8       | 10Gbps |
+|  9    |  9       | 10Gbps |
+| 10    | 10       | 10Gbps |
+| 11    | 11       | 10Gbps |
+| 12    | 12       | 10Gbps |
+| 13    | 13       | 10Gbps |
+| 14    | 14       | 10Gbps |
+| 15    | 15       | 10Gbps |
+| 16    | 16       | 10Gbps |
+| 17    | 17       | 10Gbps |
+| 18    | 18       | 10Gbps |
+| 19    | 19       | 10Gbps |
+| 20    | 20       | 10Gbps |
+| 21    | 21       | 10Gbps |
+| 22    | 22       | 10Gbps |
+| 23    | 23       | 10Gbps |
+| 24    | 24       | 10Gbps |
+| 25    | 25       | 10Gbps |
+| 26    | 26       | 10Gbps |
+| 27    | 27       | 10Gbps |
+| 28    | 28       | 10Gbps |
+| 29    | 29       | 10Gbps |
+| 30    | 30       | 10Gbps |
+| 31    | 31       | 10Gbps |
+| 32    | 32       | 10Gbps |
+| 33    | 33       | 10Gbps |
+| 34    | 34       | 10Gbps |
+| 35    | 35       | 10Gbps |
+| 36    | 36       | 10Gbps |
+| 37    | 37       | 10Gbps |
+| 38    | 38       | 10Gbps |
+| 39    | 39       | 10Gbps |
+| 40    | 40       | 10Gbps |
+| 41    | 41       | 10Gbps |
+| 42    | 42       | 10Gbps |
+| 43    | 43       | 10Gbps |
+| 44    | 44       | 10Gbps |
+| 45    | 45       | 10Gbps |
+| 46    | 46       | 10Gbps |
+| 47    | 47       | 10Gbps |
+| 48    | 48       | 10Gbps |
+| 49    | 49       | 40Gbps |
+| 50    | 50       | 40Gbps |
+| 51    | 51       | 40Gbps |
+| 52    | 52       | 40Gbps |
+
+\page PPM_QUANTA_LY8 Quanta LY8
+
+The front panel ports are configured to provide:
+\li 48 - 10Gbps ports
+\li 4 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 10Gbps |
+|  2    |  2       | 10Gbps |
+|  3    |  3       | 10Gbps |
+|  4    |  4       | 10Gbps |
+|  5    |  5       | 10Gbps |
+|  6    |  6       | 10Gbps |
+|  7    |  7       | 10Gbps |
+|  8    |  8       | 10Gbps |
+|  9    |  9       | 10Gbps |
+| 10    | 10       | 10Gbps |
+| 11    | 11       | 10Gbps |
+| 12    | 12       | 10Gbps |
+| 13    | 13       | 10Gbps |
+| 14    | 14       | 10Gbps |
+| 15    | 15       | 10Gbps |
+| 16    | 16       | 10Gbps |
+| 17    | 17       | 10Gbps |
+| 18    | 18       | 10Gbps |
+| 19    | 19       | 10Gbps |
+| 20    | 20       | 10Gbps |
+| 21    | 21       | 10Gbps |
+| 22    | 22       | 10Gbps |
+| 23    | 23       | 10Gbps |
+| 24    | 24       | 10Gbps |
+| 25    | 25       | 10Gbps |
+| 26    | 26       | 10Gbps |
+| 27    | 27       | 10Gbps |
+| 28    | 28       | 10Gbps |
+| 29    | 29       | 10Gbps |
+| 30    | 30       | 10Gbps |
+| 31    | 31       | 10Gbps |
+| 32    | 32       | 10Gbps |
+| 33    | 33       | 10Gbps |
+| 34    | 34       | 10Gbps |
+| 35    | 35       | 10Gbps |
+| 36    | 36       | 10Gbps |
+| 37    | 37       | 10Gbps |
+| 38    | 38       | 10Gbps |
+| 39    | 39       | 10Gbps |
+| 40    | 40       | 10Gbps |
+| 41    | 41       | 10Gbps |
+| 42    | 42       | 10Gbps |
+| 43    | 43       | 10Gbps |
+| 44    | 44       | 10Gbps |
+| 45    | 45       | 10Gbps |
+| 46    | 46       | 10Gbps |
+| 47    | 47       | 10Gbps |
+| 48    | 48       | 10Gbps |
+| 49    | 49       | 40Gbps |
+| 50    | 50       | 40Gbps |
+| 51    | 51       | 40Gbps |
+| 52    | 52       | 40Gbps |
+
+\page PPM_CEL_REDSTONE_XP Celestica Redstone XP
+
+The front panel ports are configured to provide:
+\li 48 - 10Gbps ports
+\li 6 - 40Gbps ports
+
+| Front Panel Port | OpenFlow Port Number(s) | Speed |
+|:----------------:|:-----------------------:|--------|
+|  1    |  1       | 10Gbps |
+|  2    |  2       | 10Gbps |
+|  3    |  3       | 10Gbps |
+|  4    |  4       | 10Gbps |
+|  5    |  5       | 10Gbps |
+|  6    |  6       | 10Gbps |
+|  7    |  7       | 10Gbps |
+|  8    |  8       | 10Gbps |
+|  9    |  9       | 10Gbps |
+| 10    | 10       | 10Gbps |
+| 11    | 11       | 10Gbps |
+| 12    | 12       | 10Gbps |
+| 13    | 13       | 10Gbps |
+| 14    | 14       | 10Gbps |
+| 15    | 15       | 10Gbps |
+| 16    | 16       | 10Gbps |
+| 17    | 17       | 10Gbps |
+| 18    | 18       | 10Gbps |
+| 19    | 19       | 10Gbps |
+| 20    | 20       | 10Gbps |
+| 21    | 21       | 10Gbps |
+| 22    | 22       | 10Gbps |
+| 23    | 23       | 10Gbps |
+| 24    | 24       | 10Gbps |
+| 25    | 25       | 10Gbps |
+| 26    | 26       | 10Gbps |
+| 27    | 27       | 10Gbps |
+| 28    | 28       | 10Gbps |
+| 29    | 29       | 10Gbps |
+| 30    | 30       | 10Gbps |
+| 31    | 31       | 10Gbps |
+| 32    | 32       | 10Gbps |
+| 33    | 33       | 10Gbps |
+| 34    | 34       | 10Gbps |
+| 35    | 35       | 10Gbps |
+| 36    | 36       | 10Gbps |
+| 37    | 37       | 10Gbps |
+| 38    | 38       | 10Gbps |
+| 39    | 39       | 10Gbps |
+| 40    | 40       | 10Gbps |
+| 41    | 41       | 10Gbps |
+| 42    | 42       | 10Gbps |
+| 43    | 43       | 10Gbps |
+| 44    | 44       | 10Gbps |
+| 45    | 45       | 10Gbps |
+| 46    | 46       | 10Gbps |
+| 47    | 47       | 10Gbps |
+| 48    | 48       | 10Gbps |
+| Q1    | 49       | 40Gbps |
+| Q2    | 50       | 40Gbps |
+| Q3    | 51       | 40Gbps |
+| Q4    | 52       | 40Gbps |
+| Q5    | 52       | 40Gbps |
+| Q6    | 52       | 40Gbps |
+*/

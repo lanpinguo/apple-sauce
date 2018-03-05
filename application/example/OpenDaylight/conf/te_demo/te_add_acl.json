@@ -1,0 +1,45 @@
+{
+  "flow": {
+    "strict": "false",
+    "table_id": "60",
+    "id": "1",
+    "cookie_mask": "255",
+    "match": {
+      "ethernet-match": {
+        "ethernet-type": { "type": "2048" },
+        "ethernet-destination": { "address": "00:01:02:03:04:05" },
+        "ethernet-source": { "address": "00:00:00:00:00:00" }
+      },
+      "vlan-match": {
+        "vlan-id": {
+          "vlan-id": "10",
+          "vlan-id-present": "true"
+        }
+      },
+      "ip-match": { "ip-protocol": "6" },
+      "ipv4-destination": "10.1.1.2/32",
+      "ipv4-source": "0.0.0.0",
+      "tcp-source-port": "9999",
+      "tcp-destination-port": "0"
+    },
+    "instructions": {
+      "instruction": {
+        "order": "0",
+        "write-actions": {
+          "action": {
+            "order": "0",
+            "group-action": {
+              "group": "L3_Unicast",
+              "group-id": "536870916"
+            }
+          }
+        }
+      }
+    },
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "PolicyAcl",
+    "priority": "2"
+  }
+}

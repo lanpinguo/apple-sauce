@@ -1,0 +1,82 @@
+/*!
+\page OFDPA_CLIENT_EXAMPLES Use Case Examples
+
+This section presents simple use cases that can be implemented using the provided Client Applications.
+
+
+\section OFDPA_BRIDGING Bridging
+
+The figure below illustrates a simple bridging configuration. Two stations are connected to ports 3 and 4 of the switch and packets are bridged in the switch for these stations to communicate. Station A sends and receives untagged traffic while Station B sends and receives tagged traffic.
+
+\image html bridging.jpg "Figure 3"
+
+Refer to the ofdpa_bridging.py script for an example of setting up this scenario.
+
+\section OFDPA_IPv4_UNICAST_ROUTING IPv4 Unicast Routing
+
+The figure below illustrates a simple IPv4 Unicast Routing configuration. Two stations are connected to ports 3 and 4 of the switch and packets are routed in the switch for these stations to communicate. The packets are routed between VLAN 10 and 11.
+
+\image html ipv4unicastrouting.jpg "Figure 4"
+
+Refer to the ofdpa_routing.py script for an example of setting up this scenario.
+
+\section OFDPA_VXLAN_EXAMPLE VXLAN
+\subsection PURPOSE Purpose
+The purpose of this example script is to demonstrate the use of OF-DPA switch to set up a VxLAN tunnel through the OpenDaylight controller.
+
+
+\subsection TOPOLOGY Topology
+
+\image html vxlan_script_topology.jpg "Figure 5"
+
+The topology setup consists of a Switch running OF-DPA connected to a host. The switch acts as a VxLAN gateway and accepts incoming packets on VLAN 20 and puts them in a VxLAN tunnel. It also serves as Virtual Tunnel End Point and removes the tunnel specific information from the incoming traffic before forwarding it to the host.
+The host with MAC address of (0000.0000.0011) connects via port 1 to the switch. The neighboring router is connected to the switch via port 5.
+
+\subsection SETUP Setup
+On the switch side  start the ofagent application
+\code
+./ofagentapp -t 10.18.20.219:6633 &
+\endcode
+Install VXLAN tunnel configuration
+OpenDaylight controller set up
+The OpenDaylight version we tried is SR3 Helium.
+Install OpenDaylight
+\code
+tar xf distribution-karaf-0.2.3-Helium-SR3.tar.gz
+\endcode
+Start the karaf executable
+\code
+cd /distribution-karaf-0.2.3-Helium-SR3/bin
+./karaf
+
+    ________                       ________                .__  .__       .__     __
+    \_____  \ ______   ____   ____ \______ \ _____  ___.__.|  | |__| ____ |  |___/  |_
+     /   |   \\____ \_/ __ \ /    \ |    |  \\__  \<   |  ||  | |  |/ ___\|  |  \   __\
+    /    |    \  |_> >  ___/|   |  \|    `   \/ __ \\___  ||  |_|  / /_/  >   Y  \  |
+    \_______  /   __/ \___  >___|  /_______  (____  / ____||____/__\___  /|___|  /__|
+            \/|__|        \/     \/        \/     \/\/            /_____/      \/
+
+
+Hit '<tab>' for a list of available commands
+and '[cmd] --help' for help on a specific command.
+Hit '<ctrl-d>' or type 'system:shutdown' or 'logout' to shutdown OpenDaylight.
+\endcode
+
+Install features necessary
+\code
+opendaylight-user@root> feature:install odl-l2switch-all odl-restconf-all odl-mdsal-all odl-openflowplugin-all odl-adsal-compatibility-all odl-nsf-all
+\endcode
+
+Exit out of Karaf
+\code
+Open ../etc/opendaylight/karaf/54-arphandler.xml file and change the is-proactive-flood-mode to false.   <is-proactive-flood-mode>false</is-proactive-flood-mode>
+\endcode
+
+Start Karaf again
+\code
+./karaf
+\endcode
+
+Run the file ./vxlan_odl_demo.sh
+
+*/

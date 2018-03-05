@@ -1,0 +1,30 @@
+{
+"flow_mod":
+        {
+        "_name" : "termination mac 1",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "table" : "mac",
+        "cmd" : "add",
+        "mask" : "0",
+        "port" : "any",
+        "group" : "any",
+        "match":
+            {
+            "eth_type" : "0x800",
+            "vlan_vid" : "0x1005",
+            "in_port": "3",
+            "eth_dst":"00:11:33:55:77:99",
+            "eth_dst_mask":"ff:ff:ff:ff:ff:ff"
+            },
+        "instructions":
+            [
+                {
+                "goto":
+                    {
+                    "table":"TABLE_UNICAST_ROUTING"
+                    }
+                }
+            ]
+        }
+}

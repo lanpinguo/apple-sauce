@@ -1,0 +1,1102 @@
+/*!
+\page TE_INFO OFDPA 1.0 Traffic Engineering Test Case
+
+\li \subpage TE_INTRODUCTION
+\li \subpage TE_OFDPA_VS_OPENFLOW1
+\li \subpage TE_USE_CASE
+\li \subpage TE_OPEN_ISSUES
+\li \subpage TE_APPENDIX_A
+\li \subpage TE_APPENDIX_B
+\li \subpage TE_APPENDIX_C
+\li \subpage TE_APPENDIX_D
+\li \subpage TE_APPENDIX_E
+
+
+\page TE_INTRODUCTION Introduction
+
+This document intends to describe some of the key advantages of an OF-DPA based OpenFlow 1.3 agent over the earlier OpenFlow 1.0 protocol based
+agents. A comparative analysis of both these agents is also done to highlight these benefits. The document then describes a use case to
+demonstrate a Traffic Engineering solution that illustrates these benefits.
+
+This document describes a configuration that is suitable for testing the controller/agent interaction during engineering development,
+and a test case that can be used by QA for final testing.  This is an engineering document that includes a lot of detail.  The same
+TE framework has also been leveraged to produce a Traffic Engineering Demonstration that can be used with customers and at trade shows.
+For details on this, please see the "OF-DPA 1.0 Traffic Engineering Demo" document.
+
+\page TE_OFDPA_VS_OPENFLOW1 OF-DPA + OpenFlow 1.3 Vs OpenFlow 1.0
+
+The key advantages of an OF-DPA based OpenFlow 1.3 agent are described in the following sections.
+
+\li \subpage TE_COMPARISON_ENHANCED_CAPABILITIES
+\li \subpage TE_COMPARISON_EXAMPLE
+
+\page TE_COMPARISON_ENHANCED_CAPABILITIES Enhanced Capabilities
+
+\section TE_COMPARISON_ENHANCED_CAPABILITIES_MULTIPLE_TABLE_SUPPORT Multiple Tables Support
+
+OpenFlow 1.0 exposes a single table to the Controller. This table is used to store all of the L2, L3, ACL, QoS, etc.
+flow entries. This seriously limits the number of flows that the switch can support as it would always be limited
+to the maximum entries this single hardware table can accommodate. Consider the Trident2 silicon. This single
+hardware table would typically be the Ingress Filter Processor which can store up to 4K entries.
+
+OpenFlow 1.3 supports multiple tables that the Controller can configure. OF-DPA maps these tables to
+multiple XGS pipeline hardware tables. It stores L2 entries in the L2 table which supports up to 32K entries.
+L3 routing entries are stored in the L3 table which supports up to 16K IPv4 entries. In addition, the 4K entries
+in the IFP are available for ACLs and QoS flow entries. This results in scaling up of the number of flows
+the switch can support by multifold.
+
+\section TE_COMPARISON_ENHANCED_CAPABILITIES_GROUP_SUPPORT Group Support
+
+OpenFlow 1.0 supports actions like output port, set packets fields etc. However when it comes to complex
+configurations like creating ECMP groups, multicast groups, etc., there are no explicit ways to do that with
+OpenFlow 1.0. Instead it is left as a task to the application to add flows that simulate the behavior of
+ECMP/multicast groups. This drastically increases the number of flows that is required for an application,
+as will be illustrated below.
+
+OpenFlow 1.3 supports the Group abstraction. Groups are buckets of actions that enable flexible configuration
+of flow actions. OF-DPA defines various types of Groups. Amongst them are the L3 ECMP and L3 Multicast groups
+which are used to create L3 ECMP and L3 Multicast groups. These groups are used as actions in flows.
+
+\section TE_COMPARISON_ENHANCED_CAPABILITIES_IPV6_SUPPORT IPv6 Support
+
+OpenFlow 1.0 does not support IPv6. OF-DPA+OF1.3 supports IPv6 addresses.
+
+\page TE_COMPARISON_EXAMPLE Comparative Analysis Example
+
+Consider the following simple scenario:
+
+\image html SimpleScenario.jpg ""
+
+\li Four hosts are connected on four ports of a switch.
+\li Ingress traffic from all these four hosts is destined to a single IP destination address.
+\li The traffic has 4k layer-4 (e.g., UDP or TCP) source ports.
+
+To avoid congestion at the egress, the ingress traffic needs to be distributed and load balanced across a set of egress ports.
+Table 1 illustrates this scenario across four ports.
+
+<table border="1">
+<tr>
+<th>Environment</th>
+<th>No of tables</th>
+<th>Configuration</th>
+<th>Total number of flows required</th>
+</tr>
+<tr>
+<td><center>OpenFlow 1.0</center></td>
+<td><center>1</center></td>
+<td>
+\li L4 source ports, the load balancing factor
+\li Will need <b>1 flow entry for each micro flow</b> to load balance the traffic
+\li Load balancing algorithm needs to run on the Controller
+</td>
+<td><b><center>4K</center></b></td>
+</tr>
+<tr>
+<td>OF-DPA + OpenFlow 1.3</td>
+<td><center>7</center></td>
+<td>
+\li <b>4 entries in the VLAN Flow table</b> to add the 4 ingress ports in the VLAN of the ingress traffic
+\li <b>1 entry in the Termination MAC Flow table</b> that configures the ingress traffic with the router MAC and VLAN
+\li <b>1 ECMP group with 4 next hops</b> (and the associated L2 Interface, L3 Unicast groups). This leverages ECMP capabilities of the hardware and the Controller is offloaded with this task
+\li <b>1 L3 Routing Table Flow entry</b> to match the IP destination and use the ECMP group as the next hop for the matching traffic.
+</td>
+<td><b><center>6</center></b></td>
+</tr>
+</table>
+
+As is evident from the above table, it takes <b>six flow entries with OF-DPA-OF1.3</b> compared to <b>4K entries in an OpenFlow 1.0</b> scenario.
+
+As a step further, consider a scenario where the ECMP hashing leads to an uneven load distribution. This would result in few of the ECMP next hop egress ports getting congested while the rest are underutilized. The ACL Policy Flow table comes to the rescue which can be used to <b>engineer and redirect</b> the identified ingress traffic to underutilized egress ports. A flow entry for each of these elephant flows would need to be installed in the ACL Policy Flow table.
+
+\page TE_USE_CASE Traffic Engineering Use Case
+
+The following figure illustrates the set up used for the Traffic Engineering test case with a Ryu Controller.  It serves as reference to visualize the location and interconnection of various elements used in the tests.
+
+\image html TrafficEngineeringUseCase.jpg ""
+
+\li \subpage TE_USE_CASE_GOALS
+\li \subpage TE_USE_CASE_SET_UP_DESCRIPTION
+\li \subpage TE_USE_CASE_OFDPA_CONFIGURATION
+\li \subpage TE_USE_CASE_IXIA_CONFIGURATION
+
+\page TE_USE_CASE_GOALS Goals
+
+The goal of this traffic engineering use case is to demonstrate the following:
+1. OpenFlow to balance paths for long lived "elephant" flows to avoid congestion.
+2. Combines measurement and control to place specific flows (e.g., elephants).
+3. Implementation using OpenFlow 1.3 multiple tables and groups.
+4. Group entries enable using ECMP hashing in switch.
+
+\page TE_USE_CASE_SET_UP_DESCRIPTION Setup description
+
+The set up consists of:
+\li A Switch running an OF-DPA based OpenFlow 1.3 Indigo agent.
+\li A Ryu Controller communicating with the switch using OpenFlow 1.3 protocol.
+\li IXIA ports connected to ports 1 through port 5 of the switch.
+\li Port 1 receiving a long lived IPv4 traffic at 60% of the line rate with DestIP: 192.168.5.1 and SrcIP: 1.1.1.1.
+\li Port 2 receiving a long lived IPv4 traffic at 60% of the line rate with DestIP: 192.168.5.2 and SrcIP: 2.2.2.2.
+\li Port 5 receiving IPv4 traffic at 10% of the line rate with DestIP: 192.168.5.3 and incremental SrcIP.
+\li Port 3 and port 4 as egress ports connected to IXIA.
+
+\section TE_USE_CASE_SET_UP_DESCRIPTION_SCENARIO_A Scenario A, the problem
+
+The Ryu Controller configures an ECMP group in the switch with ports 3 and 4 as the next hops in the group to load balance traffic sent to this group.
+
+This ECMP group is referenced by a Unicast Routing entry that routes all traffic destined to subnet 192.168.5.0 to this ECMP group.
+
+Ports 1, 2 and 5 are the ingress ports receiving traffic from IXIA.
+
+Traffic from port 5 is hashed and distributed across egress ports 3 and 4. This traffic is load balanced across the ECMP next hops.
+
+Traffic from both port 1 and port 2 are hashed only to egress port 4. This results in port 4 getting subscribed beyond 120% of its transmit capacity and results in loss of traffic.
+
+This is verified by the drops in the traffic captured on IXIA connected to ports 3 and 4.
+
+\section TE_USE_CASE_SET_UP_DESCRIPTION_SCENARIO_B Scenario B, the solution
+
+I Scenario A, egress port 4 gets congested as the ingress traffic from both port 1 and 2 hash to it. To solve the problem a more specific flow entry is installed that redirects one of the traffic streams to the port 3.
+
+The Ryu Controller adds a flow entry in the ACL Policy table that matches traffic destined to 192.168.5.2 and routes it to port 3.
+
+Thus the congested port 4 is relieved of excess traffic which is now re-routed to port 3 through traffic engineering.
+
+\page TE_USE_CASE_OFDPA_CONFIGURATION OF-DPA Configuration
+
+\section TE_USE_CASE_OFDPA_CONFIGURATION_CPQD_DPCTL_CONF CPqD dpctl Configuration
+
+dpctl is a command line utility from CPqD that mimics a Controller and installs flows in an OpenFlow aware switch.
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_CPQD_DPCTL_CONF_SCENARIO_A Scenario A
+
+<b>Add VLAN Flow Table entries</b>
+
+\li ./dpctl tcp:Switch_IP:[port] flow-mod cmd=add,table=10 in_port=1,vlan_vid=10 goto:20
+\li ./dpctl tcp:Switch_IP[:port] flow-mod cmd=add,table=10 in_port=2,vlan_vid=10 goto:20
+\li ./dpctl tcp:Switch_IP[:port] flow-mod cmd=add,table=10 in_port=5,vlan_vid=10 goto:20
+
+The above configuration will add ports 1, 2 and 5 in VLAN 10.
+
+Note: dpctl does not support VLAN mask. VLAN mask should be passed as 0x1fff by the Ryu Controller if configuring VLAN Id.
+
+<b>Create two L2 Interface Groups</b>
+
+Create an L2 interface group on interface 3 and VLAN 11
+
+\li ./dpctl tcp: Switch_IP[:port] group-mod cmd=add,type=ind,group=720899 weight=0,port=any, group=any output=3
+
+Create an L2 interface group on interface 4 and VLAN 11
+
+\li ./dpctl tcp: Switch_IP[:port] group-mod cmd=add,type=ind,group=720900 weight=0,port=any, group=any output=4
+
+Create a Termination MAC Flow table entry to route the ingress traffic
+
+\li ./dpctl tcp: Switch_IP[:port] flow-mod cmd=add,table=20,eth_type=0x800,vlan_vid=10,eth_dst=00:01:02:03:04:05/ff:ff:ff:ff:ff:ff goto:30
+
+<b>Create two L3 Unicast Groups with reference to the above created L2 Interface groups</b>
+
+\li ./dpctl tcp: Switch_IP[:port] group-mod cmd=add,type=ind,group=536870913 weight=0,port=any,group=any  set_field=vlan_vid:11,set_field=eth_dst:00:00:00:00:00:01/ff:ff:ff:ff:ff:ff,set_field=eth_src:00:01:02:03:04:05/ff:ff:ff:ff:ff:ff,group=720899
+
+This creates an L3 Unicast group with group Id <b>0x20000001</b>. This group defines an action which sends a tagged packet out on port 3 with VLAN 11 and the configured destination and source MAC.
+
+\li ./dpctl tcp: Switch_IP[:port] group-mod cmd=add,type=ind,group=536870914 weight=0,port=any,group=any  set_field=vlan_vid:11,set_field=eth_dst:00:00:00:00:00:02/ff:ff:ff:ff:ff:ff,set_field=eth_src:00:01:02:03:04:05/ff:ff:ff:ff:ff:ff,group=720900
+
+This creates an L3 Unicast group with group Id <b>0x20000002</b>. This group defines an action which sends a tagged packet out on port 4 with VLAN 11 and the configured destination and source MAC.
+
+<b>Create an ECMP Group and add the above created Unicast Groups into it</b>
+
+\li ./dpctl tcp: Switch_IP[:port] group-mod cmd=add,type=ind,group=1879048193 weight=0,port=any,group=any group=536870913 weight=0,port=any,group=any group=536870914
+
+This creates an ECMP group with group Id <b>0x70000001</b> with two next hops in the group.
+
+<b>Create a Unicast Routing Flow table entry</b>
+
+\li ./dpctl tcp: Switch_IP[:port] flow-mod cmd=add,table=30 eth_type=0x800,ip_dst=192.168.5.0/24 write:group=1879048193 goto:60
+
+This creates a Unicast Routing Flow entry that matches IPv4 packets (ether type 0x800) with destination IP subnet 192.168.5.0 and routes the packets to the ECMP next hop group <b>0x70000001</b>.
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_CPQD_DPCTL_CONF_SCENARIO_B Scenario B
+
+<b>All the configuration of scenario A is required.</b>
+
+<b>On top of it create a ACL Policy Flow table entry</b>
+
+\li ./dpctl tcp: Switch_IP[:port] flow-mod cmd=add,table=60 in_port=1,eth_type=0x800,vlan_vid=10 ,eth_dst=00:01:02:03:04:05/ff:ff:ff:ff:ff:ff, ip_dst=192.168.5.1/32 write:group=536870913
+
+This creates an ACL Policy Flow table entry that matches incoming traffic on the given parameters and routes it to the next hop implemented by the L3 Unicast group Id <b>0x20000001</b>. This routes the packets destined to IP 192.168.5.1 out of port 3.
+
+\section TE_USE_CASE_OFDPA_CONFIGURATION_RYU_CONF Ryu Configuration
+
+\li Ryu controller (RC) intended to configure OF-DPA switch by Open Flow 1.3 protocol.
+\li RC working in the passive mode and listen to TCP port 6633.
+\li To make changes in flow and group tables RC execute configuration script.
+\li Configuration script <code> ofdpa-te.py </code> get parameters from JSON files - for each flow/group in separate file.
+\li Scenario file contain list of parameter files which will be sequentially read and set.
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_RYU_CONF_SCENARIO_A Scenario A
+
+<code>cd <ofdpa-te.py directory></code>
+\n Open file <code>conf/ofdpa-te.json</code>
+\n Ensure that it contains:
+\code
+{
+        "config_directory":"conf"
+        "#working_directory":"scenarioA.json"
+        "#working_directory":"scenarioB.json"
+        "#working_directory":"AddACL.json"
+        "#working_directory":"DelACL.json"
+
+}\endcode
+Remove leading hash symbol from string which contains <code>scenarioA.json</code>.
+\n Save changes and close file.
+\n Open file <code>conf/scenarioA.json</code>
+\n Ensure that it contains:
+\code
+{
+        [
+        "te_add_vlan_1.json",
+        "te_add_vlan_2.json",
+        "te_add_vlan_5.json",
+        "te_add_group_l2_0xb003.json",
+        "te_add_group_l2_0xb003.json",
+        "te_add_termination_mac.json"
+        "te_add_group_l3_0x20000001_.json",
+        "te_add_group_l3_0x20000001.json",
+        "te_add_ecmp.json",
+        "te_add_ucast_routing.json"
+        ]
+}\endcode
+Examples of JSON files are located in Appendix A
+\n Close file.
+\n Run OF-DPA agent:
+\n <code>ofagentapp \-\-controller=\<IP\>:6633 [-a 0|1|2|3] & </code>
+\n ( -a is a loglevel)
+\n Run RC
+\n <code>ryu-manager ofdpa-te.py [--verbose]</code>
+\n To stop RC press Ctrl-C
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_RYU_CONF_SCENARIO_B Scenario B
+
+The same as  ScenarioA, but in <code>conf/ofdpa-te.json</code> should uncomment line which contains <code>scenarioB.json</code>
+\n Content of <code>scenarioB.json</code> the same as <code>scenarioA.json</code> except additional line at the end:
+\n <code>te_add_acl.json</code>
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_RYU_CONF_ADD_ACL Add ACL
+
+Adds the ACL rule.
+\n This allows to perform scenario B without cleaning ScenarioA configuration.
+\code
+{
+    [
+        "te_add_acl.json"
+    ]
+}\endcode
+
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_RYU_CONF_DEL_ACL Del ACL
+
+Deletes the ACL rule.
+\n This allows to return to scenarioB from scenarioA configuration.
+\code
+{
+    [
+        "te_del_acl.json"
+    ]
+}\endcode
+
+\section TE_USE_CASE_OFDPA_CONFIGURATION_OPENDAYLIGHT_CONF OpenDaylight Configuration
+
+\li OpenDaylight (ODL) controller helps in configuring the OpenFlow switch with OpenFlow 1.3.1 openflowplugin support.
+\li The ODL controller with OF 1.3.1 plugin listens on port 6653 for the connections from the OpenFlow switches.
+\li Traffic engineering scenarios mentioned at \ref TE_USE_CASE_SET_UP_DESCRIPTION are provided by RESTCONF
+    with the config files in json format. The config files can also be in xml format.
+\li The configuration scripts <code> scenarioA.sh </code> and <code> scenarioB.sh </code> program the flows/groups via
+    cURL commands that send REST requests via HTTP to the ODL Controller. The config scripts provided take the payload in
+    json format.
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_OPENDAYLIGHT_CONF_SCENARIO_A Scenario A
+
+\li Start ODL controller (./run.sh)
+\li Run the ofagentapp application on the switch
+    <code>ofagentapp \-\-controller=\<IP\>:6653 [-a 0|1|2|3] & </code>
+\li In the file, te_test_scripts/scenarioA.sh update the controller IP if the script is not being executed on the local machine and
+    update the Node ID (at the controller's interface (OSGI) check by executing printNodes).
+\li Run ./scenarioA.sh. This installs the required flows/groups invoking the cURL commands that send HTTP requests with
+    payload as the config files in json.
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_OPENDAYLIGHT_CONF_SCENARIO_B Scenario B
+
+\li scenarioB.sh is similar to scenarioA.sh but it includes an additional cURL command that adds an ACL flow
+    with payload as te_add_acl.json file.
+\li In the file, te_test_scripts/scenarioB.sh update the controller IP, if the script is not being executed on the local machine and
+    update the Node ID (at the controller's interface (OSGI) check by executing printNodes).
+\li Run ./scenarioB.sh.
+
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_OPENDAYLIGHT_CONF_ADD_ACL Add ACL
+
+Adds the ACL rule.
+\n This allows to perform scenario B without cleaning ScenarioA configuration.
+
+
+\subsection TE_USE_CASE_OFDPA_CONFIGURATION_OPENDAYLIGHT_CONF_DEL_ACL Del ACL
+
+Deletes the ACL rule.
+\n This allows to return to scenarioB from scenarioA configuration.
+
+\page TE_USE_CASE_IXIA_CONFIGURATION IXIA Configuration
+
+<b>Port 1</b>
+
+VLAN ID: 10
+
+Source MAC: 00:00:00:00:00:01
+
+Destination MAC: 00:01:02:03:04:05
+
+Destination IP: 192.168.5.1
+
+Source IP: 1.1.1.1
+
+\n<b>Port 2</b>
+
+VLAN ID: 10
+
+Source MAC: 00:00:00:00:00:02
+
+Destination MAC: 00:01:02:03:04:05
+
+Destination IP: 192.168.5.2
+
+Source IP: 2.2.2.2
+
+\n<b>Port 5</b>
+
+VLAN ID: 10
+
+Source MAC: 00:00:00:00:00:03
+
+Destination MAC: 00:01:02:03:04:05
+
+Destination IP: 192.168.5.3
+
+Source IP: start with 3.3.3.3; increment by 1; repeat after 10 increments
+
+\page TE_OPEN_ISSUES Open Issues
+
+None
+
+\page TE_APPENDIX_A Test Case Appendix A - Examples of Configuration Files for Ryu Scripts
+
+Examples of flow/group parameter JSON files.
+
+\section TE_APPENDIX_A_ADD_VLAN Add VLAN
+
+\code
+{
+"flow_mod":
+        {
+        "_name" : "vlan1",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "table" : "vlan",
+        "cmd" : "add",
+        "mask" : "0",
+        "port" : "any",
+        "group" : "any",
+        "match":
+            {
+            "in_port" : "1",
+            "vlan_vid" : "10"
+            },
+        "instructions":
+            [
+                {
+                "goto":
+                    {
+                    "table":"mac"
+                    }
+                }
+            ]
+        }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_L2_GROUP Add L2 Group
+
+\code
+{
+"group_mod":
+            {
+            "_name" : "l2_0xb0003",
+            "_description" :"Description",
+            "#comments": "Comments",
+            "cmd" : "add",
+            "type" : "indirect",
+            "group_id" : "0xb0003",
+            "buckets":
+                [
+                        {
+                        "weight" : "0",
+                        "watch_port":"any",
+                        "watch_group":"any",
+                        "actions":
+                        [
+                        {
+                        "output":
+                            {
+                            "port":"3"
+                            }
+                        }
+                        ]
+                        }
+                ]
+            }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_TERM_MAC Add Termination MAC
+
+\code
+{
+"flow_mod":
+        {
+        "_name" : "termination mac 1",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "table" : "mac",
+        "cmd" : "add",
+        "mask" : "0",
+        "port" : "any",
+        "group" : "any",
+        "match":
+            {
+            "eth_type" : "0x800",
+            "vlan_vid" : "10",
+            "eth_dst":"00:01:02:03:04:05",
+            "eth_dst_mask":"ff:ff:ff:ff:ff:ff"
+            },
+        "instructions":
+            [
+                {
+                "goto":
+                    {
+                    "table":"unicast"
+                    }
+                }
+            ]
+        }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_L3_GROUP Add L3 Group
+
+\code
+{
+"group_mod":
+        {
+        "_name" : "l3_0x2000_0001",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "cmd" : "add",
+        "type" : "indirect",
+        "group_id" : "0x20000001",
+        "buckets":
+            [
+                {
+                "weight" : "0",
+                "watch_port":"any",
+                "watch_group":"any",
+                "actions":
+                    [
+                        {
+                        "set_field":
+                            {
+                            "vlan_vid":"11"
+                            }
+                        },
+                        {
+                        "set_field":
+                            {
+                            "eth_src":"00:01:02:03:04:05",
+                            "eth_src_mask":"ff:ff:ff:ff:ff:ff"
+                            }
+                        },
+                        {
+                        "set_field":
+                            {
+                            "eth_dst":"00:00:00:00:00:01",
+                            "eth_dst_mask":"ff:ff:ff:ff:ff:ff"
+                            }
+                        },
+                        {
+                        "group":
+                            {
+                            "group_id":"0xb0003"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_ECMP_GROUP Add ECMP Group
+
+\code
+{
+"group_mod":
+        {
+        "_name" : "add ecmp",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "cmd" : "add",
+        "type" : "indirect",
+        "group_id" : "0x70000001",
+        "buckets":
+            [
+                {
+                "weight" : "0",
+                "watch_port":"any",
+                "watch_group":"any",
+                "actions":
+                    [
+                        {
+                        "group":
+                            {
+                            "group_id":"0x20000001"
+                            }
+                        }
+                    ]
+                },
+                {
+                "weight" : "0",
+                "watch_port":"any",
+                "watch_group":"any",
+                "actions":
+                    [
+                        {
+                        "group":
+                            {
+                            "group_id":"0x20000002"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_UNICAST_ROUTING Add Unicast Routing
+
+\code
+{
+"flow_mod":
+        {
+        "_name" : "acl",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "table" : "unicast",
+        "cmd" : "add",
+        "mask" : "0",
+        "port" : "any",
+        "group" : "any",
+        "match":
+            {
+            "eth_type" : "0x800",
+            "ipv4_dst" : "192.168.5.0",
+            "ipv4_dst_mask" : "24"
+            },
+        "instructions":
+            [
+                {
+                "write":
+                    [
+                        {
+                        "actions":
+                            [
+                            {
+                            "group":
+                                {
+                                "group_id":"0x70000001"
+                                }
+                            }
+                            ]
+                        }
+                    ]
+                },
+                {
+                "goto":
+                    {
+                    "table":"acl"
+                    }
+                }
+            ]
+        }
+}
+\endcode
+
+\section TE_APPENDIX_A_ADD_ACL Add ACL
+
+\code
+{
+"flow_mod":
+        {
+        "_name" : "acl",
+        "_description" :"Description",
+        "#comments": "Comments",
+        "table" : "acl",
+        "cmd" : "add",
+        "mask" : "0",
+        "port" : "any",
+        "group" : "any",
+        "match":
+            {
+            "in_port":"1",
+            "eth_type" : "0x800",
+            "vlan_vid" : "10",
+            "eth_dst":"00:01:02:03:04:05",
+            "eth_dst_mask":"ff:ff:ff:ff:ff:ff",
+            "ipv4_dst":"192.168.5.1",
+            "ipv4_dst_mask":"32"
+            },
+        "instructions":
+            [
+                {
+                "write":
+                    [
+                        {
+                        "actions":
+                            [
+                            {
+                            "group":
+                                {
+                                "group_id":"0x20000001"
+                                }
+                            }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+}
+\endcode
+
+\page TE_APPENDIX_B Test Case Appendix B - Ryu HOWTO
+
+Ryu is an OpenFlow controller written in Python.
+\n Ryu is a free software available under Apache2 licence.
+\n For more details visit project homepage: http://osrg.github.io/ryu
+\section RYU_PREREQ Prerequisites
+(for Debian-based distributives)
+\code
+sudo apt-get install git
+sudo apt-get install python-setuptools
+sudo apt-get install python-pip
+sudo apt-get install python-dev
+\endcode
+\section RYU_INSTALL Install
+\code
+sudo pip install ryu
+\endcode
+or
+\section RYU_BUILD Build
+\code
+git clone git://github.com/osrg/ryu.git
+cd ryu;
+sudo python ./setup.py install
+\endcode
+\section RYU_RUN Run
+\code
+ryu-manager <script_to_execution> [--verbose]
+\endcode
+
+\page TE_APPENDIX_C Test Case Appendix C - Install OpenFlow Dissector for Wireshark
+Get sources
+(for Debian-based distributions)
+\code
+git clone git://github.com/CPqD/ofdissector
+sudo apt-get install wireshark-dev
+export WIRESHARK=/usr/include/wireshark
+\endcode
+Ensure that <epan/packet.h> is in the $WIRESHARK path.
+\code
+cd src
+sudo apt-get install scons
+scons install
+sudo mv openflow.so /usr/lib/wireshark/libwireshark1/plugins/
+cd /usr/lib/wireshark/libwireshark1/plugins/
+sudo chown root:root openflow.so
+sudo chmod 644 openflow.so
+\endcode
+Run Wireshark.
+\code
+sudo wireshark &
+\endcode
+
+\page TE_APPENDIX_D Test Case Appendix D - examples of configuration files for OpenDaylight scripts
+
+Examples of flow/group parameter JSON files.
+
+\section TE_APPENDIX_D_ADD_VLAN_FLOW Add VLAN Flow
+
+\code
+{
+  "flow": {
+    "strict": "false",
+    "table_id": "10",
+    "id": "1",
+    "cookie_mask": "255",
+    "match": {
+      "vlan-match": {
+        "vlan-id": {
+          "vlan-id": "10",
+          "vlan-id-present": "true"
+        }
+      },
+      "in-port": "1"
+    },
+    "instructions": {
+      "instruction": {
+        "order": "0",
+        "go-to-table": { "table_id": "20" }
+      }
+    },
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "Vlanflow_1",
+    "priority": "2"
+  }
+\endcode
+
+\section TE_APPENDIX_D_ADD_L2_INTF_GROUP Add L2 Interface Group
+
+\code
+{
+  "group": {
+    "group-type": "group-indirect",
+    "buckets": {
+      "bucket": {
+        "action": {
+          "output-action": {
+            "max-length": "60",
+            "output-node-connector": "5"
+          },
+          "order": "0"
+        },
+        "bucket-id": "0",
+        "watch_group": "12",
+        "watch_port": "1234"
+      }
+    },
+    "group-name": "L2_Interface_b0005",
+    "group-id": "720901"
+  }
+}
+\endcode
+
+\section TE_APPENDIX_D_ADD_TERM_MAC_FLOW Add Termination MAC Flow
+
+\code
+{
+  "flow": {
+    "strict": "false",
+    "match": {
+      "vlan-match": {
+        "vlan-id": {
+          "vlan-id": "10",
+          "vlan-id-present": "true"
+        }
+      },
+      "ethernet-match": {
+        "ethernet-type": { "type": "2048" },
+        "ethernet-destination": { "address": "00:01:02:03:04:05/ff:ff:ff:ff:ff:ff" }
+      }
+    },
+    "instructions": {
+      "instruction": {
+        "order": "0",
+        "go-to-table": { "table_id": "30" }
+      }
+    },
+    "table_id": "20",
+    "id": "1",
+    "cookie_mask": "255",
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "Term_mac",
+    "priority": "1"
+  }
+}
+\endcode
+
+\section TE_APPENDIX_D_ADD_L3_UNICAST_GROUP Add L3 Unicast Group
+
+\code
+{
+  "group": {
+    "group-type": "group-indirect",
+    "buckets": {
+      "bucket": {
+        "action": [
+          {
+            "set-dl-src-action": { "address": "00:01:02:03:04:05/ff:ff:ff:ff:ff:ff" },
+            "order": "0"
+          },
+          {
+            "set-dl-dst-action": { "address": "00:00:00:00:00:05/ff:ff:ff:ff:ff:ff" },
+            "order": "1"
+          },
+          {
+            "set-vlan-id-action": { "vlan-id": "11" },
+            "order": "2"
+          },
+          {
+            "group-action": {
+              "group": "L2_Interface_b0005",
+              "group-id": "720901"
+            },
+            "order": "3"
+          }
+        ],
+        "bucket-id": "1",
+        "watch_group": "14",
+        "watch_port": "1234"
+      }
+    },
+    "group-name": "L3_Ucast_20000001",
+    "group-id": "536870913"
+  }
+}
+\endcode
+
+\section TE_APPENDIX_D_ADD_L3_ECMP_GROUP Add L3 ECMP Group
+
+\code
+{
+  "group": {
+    "group-type": "group-select",
+    "buckets": {
+      "bucket": [
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_1",
+              "group-id": "536870913"
+            },
+            "order": "0"
+          },
+          "bucket-id": "0",
+          "weight": "0",
+          "watch_group": "14",
+          "watch_port": "1234"
+        },
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_2",
+              "group-id": "536870914"
+            },
+            "order": "1"
+          },
+          "bucket-id": "1",
+          "weight": "1",
+          "watch_group": "14",
+          "watch_port": "1234"
+        }
+      ]
+    },
+    "group-name": "ECMP",
+    "group-id": "1879048193"
+  }
+}
+\endcode
+
+\section TE_APPENDIX_D_ADD_UNICAST_ROUTING_FLOW Add Unicast Routing Flow
+
+\code
+{
+  "flow": {
+    "strict": "false",
+    "match": {
+      "ethernet-match": {
+        "ethernet-type": { "type": "2048" }
+      },
+      "ipv4-destination": "10.1.1.0/24"
+    },
+    "instructions": {
+      "instruction": [
+        {
+          "order": "0",
+          "go-to-table": { "table_id": "60" }
+        },
+        {
+          "order": "1",
+          "write-actions": {
+            "action": {
+              "order": "0",
+              "group-action": {
+                "group": "ECMP_group",
+                "group-id": "1879048193"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "table_id": "30",
+    "id": "1",
+    "cookie_mask": "255",
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "Unicast_Routing",
+    "priority": "2"
+  }
+}
+\endcode
+
+\section TE_APPENDIX_D_ADD_POLICY_ACL_FLOW Add Policy ACL Flow
+
+\code
+{
+  "flow": {
+    "strict": "false",
+    "table_id": "60",
+    "id": "1",
+    "cookie_mask": "255",
+    "match": {
+      "ethernet-match": {
+        "ethernet-type": { "type": "2048" },
+        "ethernet-destination": { "address": "00:01:02:03:04:05" },
+        "ethernet-source": { "address": "00:00:00:00:00:00" }
+      },
+      "vlan-match": {
+        "vlan-id": {
+          "vlan-id": "10",
+          "vlan-id-present": "true"
+        }
+      },
+      "ip-match": { "ip-protocol": "6" },
+      "ipv4-destination": "10.1.1.2/32",
+      "ipv4-source": "0.0.0.0",
+      "tcp-source-port": "9999",
+      "tcp-destination-port": "0"
+    },
+    "instructions": {
+      "instruction": {
+        "order": "0",
+        "write-actions": {
+          "action": {
+            "order": "0",
+            "group-action": {
+              "group": "L3_Unicast",
+              "group-id": "536870916"
+            }
+          }
+        }
+      }
+    },
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "PolicyAcl",
+    "priority": "2"
+  }
+}
+\endcode
+
+
+\page TE_APPENDIX_E Appendix E - OpenDaylight HOWTO
+
+\n OpenDaylight controller is open-source software that runs in a Java Virtual Machine (JVM).
+It can be deployed on any machine that supports Java. OpenDaylight requires JVM 1.7+ to run.
+
+For more information please visit: https://www.opendaylight.org
+
+\section OPENDAYLIGHT_PREREQ Prerequisites
+
+(for Debian-based distributions)
+
+\code
+sudo apt-get install openjdk-7-jre
+sudo apt-get install openjdk-7-jdk
+\endcode
+
+Update JAVA_HOME variable in the environment (.bashrc)
+
+\code
+e.g., export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk-i386
+\endcode
+
+OpenDaylight source code is compiled using Apache Maven build tool. If opting to build the OpenDaylight source code,
+download the Maven source code and install. Alternatively, install OpenDaylight by downloading the distribution Karaf per the instructions further below.
+
+\code
+sudo mkdir -p /usr/local/apache-maven
+wget http://ftp.wayne.edu/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
+sudo mkdir /usr/local/apache-maven
+sudo mv apache-maven-3.3.3-bin.tar.gz /usr/local/apache-maven
+sudo tar -xzvf /usr/local/apache-maven/apache-maven-3.3.3-bin.tar.gz -C /usr/local/apache-maven/
+sudo update-alternatives --install /usr/bin/mvn mvn /usr/local/apache-maven/apache-maven-3.3.3/bin/mvn 1
+sudo update-alternatives --config mvn
+
+Add these to ~/.bashrc
+export M2_HOME=/usr/local/apache-maven/apache-maven-3.3.3
+export MAVEN_OPTS="-Xms256m -Xmx512m"
+\endcode
+
+\section OPENDAYLIGHT_INSTALLATION Installation
+
+OpenDaylight Controller with OpenFlow 1.3 plugin can be run in two ways, namely, using the integration project or openflowplugin project.
+The instructions for the integration project are described below.
+For more information please visit: https://wiki.opendaylight.org/view/OpenDaylight_OpenFlow_Plugin::Running_controller_with_the_new_OF_plugin
+
+\li Integration project
+
+Download the integration Karaf distribution by selecting the desired stable release version available at
+https://nexus.opendaylight.org/content/groups/public/org/opendaylight/integration/distribution-karaf/
+
+Unzip the distribution file and run
+
+\code
+tar -xzvf distribution-karaf-<stable-release-version-selected>.tar.gz
+
+e.g., tar -xzvf distribution-karaf-0.2.3-Helium-SR3.tar.gz
+      cd distribution-karaf-0.2.3-Helium-SR3/bin
+      ./karaf
+\endcode
+
+or Build and run
+
+\code
+sudo apt-get install git
+git clone https://github.com/opendaylight/integration.git
+wget https://raw.githubusercontent.com/opendaylight/odlparent/master/settings.xml
+mkdir ~/.m2
+cp settings.xml ~/.m2
+cd integration
+mvn clean install -DskipTests
+
+cd distributions/karaf/target/assembly/bin
+./karaf
+\endcode
+
+After executing "./karaf", the controller starts the OSGI interface, where desired plugins can be installed.
+
+\code
+feature:install odl-restconf odl-l2switch-switch odl-openflowplugin-all odl-mdsal-apidocs odl-dlux-all odl-adsal-northbound
+\endcode
+
+To open OpenDaylight web interface:
+
+\code
+http://<host-ip>:8181/dlux/index.html
+\endcode
+
+For more information please visit: https://wiki.opendaylight.org/view/Install_On_Ubuntu_14.04
+*/

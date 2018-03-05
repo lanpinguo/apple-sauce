@@ -1,0 +1,41 @@
+{
+"group_mod":
+        {
+        "_name" : "failover group",
+        "_description" :"",
+        "cmd" : "add",
+        "type" : "ff",
+        "group_id" : "0xa6000000",
+        "buckets":
+            [
+                {
+                "weight" : "0",
+                "watch_port": "0xf0000001",
+                "watch_group": "any",
+                "actions":
+                    [
+                        {
+                        "group":
+                            {
+                            "group_id" : "0x93000000"
+                            }
+                        }
+                    ]
+                },
+                {
+                "weight" : "0",
+                "watch_port": "0xf0000002",
+                "watch_group": "any",
+                "actions":
+                    [
+                        {
+                        "group":
+                            {
+                            "group_id" : "0x93000001"
+                            }
+                        }
+                    ]
+                }                
+            ]
+        }
+} 

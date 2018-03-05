@@ -1,0 +1,63 @@
+{
+  "group": {
+    "group-type": "group-select",
+    "buckets": {
+      "bucket": [
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_1",
+              "group-id": "536870913"
+            },
+            "order": "0"
+          },
+          "bucket-id": "0",
+          "weight": "0",
+          "watch_group": "14",
+          "watch_port": "1234"
+        },
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_2",
+              "group-id": "536870914"
+            },
+            "order": "1"
+          },
+          "bucket-id": "1",
+          "weight": "1",
+          "watch_group": "14",
+          "watch_port": "1234"
+        },
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_3",
+              "group-id": "536870915"
+            },
+            "order": "2"
+          },
+          "bucket-id": "2",
+          "weight": "2",
+          "watch_group": "14",
+          "watch_port": "1234"
+        },
+        {
+          "action": {
+            "group-action": {
+              "group": "L3_Unicast_4",
+              "group-id": "536870916"
+            },
+            "order": "3"
+          },
+          "bucket-id": "3",
+          "weight": "3",
+          "watch_group": "14",
+          "watch_port": "1234"
+        }
+      ]
+    },
+    "group-name": "ECMP",
+    "group-id": "1879048193"
+  }
+}

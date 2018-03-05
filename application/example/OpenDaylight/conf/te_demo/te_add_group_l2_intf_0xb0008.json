@@ -1,0 +1,21 @@
+{
+  "group": {
+    "group-type": "group-indirect",
+    "buckets": {
+      "bucket": {
+        "action": {
+          "output-action": {
+            "max-length": "60",
+            "output-node-connector": "8"
+          },
+          "order": "0"
+        },
+        "bucket-id": "0",
+        "watch_group": "12",
+        "watch_port": "1234"
+      }
+    },
+    "group-name": "L2_Interface_b0008",
+    "group-id": "720904"
+  }
+}

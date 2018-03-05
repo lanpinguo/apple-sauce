@@ -1,0 +1,39 @@
+{
+  "flow": {
+    "strict": "false",
+    "match": {
+      "ethernet-match": {
+        "ethernet-type": { "type": "2048" }
+      },
+      "ipv4-destination": "10.1.1.0/24"
+    },
+    "instructions": {
+      "instruction": [
+        {
+          "order": "0",
+          "go-to-table": { "table_id": "60" }
+        },
+        {
+          "order": "1",
+          "write-actions": {
+            "action": {
+              "order": "0",
+              "group-action": {
+                "group": "ECMP_group",
+                "group-id": "536870913"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "table_id": "30",
+    "id": "1",
+    "cookie_mask": "255",
+    "hard-timeout": "0",
+    "cookie": "1",
+    "idle-timeout": "0",
+    "flow-name": "Unicast_Routing",
+    "priority": "2"
+  }
+}

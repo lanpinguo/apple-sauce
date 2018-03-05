@@ -1,0 +1,27 @@
+{
+"group_mod":
+    {
+    "_name" : "L2 interface group",
+    "_description" : "Reference group for MPLS interface",
+    "cmd" : "add",
+    "type" : "indirect",
+    "group_id" : "0x60004",
+    "buckets":
+        [
+            {
+            "weight" : "0",
+            "watch_port":"any",
+            "watch_group":"any",
+            "actions":
+                [
+                    {
+                    "output":
+                        {
+                        "port" : "4"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

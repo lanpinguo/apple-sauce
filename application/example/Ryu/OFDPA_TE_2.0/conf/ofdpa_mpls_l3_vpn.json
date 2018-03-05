@@ -1,0 +1,11 @@
+{
+    "config_directory":"conf/mpls_l3_vpn",
+    "#config_directory":"conf/te_demo",
+    "working_set": "scenarioA.json",
+    "#working_set": "scenarioB.json",
+    "#working_set": "AddACL.json",
+    "#working_set": "DelACL.json",
+    "#config_directory": "conf/experimental",
+    "#working_set": "InitiationVPWS.json",
+    "#working_set": "TerminationVPWS.json"
+}

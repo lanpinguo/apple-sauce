@@ -1,0 +1,62 @@
+{
+"flow_mod":
+    {
+    "_name": "add_vccv_flow",
+    "_description" : "tunnel termination",
+    "table": "TABLE_MPLS1",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "eth_type": "0x8847",
+        "mpls_label": "0x077",
+        "mpls_bos": "1",
+        "in_port": "6",
+        "ofdpa_oxm_mpls_data_first_nibble": "1",
+        "ofdpa_oxm_mpls_ach_channel": "0x8902",
+        "ofdpa_oxm_mpls_next_label_is_gal": "0"
+        },
+    "instructions":
+        [
+            {
+            "apply":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "pop_mpls":
+                                {
+                                    "ethertype": "0x8902"
+                                }
+                            },
+                            {
+                                "dec_mpls_ttl": ""
+                            },
+                            {
+                                "ofdpa_pop_cw": ""
+                            },
+                            {
+                                "ofdpa_pop_l2_header": ""
+                            },
+                            {
+                                "set_field":
+                                    {
+                                    "ofdpa_oxm_lmep_id": "20"
+                                    }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "goto":
+                {
+                "table": "TABLE_MPLS_TP_MAINTENANCE"
+                }
+            }
+        ]
+    }
+}

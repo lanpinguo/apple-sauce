@@ -1,0 +1,17 @@
+/*!
+\page OFAGENT_AUTOMATIC_BOOTUP Automatic Bootup
+
+\section OFAGENT_GTO_AND_QUANTA_PLATFORMS GTO and Quanta LY2 Platforms
+
+After the operating system core is started, the Startup Main menu is displayed to the user. Using the menu, user can boot up with the ofagentapp in the following modes:
+
+1. Launch the ofagentapp with connecting to the controller. User needs to specify IP address and port of the controller.
+2. Launch the ofagentapp in the listening mode. The default port is used and can still be modified from the Linux shell via modification of the /mnt/fastpath/ofagent.cfg file. The DUT needs to be rebooted in order for the modifications to be applied.
+3. Launch the Linux shell.
+
+User has 5 seconds to make a choice. If during this period user does not make a choice, the ofagentapp is launched in the listening mode by default.
+In case /mnt/fastpath/ofagentapp, /mnt/fastpath/linux-kernel-bde.ko and /mnt/fastpath/linux-user-bde.ko
+files are missing from the file system, the message "There is no file /mnt/fastpath/<file_name>." is displayed to the user and Linux shell is launched from the Startup Main menu.
+
+All these actions are defined in the rc.start startup script.
+*/

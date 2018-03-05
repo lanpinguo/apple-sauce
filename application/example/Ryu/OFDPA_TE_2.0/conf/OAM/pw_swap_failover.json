@@ -1,0 +1,20 @@
+{
+"working_set" :
+    [
+    "pw_swap_failover/add_l2_interface_group_port5.json",
+    "pw_swap_failover/add_mpls_interface_group_port5.json",
+    "pw_swap_failover/add_mpls_tunnel_label_group_port5.json",
+    
+    "pw_swap_failover/add_l2_interface_group_port7.json",
+    "pw_swap_failover/add_mpls_interface_group_port7.json",
+    "pw_swap_failover/add_mpls_tunnel_label_group_port7.json",
+    
+    "pw_swap_failover/add_ff_group.json",
+    "pw_swap_failover/add_swap_label_group.json",
+    
+    "pw_swap_failover/add_tunnel_termination_flow.json",
+    "pw_swap_failover/add_vpn_termination_flow.json",
+    "pw_swap_failover/add_mac_termination_flow.json",
+    "pw_swap_failover/add_vlan_flow.json"
+    ]
+}

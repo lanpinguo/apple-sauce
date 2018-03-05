@@ -1,0 +1,29 @@
+{
+"flow_mod":
+    {
+    "_name": "add_vpn_termination_flow",
+    "_description" : "VPN termination",
+    "table": "TABLE_TERMINATION_MAC",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "in_port": "6",
+        "eth_type": "0x8847",
+        "vlan_vid": "101",
+        "eth_dst": "00:01:02:03:04:05",
+        "eth_dst_mask": "ff:ff:ff:ff:ff:ff"
+        },
+    "instructions":
+        [
+            {
+            "goto":
+                {
+                "table": "TABLE_MPLS0"
+                }
+            }
+        ]
+    }
+}

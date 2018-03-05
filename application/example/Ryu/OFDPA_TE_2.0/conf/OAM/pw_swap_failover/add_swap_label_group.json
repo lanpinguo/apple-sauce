@@ -1,0 +1,33 @@
+{
+"group_mod":
+    {
+    "_name" : "swap label group",
+    "_description" :"",
+    "cmd" : "add",
+    "type" : "indirect",
+    "group_id" : "0x95000000",
+    "buckets":
+        [
+            {
+            "weight" : "0",
+            "watch_port": "any",
+            "watch_group": "any",
+            "actions":
+                [
+                    {
+                    "set_field":
+                        {
+                        "mpls_label" : "0x55"
+                        }
+                    },
+                    {
+                    "group":
+                        {
+                        "group_id" : "0xa6000000"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

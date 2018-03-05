@@ -1,0 +1,11 @@
+{
+"working_set":
+    [
+    "initiation/vpws_add_l2_interface_group.json",
+    "initiation/vpws_add_mpls_interface_group.json",
+    "initiation/vpws_add_mpls_tunnel_label_group.json",
+    "initiation/vpws_add_l2_vpn_label_group.json",
+    "initiation/vpws_add_mpls_l2_port_flow.json",
+    "initiation/vpws_add_vlan_flow.json"
+    ]
+}

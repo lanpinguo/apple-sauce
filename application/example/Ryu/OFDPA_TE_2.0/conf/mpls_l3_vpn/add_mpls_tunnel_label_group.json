@@ -1,0 +1,43 @@
+{
+"group_mod":
+        {
+        "_name" : "add_mpls_tunnel_label_group",
+        "_description" : "MPLS tunnel label group",
+        "cmd" : "add",
+        "type" : "indirect",
+        "group_id" : "0x93000000",
+        "buckets":
+            [
+                {
+                "weight" : "0",
+                "watch_port" : "any",
+                "watch_group" : "any",
+                "actions" :
+                    [
+                        {
+                        "push_mpls" :
+                            {
+                            "ethertype" : "0x8847"
+                            }
+                        },                      
+                        {
+                        "set_field" :
+                            {
+                            "mpls_bos" : "0"
+                            },
+                        "set_field" :
+                            {
+                            "mpls_label" : "0x1ff"
+                            }
+                        },
+                        {
+                        "group" :
+                            {
+                            "group_id" : "0x90000000"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+}

@@ -1,0 +1,42 @@
+#*********************************************************************
+#
+# (C) Copyright Broadcom Corporation 2013-2014
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#*********************************************************************
+#
+# Top level OFAgent Indigo Makefile
+#
+
+export CFLAGS += $(OFDPA_CFLAGS) -DINDIGO_MEM_STDLIB -DINDIGO_LINUX_TIME -DINDIGO_LINUX_TIME_MONOTONIC -DOFDPA_FIXUP
+
+.PHONY: indigo
+
+indigo: $(LIBRARIES_DIR)
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/modules/Configuration/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/modules/indigo/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/submodules/loxigen-artifacts/loci/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/modules/OFConnectionManager/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/modules/OFStateManager/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/modules/SocketManager/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/submodules/bigcode/modules/BigData/BigList/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/submodules/bigcode/modules/cjson/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/submodules/infra/modules/AIM/module/src/make.ofagent)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OF_AGENT_BASE_DIR)/submodules/bigcode/modules/BigData/BigHash/module/src/make.ofagent)
+
+	
+
+	$(RM) -f $(ofagent_archive)
+	$(AR) cq $(ofagent_archive) `find $(abspath $(OUTPATH)/$@) -name "*.o"`

@@ -1,0 +1,132 @@
+#*********************************************************************
+#
+# (C) Copyright Broadcom Corporation 2013-2014
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#*********************************************************************
+#
+# Set up variables to compensate for environmental command syntax differences:
+#   DEVNULL  - define null device for disposing unwanted output.
+#   DOXYGEN  - define the command used to run doxygen.
+#   INCCLOSE - use for enclosing the name of a file to be included, esp. for SNMP (e.g. <file.h>).
+#   INCOPEN  - use for enclosing the name of a file to be included, esp. for SNMP (e.g. <file.h>).
+#   MKDIRP   - make new directory, including all intervening parent directories.
+#   PSEP     - path list separation character.
+#   QT       - use where quotation marks are needed around a command (e.g. 'sed', '*.o').
+#   REDIRERR - sequence for redirecting stderr to stdout.
+#   PRINTF   - used to format text
+#
+ DEVNULL    := >/dev/null
+ DOXYGEN    :=  DOXYGENVER=1.8.2 doxygen
+ INCCLOSE   := \"
+ INCOPEN    := \"
+ LZMA_CMD   := lzma
+ MKDIRP     := mkdir -p
+ PRINTF     := printf
+ PSEP       := :
+ QT         :=
+ REDIRERR   := 2>&1
+ TAR        := tar
+export DEVNULL DOXYGEN INCCLOSE INCOPEN LZMA_CMD MKDIRP PRINTF PSEP QT REDIRERR TAR
+
+export CREATING_MSG   = @printf "CREATING.....:  %s\n" $(subst ../,$(BLANK),$@)
+export GENERATING_MSG = @printf "GENERATING...:  %s\n" $(subst ../,$(BLANK),$@)
+
+#
+# Ensure that doxygen is installed.
+# If not, provide a user-friendly error.
+#
+doxygen_executable := $(shell which doxygen)
+ifeq ($(doxygen_executable),)
+$(error Doxygen must be installed to build the documentation)
+endif
+
+#
+# local variables
+#
+
+#
+# ofdpa_reldir is the directory to use for the (external) OFDPA files.
+#
+export ofdpa_reldir := ofdpa
+
+#
+# For the Documentation file extension (used to create filenames),
+# The final zip file will be named with this name attached with the ofdpa_reldir
+#
+
+ofdpa_file_ext := documentation
+
+# Special dependency rules.
+#
+# In general we create a list of files that we want in the
+# OFDPA documentation (e.g. ofdpa_hdr_files), and then a set of directories
+# we need to create for those files (e.g. ofdpa_hdr_dirs).  Note
+# that the file layout is that of the OFDPA documentation, and not the
+# source tree that they come from.  Later on we use suffix
+# rules to map from the input file structure to the OFDPA doc.
+#
+#
+
+# doxygen_files: Extra files required for producing the doxygen docs
+doxygen_files       := $(shell find $(OFDPA_BASE)/tools/doxygen -type f)
+
+# dc_files: Direct copy files: place all of them in the OFDPA as is
+dc_files            := $(realpath $(OFDPA_BASE)/README)
+dc_files            := $(patsubst $(OFDPA_BASE)%,$(ofdpa_reldir)/%,$(dc_files))
+
+# ofdpa_hdr_files: OFDPA header files: for doxygen generation (for doxygen use only)
+ofdpa_hdr_files       := $(shell find $(OFDPA_BASE)/application/api/include -name "ofdpa*.h")
+ofdpa_hdr_dirs        := $(sort $(dir $(ofdpa_hdr_files)))
+
+# Input and log files for when we run doxygen
+doxygen_conf_file        := $(realpath $(OFDPA_BASE)/tools/doxygen/ofdpa.doxygen)
+doxygen_log_file         := doxygen.log
+
+# List of all directories that need to exist
+ofdpa_dirs := $(documentation_dir)/$(ofdpa_reldir)
+
+export html_dir := html
+
+# Delete the target file if the make command fails.
+.DELETE_ON_ERROR:
+
+.DEFAULT: $(documentation_dir)/$(ofdpa_reldir)-$(ofdpa_file_ext).tar.bz2
+
+#
+#Doxygen related actions follow
+#
+
+# The end result: a bzip'ed tar file that contains the OFDPA documentation.
+$(documentation_dir)/$(ofdpa_reldir)-$(ofdpa_file_ext).tar.bz2: $(ofdpa_dirs) $(dc_files) $(abspath $(documentation_dir)/$(ofdpa_reldir)/$(html_dir)/index.html)
+	$(CREATING_MSG)
+	$(DBG) $(TAR) -Pjcf $@ --transform='s,$(documentation_dir),,' --transform='s,$(ofdpa_reldir)/,$(ofdpa_reldir)-$(ofdpa_file_ext)/,' --exclude=xml $(documentation_dir)/$(ofdpa_reldir)/*
+
+# Create any directories that we need
+$(ofdpa_dirs):
+	$(MKDIRP) $@
+
+# Rule for running doxygen over everything
+$(abspath $(documentation_dir)/$(ofdpa_reldir)/$(html_dir)/index.html): $(doxygen_files) $(doxygen_conf_file) $(ofdpa_hdr_files)
+	$(GENERATING_MSG)
+	cd $(documentation_dir); $(DOXYGEN) $(doxygen_conf_file) > $(doxygen_log_file) $(REDIRERR)
+# The following command will check to see that there are no warnings generated and raise an error if so.
+	if [ 0 -ne $$(wc --bytes <doxygen.warn.log) ] ; then echo "Error: Doxygen warnings generated, check doxygen.warn.log"; exit 1; fi
+
+#
+# Rule for copying directly copying files into OFDPA.
+#
+$(dc_files): $(ofdpa_reldir)/%: $(OFDPA_BASE)/%
+	$(CREATING_MSG)
+	$(DBG) cp -f $< $(documentation_dir)/$@

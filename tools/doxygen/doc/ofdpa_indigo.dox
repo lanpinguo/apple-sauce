@@ -1,0 +1,213 @@
+/*!
+\page INDIGO_PORTING INDIGO OF-DPA Integration
+
+The following sections give a brief overview of the steps involved in integrating Indigo Openflow agent with OF-DPA.
+
+\section CODE_ORGANIZATION Indigo Code Organization
+
+The Indigo agent code is organized into modules and submodules subdirectories. The modules comprise of the core architecture while code from other repositories are organized into submodules.
+
+\section ARCH_OVERVIEW Architectural Overview
+
+The architecture is divided into two sets of modules, platform independent modules and platform dependent modules. The implementation for platform independent modules is available in the Indigo repository. These include the Socket Manager, Connection Manager, State Manager and Configuration. The platform specific modules are not included in the Indigo distribution. These are the Forwarding and the Port Manager modules.
+
+\section PLATFORM_MODULES Platform-Specific Modules
+
+Implementing Platform specific modules form an integral part of integrating the Indigo agent on a platform. These are implemented as indigo-ofdpa driver located in the folder openflow/ofdpa/ofagent/ofdpadriver. Changes done in the Indigo code are flagged with the macro OFDPA_FIXUP.
+
+\subsection FORWARDING_MODULE Forwarding Module
+This module exposes interfaces that integrate with the platforms forwarding engine. The forwarding APIs are declared in the header file
+indigo/modules/indigo/module/inc/indigo/forwarding.h.
+
+The following APIs are implemented:
+
+\li indigo_fwd_forwarding_features_get(): Fills out the feature reply message with number of OpenFlow tables and capabilities supported.
+
+\li indigo_fwd_flow_create(): Creates a flow entry.
+
+\li indigo_fwd_flow_modify(): Modifies a flow entry.
+
+\li indigo_fwd_flow_delete(): Deletes a flow entry.
+
+\li indigo_fwd_flow_stats_get(): Gets flow entry statistics.
+
+\li indigo_fwd_table_stats_get(): Gets table statistics.
+
+\li indigo_fwd_packet_out(): ofdpa packet_out message handler. Transmits the packet sent by the Controller out of the given port.
+
+\li indigo_fwd_group_add(): Adds a group entry.
+
+\li indigo_fwd_group_modify(): Modifies a group entry.
+
+\li indigo_fwd_group_delete(): Deletes a group entry.
+
+\li indigo_fwd_group_stats_get(): Gets group statistics.
+
+\subsection PORT_MODULE Port Module
+This module exposes interfaces that integrate with the ports of the platforms. The port APIs are declared in the header file
+indigo/modules/indigo/module/inc/indigo/port_manager.h
+
+The following APIs are implemented
+
+\li indigo_port_features_get(): Gets port features: current, advertized, supported and peer features.
+
+\li indigo_port_desc_stats_get(): Gets detailed port description including Port MAC address, name, admin status, state, features, current speed and maximum speed.
+
+\li indigo_port_modify(): Configures port admin state and advertized features.
+
+\li indigo_port_stats_get(): Gets port statistics.
+
+\li indigo_port_queue_config_get(): Gets port queue configuration.
+
+\li indigo_port_queue_stats_get(): Gets port queue statistics.
+
+\subsection ASYNCHRONOUS_MESSAGES Asynchronous Messages
+
+The following functions are implemented to add support for asynchronous messages sent by OF-DPA to the Controller
+
+\li ind_ofdpa_flow_event_receive(): Handles flow events. These are hard and idle timeout flow ageing events. It invokes ind_core_flow_expiry_handler() which is a new function added in Indigo as part of ofdpa integration. This function invokes core indigo functions to delete the expired flow from ofdpa and the indigo database and sends a flow removed message to the Controller.
+
+\li ind_ofdpa_pkt_receive(): Handles packet_in from ofdpa. This functions receives the packet sent by ofdpa. It then creates a packet_in message and invokes core indigo functions to send the message to the Controller.
+
+\li ind_ofdpa_port_event_receive(): Handles port events. These are port link state and port added and deleted events. The function traverses through all the ofdpa port events and invokes core indigo functions to send these events to the Controller.
+
+\section INDIGO_INITIALIZATION Indigo Initialization
+
+The Indigo agent initialization code is implemented in the file openflow/ofdpa/ofagent/application/ofagent.c. This file primarily implements the following:
+
+\li Sets the debug levels of core Indigo and ofdpa as passed through the command line arguments.
+
+\li Initializes logging for the indigo-ofdpa driver and the core Indigo modules.
+
+\li Initializes ofdpa client.
+
+\li Initializes and enables core Indigo.
+
+\li Initializes the Controller and/or the listening mode of the agent as per the command line arguments passed.
+
+\li Registers the agent client event socket with the Indigo Socket Manager. The callback ind_ofdpa_event_socket_ready() is registered as the callback handler. This handler loops through the flow and port events and processes them.
+
+\li Registers the agent client packet socket with the Indigo Socket Manager. The callback ind_ofdpa_pkt_socket_ready() is registered as the callback handler. This handler handles packet_in and invokes ind_ofdpa_pkt_receive().
+
+\li Runs the main Indigo socket poll loop. This loop polls on the registered sockets and handles socket events and timers for the Indigo agent.
+
+\section OFDPA_CHANGES OF-DPA Changes in Indigo
+
+Changes have been made in the following Indigo files for OF-DPA:
+
+\li indigo/modules/OFStateManager/module/inc/OFStateManager/ofstatemanager.h
+\li indigo/modules/OFStateManager/module/src/ofstatemanager.c.
+ - ind_core_flow_expiry_handler(): This new function is added to handle flow expiry in the datapath.
+
+\li indigo/modules/OFStateManager/module/src/group_handlers.c
+ - Changes are made to add return codes for functions handling Group deletes.
+
+\li indigo/modules/OFStateManager/module/src/handlers.c
+ - ind_core_queue_get_config_request_handler(): Changes are made to send appropriate error type and code in the reply messages to Controller. Changes are also made to port queue configuration error logs.
+ - ind_core_queue_stats_request_handler(): Changes are made to send appropriate error code to Controller.
+
+\li indigo/modules/indigo/module/inc/indigo/forwarding.h
+ - A return code is added to indigo_fwd_group_delete().
+
+\li indigo/modules/loci/inc/loci/loci.h
+\li indigo/modules/loci/inc/loci/loci_base.h
+\li indigo/modules/loci/inc/loci/loci_show.h
+\li indigo/modules/loci/inc/loci/of_doc.h
+\li indigo/modules/loci/inc/loci/of_match.h
+\li indigo/modules/loci/src/loci.c
+\li indigo/modules/loci/src/loci_obj_dump.c
+\li indigo/modules/loci/src/loci_obj_show.c
+\li indigo/modules/loci/src/of_match.c
+\li indigo/modules/loci/src/of_type_data.c
+\li indigo/modules/locitest/src/test_common.c
+ - Changes are made to support TunnelId match field.
+
+\section INDIGO_BUILDS Compiling Indigo
+
+Two top-level makefiles are used to compile Indigo:
+
+\li openflow/ofdpa/ofagent/Make.agent: Builds the interprocess mode version of the agent executable "ofagent". Both "ofagent" and "ofdpa" need to be run simultaneously.
+
+\li openflow/ofdpa/ofagent/Make.agentapp: Builds the single process version of the agent executable "ofagentapp" that links ofdpa libraries statically.
+
+A bunch of makefiles with the name "make.ofagent" have been added in the various modules and submodules of the Indigo code to compile Indigo. These are invoked through the above mentioned makefiles.
+
+\section EXECUTING_INDIGO Executing Indigo
+
+With reference to communication with a Controller, Indigo can be run in Active and Passive modes. It can also be in the Interprocess mode or a Single Process mode.
+
+\subsection ACTIVE_MODE Active Mode
+
+In this mode a Controller IP is passed as a command line argument and the agent connects to the Controller.
+
+\subsection PASSIVE_MODE Passive Mode
+
+In this mode the agent's local IP is passed as a command line argument and the agent listens on a socket on the IP. A Controller would need to connect to the agent for agent configurations.
+
+\subsection EXECUTING_INTERPROCESS_MODE Interprocess Mode
+
+\# ./ofagent --help\n
+Jan 11 20:50:52.081 ofagent: MSG: \n
+version 0.0.0.0 -- Built on Sat Feb 15 2014 at 12:40:38 IST
+
+Usage: ofagent [OPTION...]\n
+Runs the main OFAgent application.
+
+  -a, --agentdebuglvl=AGENTDEBUGLVL
+                             The verbosity of OF Agent debug messages.\n
+  -l, --listen=IP:PORT       Listen\n
+  -t, --controller=IP:PORT   Controller\n
+  -?, --help                 Give this help list\n
+      --usage                Give a short usage message\n
+  -V, --version              Print program version\n
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+Default values:
+OFAGENTDEBUGLVL  = 0
+Valid OF Agent debug levels are 0 - 2.
+
+\li Examples
+- ./ofagent --listen=10.130.173.74 -a 3 &
+- ./ofagent --controller=10.130.173.33:6633 -a 3 &
+
+\subsection EXECUTING_SINGLE_PROCESS_MODE Single-Process Mode
+
+\# ./ofagentapp --help\n
+Jan 11 20:50:43.291 ofagent: MSG: \n
+version 0.0.0.0 -- Built on Wed Feb 12 2014 at 15:21:41 IST\n
+
+
+Usage: ofagentapp [OPTION...]\n
+Runs the main OFAgent application.
+
+  -a, --agentdebuglvl=AGENTDEBUGLVL
+                             The verbosity of OF Agent debug messages.\n
+  -c, --ofdpadebugcomp=OFPDACOMPONENT
+                             The OF-DPA component for which debug messages are
+                             enabled.\n
+  -d, --ofdpadebuglvl=OFDPADEBUGLVL
+                             The verbosity of OF-DPA debug messages.\n
+  -l, --listen=IP:PORT       Listen\n
+  -t, --controller=IP:PORT   Controller\n
+  -?, --help                 Give this help list\n
+      --usage                Give a short usage message\n
+  -V, --version              Print program version\n
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+Default values:\n
+OFAGENTDEBUGLVL  = 0\n
+Valid OF Agent debug levels are 0 - 2.\n
+OFDPADEBUGLVL  = 0\n
+Valid OF-DPA debug levels are 0 - 0.\n
+No components enabled for debug:\n
+Valid OF-DPA components are:\n
+                1 = API\n
+                2 = Mapping\n
+                3 = RPC\n
+                4 = OFDB\n
+                5 = Datapath
+*/

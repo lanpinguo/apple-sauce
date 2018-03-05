@@ -1,0 +1,55 @@
+{
+"flow_mod":
+    {
+    "_name": "add_vpn_termination_flow",
+    "_description" : "VPN termination",
+    "table": "TABLE_MPLS1",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "eth_type": "0x8847",
+        "mpls_label": "0x17"
+        },
+    "instructions":
+        [
+            {
+            "apply":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                                "dec_mpls_ttl": ""
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "write":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "group":
+                                {
+                                "group_id":"0x95000000"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "goto":
+                {
+                "table": "TABLE_POLICY_ACL"
+                }
+            }
+        ]
+    }
+}

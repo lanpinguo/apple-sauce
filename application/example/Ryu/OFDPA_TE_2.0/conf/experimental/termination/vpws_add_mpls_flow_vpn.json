@@ -1,0 +1,80 @@
+{
+"flow_mod":
+    {
+    "_name": "vpws_add_vlan_flow",
+    "_description": "VPWS termination: add MPLS flow VPN",
+    "table": "TABLE_MPLS1",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "eth_type": "0x8847",
+        "mpls_label": "0x77",
+        "mpls_bos": "1"
+        },
+    "instructions":
+        [
+            {
+            "apply":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "pop_mpls":
+                                {
+                                "ethertype": "0x8847"
+                                }
+                            },
+                            {
+                            "dec_mpls_ttl": ""
+                            },
+                            {
+                            "ofdpa_pop_l2_header": ""
+                            },                            
+                            {
+                            "set_field" :
+                                {
+                                "ofdpa_l2_port": "0x20001"
+                                }
+                            },
+                            {
+                            "set_field" :
+                                {
+                                "tunnel_id": "0x10001"
+                                }
+                            },
+                            {
+                                "ofdpa_pop_cw_or_ach": ""
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "write":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "group":
+                                {
+                                "group_id": "0xb0000005"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {                    
+            "goto":
+                {
+                "table": "TABLE_POLICY_ACL"
+                }
+            }
+        ]
+    }
+}

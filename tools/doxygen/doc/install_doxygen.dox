@@ -1,0 +1,156 @@
+/*!
+\page OFDPARPMS_INSTALL_PAGE RPM Installation
+
+\section OFDPARPMSOVERVIEW Overview
+
+Customer applications and other open source software can be installed
+and maintained on an OF-DPA switch using the RPM Package Management
+System. By default, RPM is not installed.  In order to use RPM you
+must first bootstrap the RPM framework so that the rpm binary is
+available. You must then install the other RPMs using the rpm command.
+
+The RPM system and subsequent packages are installed into
+/mnt/fastpath/usr.  This location is persistent across reboots and
+across upgrades of the OF-DPA switch.  Note that /mnt/fastpath/usr/bin
+is on the default search path for binaries.
+
+\section OFDPARPMSCENTOS Broadcom Linux RPMs
+
+The Broadcom Linux RPMs are based on the source RPMs from the CentOS
+6.2 release.  These source RPMs have been cross compiled and then
+repackaged.  For example, sed-4.2.1-7.el6.src.rpm from CentOS is cross
+compiled and repackaged as sed-4.2.1-7.1.el6.brl_3.6a.iproc.rpm.  The
+".1" portion of "4.2.1-7.1" indicates the Broadcom package revision,
+"brl_3.6a" indicates the Broadcom tool chain version and "iproc"
+indicates the processor family.
+
+\section OFDPARPMSBOOTSTRAPRPM Bootstrapping RPM
+
+This is the process of installing RPM and its dependencies without
+actually using RPM, but doing so in a way that creates the initial RPM
+database.  The RPMs are delivered as a compressed tar ball in the
+rpms.\<toolchain\>.\<cpu\>-\<version\>.tar.bz2 file.  Uncompress and
+extract this file on your host Linux machine.  It will create a folder
+named rpms.\<toolchain\>.\<cpu\>-\<version\>.  Step into that folder
+and step into the output directory.  Inside will be a
+bootstrap-rpm.\<toolchain\>.\<cpu\>.sh file.  This is the file that
+needs to be copied and installed on the switch, as shown below.
+
+It is recommended that wget is used to fetch the bootstrap-rpm file since the
+file is large and tftp may time out.
+
+<pre>
+  \# cd /tmp
+  \# wget http://<http-server>/bootstrap-rpm.brl_3.6a.iproc.1.0.1.7.sh
+  or tftp -g -r bootstrap-rpm.brl_3.6a.iproc.1.0.1.7.sh <tftp-server>
+  \# chmod +x ./bootstrap-rpm.brl_3.6a.iproc.1.0.1.7.sh
+  \# ./bootstrap-rpm.brl_3.6a.iproc.1.0.1.7.sh
+  Installing RPM bootstrap files (this can take 10-15 minutes): mnt/
+  mnt/fastpath/
+  \<snip\>
+  Sync'ing filesystem: done
+  Creating links: done
+  Creating RPM database: done
+  RPM bootstrap successfully installed
+  \# rm ./bootstrap-rpm.brl_3.6a.iproc.1.0.1.7.sh
+  \# rpm -qa
+  zlib-1.2.3-27.2.el6.arm7l
+  libattr-2.4.44-7.1.el6.arm7l
+  nss-util-3.12.10-2.2.el6.arm7l
+  nss-3.12.10-16.2.el6.arm7l
+  db4-utils-4.7.25-16.1.el6.arm7l
+  ncurses-5.7-3.20090208.1.el6.arm7l
+  grep-2.6.3-2.2.el6.arm7l
+  ca-certificates-2010.63-3.1.el6.5.noarch
+  python-libs-2.6.6-29.3.el6.arm7l
+  rpm-python-4.8.0-19.4.el6.arm7l
+  libxml2-2.7.6-4.1.el6.arm7l
+  python-pycurl-7.19.0-8.1.el6.arm7l
+  yum-3.2.29-22.2.el6.noarch
+  brl-release-3-6a.el6.2.arm7l
+  file-5.04-11.2.el6.arm7l
+  nspr-4.8.8-3.2.el6.arm7l
+  sed-4.2.1-7.2.el6.arm7l
+  db4-4.7.25-16.1.el6.arm7l
+  ncurses-libs-5.7-3.20090208.1.el6.arm7l
+  pcre-7.8-3.1.2.el6.arm7l
+  coreutils-8.4-16.4.el6.arm7l
+  gdbm-1.8.0-36.1.el6.arm7l
+  rpm-libs-4.8.0-19.4.el6.arm7l
+  libssh2-1.2.2-7.1.el6.arm7l
+  python-iniparse-0.3.1-2.1.1.el6.noarch
+  yum-plugin-fastestmirror-1.1.30-10.1.el6.noarch
+  brcm-misc-1-9.arm7l
+  file-libs-5.04-11.2.el6.arm7l
+  sqlite-3.6.20-1.1.el6.arm7l
+  nss-softokn-3.12.9-11.2.el6.arm7l
+  popt-1.13-7.2.el6.arm7l
+  ncurses-base-5.7-3.20090208.1.el6.arm7l
+  bzip2-libs-1.0.5-7.1.el6.arm7l
+  coreutils-libs-8.4-16.4.el6.arm7l
+  readline-6.0-3.1.el6.arm7l
+  rpm-4.8.0-19.4.el6.arm7l
+  glib2-2.22.5-6.3.el6.arm7l
+  curl-7.19.7-26.1.el6.2.arm7l
+  yum-metadata-parser-1.1.2-16.1.el6.arm7l
+  initial-1-8.arm7l
+  xz-libs-4.999.9-0.3.beta.20091007git.1.el6.arm7l
+  libacl-2.2.49-6.1.el6.arm7l
+  nss-softokn-freebl-3.12.9-11.2.el6.arm7l
+  nss-sysinit-3.12.10-16.2.el6.arm7l
+  libcap-2.16-5.5.1.el6.arm7l
+  libidn-1.18-2.2.el6.arm7l
+  gmp-4.3.1-7.3.el6.arm7l
+  openssl-1.0.0-20.5.el6.arm7l
+  python-2.6.6-29.3.el6.arm7l
+  gamin-0.1.10-9.1.el6.arm7l
+  libcurl-7.19.7-26.1.el6.2.arm7l
+  python-urlgrabber-3.9.1-8.1.el6.noarch
+</pre>
+
+\section OFDPARPMSRPMPKGINST RPM Package Installation
+
+Once the RPM system has been installed onto the switch, rpm can then be used as normal
+to install additional packages.  A number of RPMs are provided in the
+rpms.\<toolchain\>.\<cpu\>-\<version\>.tgz file.  Once extracted, see the
+rpms.\<toolchain\>.\<cpu\>-\<version\>/output/RPMS directory for binaries and
+rpms.\<toolchain\>.\<cpu\>-\<version\>/output/SRPMS for source code.
+
+For installing further RPMs you can use the rpm-install.sh
+utility script that is shipped with the RPMs.  It is automatically installed as
+part of the bootstrap RPM tar ball.  Use the -h option to display
+the commands available.  For example, you could install all RPMs required for
+Python, or all RPMS required for the Chef client, or just all available RPMs. The
+script also  takes parameters for the TFTP/HTTP path and TFTP/HTTP server IP address.  It
+is recommended that you run this script from the /mnt/fastpath directory.
+
+For example, to install Puppet from the HTTP server at 10.27.9.99 where the RPMs
+are installed in /var/www/html/repo/brl/3.8:
+
+<pre>
+  \# cd /mnt/fastpath
+  \# rpm-install.sh -http puppet repo/brl/3.8 10.27.9.99
+  \# ......
+  \# rpm -q puppet
+  puppet-3.1.1-1.1.el6.noarch
+  \# which puppet
+  /bin/puppet
+</pre>
+
+Other packages can be installed in a similar fashion.  See
+`rpm-install.sh -h` for further information.
+
+\section OFDPARPMSRPMUPGINST RPM Upgrade Instructions
+
+If RPMs are already installed on the switch and a new set of RPMs have to be installed, please follow the steps below:
+1.	From linuxsh, rm -rf /mnt/fastpath/usr
+2.	From linuxsh, sync
+3.	Re-install the RPMs starting with the bootstrap file.
+
+<pre>
+  \# rm -rf /mnt/fastpath/usr
+  \#
+  \# sync
+  \#
+</pre>
+*/

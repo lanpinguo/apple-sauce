@@ -1,0 +1,28 @@
+{
+"group_mod":
+    {
+    "_name" : "L2 unfiltered interface group",
+    "_description" : "",
+    "cmd" : "add",
+    "type" : "indirect",
+    "group_id" : "0xb0000005",
+    "buckets":
+        [
+            {
+            "weight" : "0",
+            "watch_port" : "any",
+            "watch_group" : "any",
+            "actions":
+                [
+                    {
+                    "output":
+                        {
+                        "port" : "5"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
+

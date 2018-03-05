@@ -1,0 +1,314 @@
+/*!
+\page OFDPA_BUILDING Building OF-DPA Source Code
+
+\section OFDPA_LINUX_BUILD Linux Build Procedure for OF-DPA Software
+This section details the build procedure for the OF-DPA software using the following environment:
+
+\li The build machine uses either Red Hat&reg; Linux&reg; 5 and 6.2, or CentOS 5 and 6.2 (64-bit only) as the development environment. CentOS 6.2 is recommended if you will also be using this build machine for building RPMs.
+\li The build machine uses Broadcom Linux or XLP&reg; SDK 2.2.7/3.2 as the cross-compiler and target environment.
+
+\note It should be possible to use other distributions for the development environment and other development kits for cross-compilation and target files. This file documents compiling for a Broadcom GTO (BCM98548XMC PowerPC 8548), WRX (BCM9XLP208XMC), GTR (BCM9XLP316XMC) CPU-based or iProc ARM&reg; (ARMv7) reference platform target.
+
+To successfully build OF-DPA software for a Linux environment, execute the following steps in the order specified.
+  1. Build or install the necessary toolchain (see \ref OFDPA_INSTALLING_TOOLCHAIN).
+  2. Extract the open source code (see \ref OFDPA_EXTRACTING_SOURCE).
+  3. Build mkimage (see \ref OFDPA_BUILDING_MKIMAGE).
+  4. Install and build the Linux kernel (see \ref OFDPA_INSTALLING_KERNEL).
+  6. Build the OF-DPA code (see \ref OFDPA_BUILDING_CODE).
+
+\section OFDPA_INSTALLING_TOOLCHAIN Installing the Broadcom Linux Toolchain
+This section provides information about how to install the Broadcom Linux toolchains for OF-DPA 2.0.  The following table contains information about the toolchains provided for the supported architectures and CPUs:
+\note For XLP architecture, use \ref OFDPA_INSTALLING_XLP_TOOLCHAIN instead of this section.
+
+<table>
+<caption id="toolchains">Provided Toolchains</caption>
+<tr>
+  <th>Directory</th>
+  <th>Architecture</th>
+  <th>CPU</th>
+  <th>OS Version</th>
+</tr>
+<tr>
+  <td>e500v2</td>
+  <td>PowerPC</td>
+  <td>E500v2</td>
+  <td>BRL 3.8</td>
+</tr>
+<tr>
+  <td>iproc</td>
+  <td>ARM CPU</td>
+  <td>ARMv7</td>
+  <td>BRL 3.6</td>
+</tr>
+<tr>
+  <td>x86_64</td>
+  <td>Intel x86</td>
+  <td>Intel Atom</td>
+  <td>Ubuntu 12.04</td>
+</tr>
+</table>
+
+The toolchains are built to run under Red Hat Enterprise Linux 5 (RHEL5), RHEL6, CentOS 5, and CentOS 6, 64-bit. If there is a need for toolchains to run in a different environment, contact Broadcom for assistance.
+
+\note For OF-DPA x86 with Ubuntu, the Ubuntu 12.04 native toolchain should be used.  The cross-toolchains provided are only applicable to PowerPC and ARM CPU based platforms.
+
+To install the toolchains:
+  1. Log on to the Customer Support Portal (CSP) and acquire the toolchain file OFDPA_R200_toolchain.tar.bz2.
+  2. Log in to the development system as root.
+  3. Change to the root directory:
+  \code{.sh}
+  cd /
+  \endcode
+  4. Uncompress the toolchain file:
+  \code{.sh}
+  tar -xjf OFDPA_R200_toolchain.tar.bz2
+  \endcode
+  The toolchains will be installed to /projects/nwsoft-toolchains/brl/brl_x.x/brl_x.x.x.
+  where x.x/x.x.x is the brl version.
+  5. For PowerPC e500v2 CPU-based switches, use the toolchain path:
+  \code{.unparsed}
+  /projects/nwsoft-toolchains/brl/brl_3.8/e500v2
+  \endcode
+  For ARMv7 CPU-based switches, use the toolchain path:
+  \code{.unparsed}
+  /projects/nwsoft-toolchains/brl/brl_3.6a/iproc
+  \endcode
+
+\note The toolchains were built specifying Linux headers for version 3.8.13 (for e500v2) or version 3.6.5 (for BRL 3.6) which may not be compatible with building other projects.
+
+\subsection OFDPA_INSTALLING_XLP_TOOLCHAIN Installing the XLP MIPS Toolchain
+A development environment for the BCM9XLP208XMC CPU card is needed to compile the FASTPATH code to run on the target. XLP SDK 3.2.1 was tested as the cross-compiler and target environment.
+<table>
+<caption id="XLPtoolchains">XLP Toolchain Provided</caption>
+<tr>
+  <th>Directory</th>
+  <th>Architecture</th>
+  <th>CPU</th>
+</tr>
+<tr>
+  <td>wrx</td>
+  <td>MIPS64</td>
+  <td>XLP208</td>
+</tr>
+</table>
+
+To install the toolchains:
+  1. Log on to the Customer Support Portal (CSP) and acquire the SDK file sdk-base-3.2.1.tar.gz.
+  2. Log in to the development system as root.
+  3. Create a toolchain directory.
+  \code{.sh}
+  [root@localhost]# mkdir -p /projects/nwsoft-toolchains/netlogic
+  \endcode
+  4. Uncompress the SDK file.
+  \code{.sh}
+  [root@localhost]# cd /projects/nwsoft-toolchains/netlogic
+  [root@localhost netlogic]# tar zxf /tmp/sdk-base-3.2.1.tar.gz
+  [root@localhost netlogic]# mv sdk-base sdk-3.2.1
+  [root@localhost netlogic]# cd sdk-3.2.1
+  \endcode
+
+\subsection OFDPA_EXTRACTING_SOURCE Extracting the Open Source Code
+After building the toolchain, the operator must extract the open source code. A sample set of commands for extracting the open source code is as follows.
+\subsection OFDPA_EXTRACTING_SAMPLE Extracting the Open Source Code Sample Command Sequence
+\code{.sh}
+[builduser]$ ls
+OFDPA_R200_open_source_support_code.tar.bz2
+
+[builduser]$ tar xfj OFDPA_R200_open_source_support_code.tar.bz2
+\endcode
+The various open source packages are unpacked into the OFDPA_R200_open_source_support_code directory.
+\subsection OFDPA_BUILDING_MKIMAGE Building mkimage/mkimage64
+Refer to the following command sequence as a guide for building mkimage:
+
+\code{.sh}
+wget ftp://ftp.denx.de/pub/u-boot/u-boot-2012.10.tar.bz2
+bunzip2 u-boot-2012.10.tar.bz2
+tar xf u-boot-2012.10.tar
+cd u-boot-2012.10
+make tools
+cp tools/mkimage tools/mkimage64
+\endcode
+When this process is complete, the mkimage and mkimage64 binaries are available in tools/mkimage and tools/mkimage64, respectively, and should be copied to a location that is accessible via the PATH variable, so that is visible to the OF-DPA build process. mkimage64 is identical to mkimage.
+\subsection OFDPA_INSTALLING_KERNEL Installing and Building the Linux Kernel
+The operator should now be ready to install and build the Linux kernel.
+The kernel is automatically built as part of the OF-DPA image construction, so there is no need to do a separate build of the kernel.
+
+The Linux kernel provided with the OF-DPA distribution compiles as simply as any other distribution of Linux. The exception is the image packaging. The OF-DPA code image needs to be packaged using the mkimage tool from the u‑boot distribution.
+
+\note Customers can use their own Linux kernels. It is not necessary to use the provided source. In that case, have the compiled kernel source available so that OF-DPA can build kernel modules against it. See Porting the Linux Kernel for kernel changes necessary to integrate with OF-DPA.
+
+\subsection OFDPA_KERNEL_SAMPLE Linux Kernel Install/Build Sample Command Sequence
+Refer to the following command sequence as a guide for installing and building the Linux kernel:
+
+\par XGS BCM98548XMC Platform Example
+\code{.sh}
+[builduser]$ cd OFDPA_R200_open_source_support_code/fp_fsl_1.4
+[builduser]$ ARCH=powerpc CROSS_COMPILE=/projects/nwsoft-toolchains/brl/brl_3.8/e500v2/usr/bin/powerpc-linux- make 85xx/bcm98548xmc_defconfig
+HOSTCC scripts/basic/fixdep
+[ snip output ]
+HOSTLD scripts/kconfig/conf
+#
+# configuration written to .config
+#
+[builduser]$ ARCH=powerpc CROSS_COMPILE=/projects/nwsoft-toolchains/brl/brl_3.8/e500v2/usr/bin/powerpc-linux- make
+scripts/kconfig/conf -s arch/powerpc/Kconfig
+[ snip output ]
+  LD [M]  ltt/probes/syscall-trace.ko
+  CC      ltt/probes/trap-trace.mod.o
+  LD [M]  ltt/probes/trap-trace.ko
+[builduser]$
+\endcode
+
+\par iProc ARM Example
+
+The iProc ARM kernel sources are bundled in the open source tarball and also within the OF-DPA source code directory structure. For iProc ARM, the kernel is automatically built as part of the OF-DPA image construction, so there is no need to do a separate build of the kernel. The following information documents the location of the iProc ARM sources within the tree.
+
+The kernel that gets built for iProc ARM BSP can be found in the OF-DPA tree at this location:
+\code{.sh}
+..../build_kernels/<40-character-hex-string>/<cpu>
+\endcode
+
+For example, the iproc_hr2 kernel sources are found in this tree:
+\code{.sh}
+.../build_kernels/85c52398c1fcca5d9defcffc00679afe33010d31/iproc_hr2
+\endcode
+
+The 40-character string is the SHA ID that corresponds to the version of the kernel that we have provided for that BSP. A BSP that uses this kernel auto-build feature has two places where this SHA ID can be configured:
+\code{.sh}
+.../systems/cpu/<bsp>/<kernel version>/kernel.cfg
+\endcode
+where:
+\li \<bsp\> is the name of the BSP
+\li \<kernel version\> is the generic name for the kernel
+
+Within that file, the BSP may optionally define the Makefile variable GIT_COMMIT_ID to exactly match the 40-character string. If GIT_COMMIT_ID is not found there, the Makefile system falls back to this file:
+\code{.sh}
+.../systems/common/<kernel version>/kernel.cfg
+\endcode
+
+For OF-DPA 2.0, the BSPs use only the common version of the kernel.cfg file. In that file, there is this line:
+\code{.sh}
+.../bsp/common/brl_3.6/kernel.cfg:export GIT_COMMIT_ID=85c52398c1fcca5d9defcffc00679afe33010d31
+\endcode
+The user of a BSP can find this commit ID, and use it to locate the proper version of the kernel sources within the build_kernels subdirectory.
+\par Installing gen_init_cpio
+After the kernel has been built, you must copy the usr/gen_init_cpio binary that is generated to a location that is on your path.
+
+If you forget to install this file and perform a make with OF-DPA, then you must do a make clean for OF-DPA after installing gen_init_cpio.
+
+\subsection OFDPA_BUILDING_CODE Building OF-DPA Source Code
+
+Users can build OF-DPA as an interprocess mode application or choose to generate the
+archives necessary to statically link with their code. The sections below provide
+the build instructions for these modes. In either mode, the SDK is also built as
+part of the OF-DPA make process. OF-DPA builds the SDK using the SDK Make system.
+
+\par Build Variables
+
+These make variables control building OF-DPA. They are typically set in the Makefile in the platform output directory.  The common variables are:
+\li OFDPA_BASE    - top level directory of the OFDPA code.
+\li OUTPATH       - directory where the generated output is placed.
+\li L7_TARGETOS_VARIANT - Identifies the OS version used to build with OF-DPA.  Used as subdirectory names below the systems directory.
+\li L7_CPU - - Identifies the CPU type used to build with OF-DPA.  Used as subdirectory names below the systems directory.
+\li CROSS_COMPILE - base name of the cross compiler tools.
+\li KERNEL_SRC - the location of the Linux kernel source code.
+\li PLATFORM_CODE - directory where the platform specific code resides.
+\li kernel_version - Used with either L7_CPU or L7_SDK_PLATFORM to determine the platform name used by the SDK.
+\li L7_SDK_PLATFORM - only needs to be defined if the SDK platform is different than the L7_CPU.
+
+The following make variables are only needed by the iProc systems to address some make issues in the SDK.
+\li TOOLCHAIN_BASE_DIR
+\li BUILDROOT
+\li GCC_LIB_VER
+\li TARGET_ARCHITECTURE
+
+The following make variables are only needed by the Ubuntu switches:
+\li OFDPA_PLATFORM - Used for generating the .deb package name
+\li CREATE_DEBIAN_PACKAGE - If defined, causes a .deb package to be created
+\li DEBIAN_DEPENDS - The list of package dependencies
+
+\par Interprocess Mode Application
+
+Change to the platform subdirectory (e.g.  output/gto-xgs5-fsl14) and
+type "make". This will generate the following binaries in the
+directory specified by DELIVERABLES_DIR. The default setting for
+DELIVERABLES_DIR is output/\<platform\>/build/ as defined in
+Make.common.
+
+\li ofdpa: the OF-DPA executable.  Clients invoke APIs via Remote Procedure Calls (RPCs). The OF-DPA process is started using the command "./ofdpa &"
+from the switch Linux prompt.
+\li ofdpa.dbg: the OF-DPA executable with debug symbols. This is used with the GDB debugger.
+\li librpc_client.so.1: the shared library used to dynamically link to invoke the OF-DPA APIs via RPC.
+\li linux-kernel-bde.ko/linux-user-bde.ko: kernel objects used by the SDK.
+
+\par Single Process Mode Application
+
+Users can choose to link OF-DPA statically with
+their application. The OF-DPA build target 'libraries' generates the archives for OF-DPA code. By default, the SDK code archives
+are also generated on invocation of 'libraries' target. The archives are generated in LIBRARIES_DIR directory.
+Statically link the OF-DPA archives with the user application code to generate the executable image.
+
+The OF-Agent application is an example of a single process mode
+application. This application is built by the make target
+'ofagentapp'.  It statically links an example port of the Indigo agent
+with OF-DPA.  The OF-DPA process is started using the command "./ofagentapp
+&" from the switch Linux prompt.
+
+\note The RPC interface used in the Interprocess Mode Application is also available in the Single Process Mode Application.
+
+\par Client and User Application Guidelines
+
+Applications accessing the OF-DPA APIs must invoke ofdpaClientInitialize()
+before invoking any other OF-DPA APIs.
+
+\par Clean Targets
+
+Use the following commands to clean the builds
+
+\li make clean: deletes the contents of all the subdirectories of output/\<platform\> except sdk
+\li make clean-all: deletes the contents of all the subdirectories of output/\<platform\> including sdk
+
+\par OFDPA Documentation
+
+Use the following command to generate OF-DPA documentation
+
+\li make ofdoc
+
+\subsection OFDPA_STANDALONE_BUILDING_CLIENT Building OF-DPA Example Applications
+
+Some small example applications are provided along with OF-DPA that
+invoke OF-DPA APIs.  These applications typically dump tables or
+perform trivial tasks.  They can be examined as a model for writing
+code to access the OF-DPA API.  These applications access OF-DPA via
+the RPC interface.
+
+\par Building the Example Programs
+
+The example applications may be built using following command.
+
+\code{.sh}
+#make client
+\endcode
+
+This command must be issued in the directory ofdpa/output/\<platform\>.
+
+This command also creates the Python interface to the RPC shared library.
+
+\subsection OFDPA_BUILDING_UBUNTU Building OF-DPA for Ubuntu-based switches
+For Ubuntu-based switches, a .deb package will be built if the make target is package.
+\code{.sh}
+#make package
+\endcode
+
+This package can be installed using the usual package managers.  OF-DPA will be installed as upstart services.  There are two services:  ofdpa and ofagentapp.  The ofdpa service starts ofdpa in Interprocess mode.  The ofagentapp service starts OF-DPA in Single Process mode with the Indigo OpenFlow agent.
+
+Example:  To start the ofdpa service:
+\code{.sh}
+#start ofdpa
+\endcode
+
+To stop the ofdpa service:
+\code{.sh}
+#stop ofdpa
+\endcode
+*/

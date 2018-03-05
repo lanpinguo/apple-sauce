@@ -1,0 +1,76 @@
+#!/bin/sh
+
+if which logger >/dev/null; then
+    LOGGER='logger -is -t'
+else
+    LOGGER='printf "%s: %s"'
+fi
+
+if [ 0 -eq $# ] ; then
+    ${LOGGER} "OFDPA Launcher" "No application provided"
+    exit 1
+fi
+
+posparms=$@
+
+if which dirname >/dev/null; then
+    ofdpadir=$(dirname $0)
+    cd ${ofdpadir}
+else
+    ofdpadir=.
+fi
+
+APPLICATION=$1
+
+if [ ! -x $1 ] ; then
+    ${LOGGER} ${APPLICATION} "Application does not exist or is not executable"
+    exit 2
+fi
+
+#
+# Remove the SDK kernel modules.  They might be a different version
+# than OF-DPA needs (e.g., if ICOS has been running).
+#
+remove_modules()
+{
+    for mod in linux_user_bde linux_kernel_bde; do
+        if lsmod | grep -q ${mod} ; then
+            rmmod ${mod} || true;
+        fi
+    done
+    rm -f /dev/linux-user-bde
+    rm -f /dev/linux-kernel-bde
+}
+
+cleanup()
+{
+    remove_modules
+}
+
+#
+# Trap the SIGTERM signal -- send a SIGTERM to the application.
+#
+sighandle()
+{
+    ${LOGGER} ${APPLICATION} "Received terminate signal"
+    sleep 2
+    cleanup
+    exit 0
+}
+
+remove_modules
+trap 'sighandle' TERM
+
+#
+# Now load the kernel modules OF-DPA needs.
+#
+insmod linux-kernel-bde.ko
+insmod linux-user-bde.ko
+major=`grep linux-user-bde /proc/devices| cut -d' ' -f1`
+mknod /dev/linux-user-bde c "${major}" 0
+major=`grep linux-kernel-bde /proc/devices| cut -d' ' -f1`
+mknod /dev/linux-kernel-bde c "${major}" 0
+
+# Start application
+${LOGGER} ${APPLICATION} -- Start command = ${posparms}
+${ofdpadir}/${posparms}

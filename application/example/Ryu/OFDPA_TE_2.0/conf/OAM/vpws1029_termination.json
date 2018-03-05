@@ -1,0 +1,13 @@
+{
+"working_set" :
+    [
+    "vpws_termination/add_l2_interface_group.json",
+    "vpws_termination/add_mpls_interface_group.json",
+    "vpws_termination/add_mpls_flow_177.json",
+    "vpws_termination/add_mpls_flow_077.json",
+    "vpws_termination/add_flow_vccv.json",
+    "vpws_termination/add_mac_termination_flow.json",
+    "vpws_termination/add_vlan_flow.json",
+    "vpws_termination/add_mep_flow.json"
+    ]
+}

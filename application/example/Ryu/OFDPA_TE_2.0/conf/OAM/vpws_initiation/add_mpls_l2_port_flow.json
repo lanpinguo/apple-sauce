@@ -1,0 +1,42 @@
+{
+"flow_mod":
+    {
+    "_name": "add_mpls_l2_port_flow",
+    "_description": "Initiation MPLS L2 port",
+    "table": "TABLE_MPLS_L2_PORT",
+    "cmd": "add",
+    "mask": "0",
+    "port": "any",
+    "group": "any",
+    "match":
+        {
+        "ofdpa_oxm_mpls_l2_port": "0x1",
+        "tunnel_id": "0x10001"
+        },
+    "instructions":
+        [
+            {
+            "write":
+                [
+                    {
+                    "actions":
+                        [
+                            {
+                            "group": 
+                                {
+                                "group_id":"0x91000000"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+            "goto":
+                {
+                "table": "TABLE_POLICY_ACL"
+                }
+            }
+        ]
+    }
+}

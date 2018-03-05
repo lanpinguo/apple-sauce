@@ -1,0 +1,24 @@
+OFDPA Source Files
+==================
+The directories under the src directory contain source files that define the
+OF-DPA API and examples illustrating how to use the API.  The contents of these
+directories are described below:
+
+ o example - a collection of client applications that accept and parse
+             command line parameters to invoke the OF-DPA API. They
+             illustrate how OF-DPA APIs are called.
+
+ o include - the header files defining the OF-DPA API.
+
+ o ofagent - a reference port of an OpenFlow Agent illustrating how the
+             OF-DPA API may be interfaced with an agent library.
+
+ o Ryu -     sample scripts and configuration files used to demonstrate a
+             traffic engineering scenario using a Ryu based OpenFlow controller.
+
+
+Broadcom Corporation
+5300 California Avenue
+Irvine, CA 92617
++1 (949) 926-5000
+http://www.broadcom.com

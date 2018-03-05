@@ -1,0 +1,35 @@
+{
+  "group": {
+    "group-type": "group-indirect",
+    "buckets": {
+      "bucket": {
+        "action": [
+          {
+            "set-dl-src-action": { "address": "00:01:02:03:04:05" },
+            "order": "0"
+          },
+          {
+            "set-dl-dst-action": { "address": "00:00:00:00:00:05" },
+            "order": "1"
+          },
+          {
+            "set-vlan-id-action": { "vlan-id": "11" },
+            "order": "2"
+          },
+          {
+            "group-action": {
+              "group": "L2_Interface_b0005",
+              "group-id": "720901"
+            },
+            "order": "3"
+          }
+        ],
+        "bucket-id": "1",
+        "watch_group": "14",
+        "watch_port": "1234"
+      }
+    },
+    "group-name": "L3_Ucast_20000001",
+    "group-id": "536870913"
+  }
+}

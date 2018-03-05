@@ -1,0 +1,103 @@
+/*!
+\page OFDPA_PLATFORM OF-DPA Platform Support
+
+\section OFDPA_BSP_SUPPORT OF-DPA Platform BSP Support
+
+Because OF-DPA is a reference design, it does not provide complete
+Board Support Packages (BSP) for any switches.  Usually all that is
+supported is the minimum required to forward traffic.  Some switches
+have limited support for fiber transceivers and I2C, but this is only
+because this support is required to turn on the power to the
+transceivers.  None of the supported switches have support for
+managing power supplies or fans.  Usually, the port LEDs are not
+supported either.  A few platforms have partial LED support.
+
+There is some basic infrastructure for supporting BSP features.
+Examine the code in the systems/cpu/common/src and
+systems/platform/common.
+
+\section OFDPA_PLATFORM_PORTING Porting a New Platform
+
+\subsection OFDPA_PLATFORM_INTRODUCTION Introduction
+The OF-DPA BSP is made up of two major components: the CPU complex and
+the platform definition. The CPU complex can provide support for the
+CPU, Flash, and drivers for all the peripherals attached to the
+CPU. The platform support defines the characteristics of the switch
+chip and provides functions to support its operation.
+
+To port OF-DPA to new hardware, the OF-DPA BSP must be modified. This
+is most easily accomplished in these phases:
+\li \ref OFDPA_PLATFORM_CPU_INTEGRATION
+\li \ref OFDPA_PLATFORM_SUPPORT
+\li \ref OFDPA_PLATFORM_BUILD_DIRECTORY
+
+It is often a good starting point to clone the files from a similar
+switch.  For example, when support for the BCM956260K (Saber2) SVK was
+added, the files for the BCM56450K (Katana2) SVK were copied and
+modified.
+
+\subsection OFDPA_PLATFORM_CPU_INTEGRATION CPU Integration
+
+The new CPU complex should be named and a new directory created for it
+under the systems/cpu/ directory.  One of the reference platform's CPU
+directories can be cloned to support the new CPU.  The environment
+variable L7_CPU must also be updated. Alternatively, an existing CPU
+can be modified to support the new hardware and an unmodified version
+can be preserved to run on the reference platform.
+
+\par Linux Integration
+This section describes each of the directories under systems/cpu/\<newCPU\>/linux.
+- The build directory contains a file that should be named cpu.cfg. It
+  sets up environment variables to support the build process. It will
+  probably not be necessary to modify this file.  If the CFLAGS need
+  to be customized, it should be performed in this file.
+- The include directory contains the file platform_cpu.h. This file
+  exports BSP values to OF-DPA. It is probably not necessary to update
+  this file for the initial integration.
+- The src directory contains the file cpu_init.c, which contains the
+  cpuInit() function. This function is called to perform
+  initialization specific to this board such as a mmap for a CPLD, an
+  open of /dev/nvram if the environment variables were stored in
+  NVRAM, or a hardware reset. The cpuInit function is called as part
+  of the driver initialization in driverInit() in driver_util.c.
+- The system directory contains the root file system. The directory
+  rootfs contains the files necessary to generate the root file
+  system. If the reference BSP is the same architecture and uses the
+  same toolchain, it is not necessary to update any files in this
+  directory.
+- The target directory contains any other code required (if necessary)
+  to boot the switch such as an updated u-boot.
+
+For information on other configuration (such as kernel configuration) necessary in the CPU complex, refer to \ref OFDPA_INSTALLING_KERNEL.
+
+\subsection OFDPA_PLATFORM_SUPPORT Platform Support
+
+Select a reference platform that is based on the same chip as the new platform. Create a new directory under the systems/platform directory and copy the contents from a reference platform that supports a similar switch chip.
+\li The platform.h file contains \#defines that are used for certain platform limits.  Usually this should not need to be modified.
+\li The platform_init.c file implements the functions that provide any SDK customization and set up the port map.  This file is required to implement the following functions:
+- platformInit -- implements any required initialization.  Usually this includes detecting the switch, setting SOC properties and determining the port map.
+- platformNumPortsGet -- returns the number of ports defined on this switch.
+- platformPortMappingGet -- provides a port mapping array to map OF-DPA ports to BCM ports.
+- platformScriptGet -- provides a list of BCM shell commands to be performed at initialization.  May return a NULL pointer if no commands.
+- platformCustomLinkScanHandler -- performs any necessary activity when a ports link state changes.  Often does nothing.
+
+Sometimes multiple switches can be supported by the same "platform".  Usually this is when the same switches can use exactly the same Linux kernel and have the same CPU requirements.  An example of this kind of platform is the gto platform.
+
+\subsection OFDPA_PLATFORM_BUILD_DIRECTORY New Build Directory
+
+Make the following changes in the output build folder:
+
+\li Add a new directory in the output folder with the platform name.  The convention has been \<cpu\>-\<switch\>-\<os\> but it is not required to follow the convention.
+\li Copy the Makefile from an existing output folder to this new folder.
+\li Modify the variables in the new Makefile as appropriate for the new platform and for the build environment.
+The variables most likely to need modifying are:
+- CROSS_COMPILE
+- L7_TARGETOS_VARIANT
+- L7_CPU
+- KERNEL_SRC
+- PLATFORM_CODE
+- kernel_version
+
+For more information about make variables, see \ref OFDPA_BUILDING_CODE.
+
+*/

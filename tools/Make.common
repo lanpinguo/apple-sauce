@@ -1,0 +1,746 @@
+# -*- mode: makefile-gmake; -*-
+#*********************************************************************
+#
+# (C) Copyright Broadcom Corporation 2013-2014
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#*********************************************************************
+
+#
+# The valid command line targets begin in the section "Command Line Targets".
+#
+
+# This make file is common for all builds.  It is expected that
+# several global variables have already been defined:
+# 	CROSS_COMPILE - base name of the cross compiler tools
+# 	KERNDIR       - the directory containing the kernel
+# 	OFDPA_BASE    - top level directory of the OFDPA code
+# 	OUTPATH       - directory where the generated output is placed
+# 	PLATFORM_CODE - directory where the platform specific code resides
+#       L7_CPU
+#       kernel_version
+#       L7_SDK_PLATFORM - only needs to be defined if the SDK platform is different than the L7_CPU
+#
+
+#
+# SDK make variables:
+# 	MAKE_LOCAL 	 - the name of a local makefile to be included by Make.config
+# 	NO_LOCAL_TARGETS - if set, do not copy targets to the SDK directory (leave in output)
+# 	QUIET      	 - reduces the output of the SDK make process (defined based on dmode)
+# 	SDK      	 - top level directory of the SDK code
+# 	SDKBUILD 	 - directory for SDK generated output relative to $(SDK)
+#
+
+ifeq ($(MAKE_LOCAL),)
+   export MAKE_LOCAL=$(abspath $(OFDPA_BASE)/tools/Make.local)
+endif
+
+export NO_LOCAL_TARGETS=1
+
+ifeq ($(SDK),)
+   export SDK:=$(abspath $(OFDPA_BASE)/sdk/)
+endif
+
+ifeq ($(SDKBUILD),)
+   export SDKBUILD:=$(shell $(OFDPA_BASE)/tools/relativepath $(SDK) $(OUTPATH)sdk)
+endif
+
+#
+# Make variables
+#
+export AR      = $(CROSS_COMPILE)ar
+export AS      = $(CROSS_COMPILE)as
+export CC      = $(CROSS_COMPILE)gcc
+export LD      = $(CROSS_COMPILE)ld
+export NM      = $(CROSS_COMPILE)nm
+export OBJCOPY = $(CROSS_COMPILE)objcopy
+export OBJDUMP = $(CROSS_COMPILE)objdump
+export PERL    = perl
+export RANLIB  = $(CROSS_COMPILE)ranlib
+export RM      = rm
+export SED     = sed
+export SPLINT  = splint
+export STRIP   = $(CROSS_COMPILE)strip
+
+#
+# Other variables:
+# 	DELIVERABLES_DIR - the directory containing the results of building
+# 			   E.g., the /tftpboot/ directory
+#       LIBRARIES_DIR    - the directory in which the linkable objects will be placed
+# 	OFDPA_CFLAGS     - CFLAGS that only apply to OFDPA (i.e., not the SDK)
+# 	PACKAGES_DIR	 - the directory into which the ofdpa packages are generated
+# 	dmode            - for debugging.  The following are valid values:
+#                               d  -- turn off optimization and enable debug symbols to be generated.
+#                                     This includes setting the SDK variables DEBUG_SYMBOLS
+#                                     and DEBUG_OPTIMIZE such that our settings in CFLAGS
+#                                     are used and not overridden by SDK settings.
+# 				i  -- turn on only POSIX IEEE Std 1003.2 APIs
+# 				m  -- turn on some make debugging
+# 				p  -- turn on profiling code generation for gprof tool
+# 				r  -- turn on debugging for the rpcgen script
+# 				vv -- echoes the SDK compiler invocation commands
+#				   -- any value will cause some make variables to be displayed
+#
+
+ifeq ($(CPU_BASE_DIR),)
+   CPU_BASE_DIR = $(realpath $(OFDPA_BASE)/systems/cpu)
+endif
+export CPU_BASE_DIR
+
+ifeq ($(DELIVERABLES_DIR),)
+   DELIVERABLES_DIR=$(abspath $(OUTPATH)/build/)
+endif
+export DELIVERABLES_DIR
+
+ifeq ($(LIBRARIES_DIR),)
+   LIBRARIES_DIR=$(abspath $(OUTPATH)/libraries/)
+endif
+export LIBRARIES_DIR
+
+ifeq ($(OF_AGENT),)
+   OF_AGENT = indigo
+endif
+export OF_AGENT
+
+ifeq ($(OF_AGENT_BASE_DIR),)
+   OF_AGENT_BASE_DIR = $(abspath $(OFDPA_BASE)/ofagent/$(OF_AGENT))
+endif
+export OF_AGENT_BASE_DIR
+
+ifeq ($(OF_AGENT_OUTPUT_DIR),)
+   OF_AGENT_OUTPUT_DIR = $(abspath $(OUTPATH)/ofagent)
+endif
+export OF_AGENT_BASE_DIR
+
+ifeq ($(OF_ONIE_DIR),)
+   OF_ONIE_DIR = $(abspath $(OFDPA_BASE)/onie)
+endif
+export OF_ONIE_DIR
+
+PACKAGES_DIR ?= $(abspath $(OUTPATH)/packages/)
+
+ifneq ($(dmode),)
+   rpcgen_debug = --verbose
+   ifeq ($(findstring p,$(dmode)),p)
+      export OFDPA_CFLAGS += -pg
+      export OFDPA_LDFLAGS += -pg
+      # Force debug mode -- cannot optimize when profiling
+      ifeq ($(findstring d,$(dmode)),)
+         export dmode+=d
+      endif
+   endif
+   ifeq ($(findstring d,$(dmode)),d)
+      OFDPA_CFLAGS += -ggdb2 -O0
+      export DEBUG_OPTIMIZE = -ggdb2 -O0
+   else
+      OFDPA_CFLAGS += -O2
+   endif
+   ifeq ($(findstring i,$(dmode)),i)
+      # for now, not turning on ansi -- too many warnings
+      #OFDPA_CFLAGS += -ansi -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=2
+      # _XOPEN_SOURCE implies POSIX support (see features.h)
+      OFDPA_CFLAGS += -D_XOPEN_SOURCE=700
+   endif
+   ifeq ($(findstring m,$(dmode)),m)
+      export DEBUG_PARMS=--debug=v,j,m
+   endif
+   ifeq ($(findstring r,$(dmode)),r)
+      export rpcgen_debug = --debug
+   endif
+   ifeq ($(findstring vv,$(dmode)),)
+      export QUIET = 1
+   else
+      unexport QUIET
+   endif
+else
+   ##OFDPA_CFLAGS += -O2
+   OFDPA_CFLAGS += -ggdb2 -O0
+   export DEBUG_OPTIMIZE = -ggdb2 -O0
+   #export OFDPA_LDFLAGS += -pg
+
+   export QUIET = 1
+   export DBG=@
+endif
+
+export dmode
+
+CFLAGS += -Wall   -Wno-pointer-sign
+export OFDPA_CFLAGS
+
+OSLIBS = -lpthread -lrt -ldl
+OSLIBS_STATIC = -lm
+
+ifeq ($(KERNEL_SRC),)
+  KERNEL_SRC = $(realpath $(OFDPA_BASE)/systems/cpu/$(L7_CPU)/$(L7_TARGETOS_VARIANT)/kernel)
+else ifeq (auto,$(KERNEL_SRC))
+  KERNEL_SRC = $(abspath $(OFDPA_BASE)/../build_kernels/$(GIT_COMMIT_ID)/$(L7_TARGETOS_VARIANT)/$(L7_CPU))
+endif
+export KERNEL_SRC
+
+ifeq ($(KERNDIR),)
+  KERNDIR = $(KERNEL_SRC)
+endif
+export KERNDIR
+
+
+ifeq (,$(UIMAGE_ADDR))
+UIMAGE_ADDR := 0
+endif
+
+ifeq (,$(L7_SDK_PLATFORM))
+  platform=$(L7_CPU)-$(kernel_version)
+else
+  platform=$(L7_SDK_PLATFORM)-$(kernel_version)
+endif
+export platform
+export LINUX_MAKE_USER=1
+export LINUX_MAKE_DIR := $(SDK)/ofdpa/common
+
+export CFLAGS
+export OSLIBS
+export OSLIBS_STATIC
+
+CPU_MAKEFILE = $(realpath $(CPU_BASE_DIR)/$(L7_CPU)/$(L7_TARGETOS_VARIANT)/Makefile)
+
+export CPU_ARCH_FOLDERS
+export CPU_BASE_DIR
+export CPU_MAKEFILE
+export GIT_COMMIT_ID
+export L7_CPU_ARCH
+export L7_GIT_REPO
+export L7_GIT_SERVER
+export L7_LINUX_CONFIG_FILE
+export UIMAGE_ADDR
+
+#
+# Get the version info for this build from the package.cfg file of the CC view
+#
+
+ifeq ($(L7_REL_NUM),)
+   L7_REL_NUM=0
+endif
+
+ifeq ($(L7_VER_NUM),)
+   L7_VER_NUM=0
+endif
+
+ifeq ($(L7_MAINT_NUM),)
+   L7_MAINT_NUM=0
+endif
+
+ifeq ($(L7_BUILD_NUM),)
+   L7_BUILD_NUM=0
+endif
+
+export L7_REL_NUM
+export L7_VER_NUM
+export L7_MAINT_NUM
+export L7_BUILD_NUM
+
+OFDPA_RELEASE = ofdpa-$(L7_REL_NUM).$(L7_VER_NUM).$(L7_MAINT_NUM).$(L7_BUILD_NUM)
+OFDPA_RELEASE_NUMBER = $(L7_REL_NUM)$(L7_VER_NUM)$(L7_MAINT_NUM)$(L7_BUILD_NUM)
+ODP_PACKAGE = $(OFDPA_RELEASE)-odp
+ODP_PACKAGE_NAME = $(PACKAGES_DIR)/$(OFDPA_RELEASE)-odp.tar
+CDP_PACKAGE = $(OFDPA_RELEASE)-cdp
+CDP_BIN_PACKAGE = $(PACKAGES_DIR)/$(CDP_PACKAGE)-$(L7_PLATFORM).tar
+CDP_DEV_PACKAGE = $(PACKAGES_DIR)/$(CDP_PACKAGE)-devel.tar
+RELEASE_FILE = $(abspath $(OFDPA_BASE)/RELEASE)
+
+ifneq (,$(CREATE_DEBIAN_PACKAGE))
+  base_version = $(shell printf -v number "%d" $(L7_REL_NUM) 2>/dev/null || echo "0.")
+  debian_package_name = ofdpa-$(OFDPA_PLATFORM)_$(base_version)$(L7_REL_NUM).$(L7_VER_NUM).$(L7_MAINT_NUM).$(L7_BUILD_NUM)_$(DEB_ARCH).deb
+endif
+
+#
+# Special OFDPA RPC dependency rules.
+#
+
+export rpcgen_script = $(abspath $(OFDPA_BASE)/tools/fp_rpcgen.pl)
+export rpc_support_dir = $(abspath $(OFDPA_BASE)/util/rpc/)
+
+export rpc_client_version = 1
+export rpc_client_library = $(abspath $(DELIVERABLES_DIR)/librpc_client.so.$(rpc_client_version))
+
+export rpc_server_library = $(abspath $(OUTPATH)/rpc/rpc_server.a)
+
+export rpcgen_input_files = $(realpath $(wildcard $(OFDPA_BASE)/application/api/ofdpa_server*.c))
+
+#
+# Variables for creating libraries
+#
+export client_only_code = ofdpa_client.c
+export application_archive = $(abspath $(LIBRARIES_DIR)/application.a)
+export mapping_system_archive = $(abspath $(LIBRARIES_DIR)/mapping_system.a)
+export mapping_driver_archive = $(abspath $(LIBRARIES_DIR)/mapping_driver.a)
+export unit_test_archive = $(abspath $(LIBRARIES_DIR)/unit_test.a)
+export core_archive = $(abspath $(LIBRARIES_DIR)/core.a)
+export datapath_archive = $(abspath $(LIBRARIES_DIR)/datapath.a)
+export of_adpl_archive = $(abspath $(LIBRARIES_DIR)/adpl.a)
+export ofagent_archive = $(abspath $(OF_AGENT_OUTPUT_DIR)/ofagent.a)
+export ofagentapp_archive = $(abspath $(OF_AGENT_OUTPUT_DIR)/ofagentapp.a)
+export ofagent_driver_archive = $(abspath $(OF_AGENT_OUTPUT_DIR)/ofdpadriver.a)
+export ofdpa_symbols_file_name = ofdpa_symbols
+export ofdpa_symbols_file = $(abspath $(DELIVERABLES_DIR)/$(ofdpa_symbols_file_name))
+export CFLAGS += -DOFDPA_SYMBOLS_FILE_NAME=\"$(ofdpa_symbols_file_name)\"
+#
+# Here we pick one of the generated files to depend upon the input
+# file(s).  Multiple files cannot be used since if all the files were
+# targets, rpcgen would be invoked once for each!
+#
+a_generated_file = $(abspath $(OUTPATH)/rpc/rpccom_ofdpa.h)
+
+#
+# Variables for Source Archiving
+#
+# The relative path of OUTPATH directory w.r.t the OFDPA_BASE
+# would be helpful
+#
+outpath_relative = $(shell $(OFDPA_BASE)/tools/relativepath $(OFDPA_BASE) $(OUTPATH))
+
+#
+# First declare most of the targets in this make file to be phony (not real files)
+#
+.PHONY: libraries kernel test system core datapath adpl app_lib rpc sdk ofdoc ofdpa-source clean clean-all clean-ofdpa client ofagent ofagentapp unittests package cdp odp dump-variables
+
+.DEFAULT_GOAL := ofdpa
+
+vpath ofdpa  $(DELIVERABLES_DIR)
+
+#
+# Command Line Targets
+#
+# The following group of targets may be specified on the command line.
+#
+
+#
+# These targets are the usual targets for complete builds:
+#
+# ofdpa:     the target which will build everything resulting in the ofdpa
+#            executable (default target).
+# libraries: the target which will build the archives necessary to
+#            create a combined (client and server) executable without the RPC
+#            code.
+# kernel:    the target which will build the switch kernel.
+# test:      same as the ofdpa target but includes the unit test code.
+# client:    builds the example client applications.
+# ofdoc:     the target which will generate the HTML documentation.
+#
+# Additional targets for creating packages for distribution:
+# cdp:       Community Development Packages.  Builds two packages:
+#            1) A binary package with the executable, all required libraries and
+#            the compiled example programs.
+#            2) A development package which contains the API header files, the
+#            source for the example programs and the documentation.
+# odp:       OEM/ODM Development Package.  One package contains all the source code.
+# package:   Builds a package to be used by the OS package manager.
+#
+
+ofdpa: $(DELIVERABLES_DIR) unittests libraries rpc $(abspath $(OFDPA_BASE))/README $(abspath $(OUTPATH))/INSTALL
+ifneq ($(dmode),)
+	@echo
+	@echo ofdpa prereqs = $+
+	@echo
+endif
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/systems/Makefile)
+
+libraries: $(LIBRARIES_DIR) core system sdk
+	$(MAKE) $(DEBUG_PARMS) -C $(LIBRARIES_DIR) -f $(OFDPA_BASE)tools/Make.client
+
+ifeq ($(ONIE_INSTALLER),1)
+onie_kernel_prerequisites := ofdpa client ofagentapp
+endif
+
+kernel: $(DELIVERABLES_DIR) $(KERNEL_PREREQ) $(onie_kernel_prerequisites)
+	mkdir -p $(abspath $(OUTPATH)/$@)
+# If a uImage needs to be built, the KERNEL_PREREQ will have made a kernel image available
+	if [ -f $(abspath $(KERNEL_SRC)/vmlinux) ] ; then \
+		$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(CPU_BASE_DIR)/Makefile) ; \
+	fi
+# Create onie-installer if supported.
+ifeq ($(ONIE_INSTALLER),1)
+	mkdir -p $(abspath $(OUTPATH)/onie)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/onie) -f $(abspath $(OF_ONIE_DIR)/Makefile)
+endif
+
+test: export UNITTEST=1
+test: ofdpa
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/test/Makefile)
+
+client: $(DELIVERABLES_DIR) rpc swig
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(realpath $(OFDPA_BASE)/application/example/Makefile)
+
+cli: $(DELIVERABLES_DIR) rpc 
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(realpath $(OFDPA_BASE)/application/cli/Makefile)
+
+    
+#
+# This client gets built in the same directory as the other RPC client programs
+#
+##ofagent: $(DELIVERABLES_DIR) $(OF_AGENT_OUTPUT_DIR) rpc ofagent_libraries
+ofagent: $(DELIVERABLES_DIR) $(OF_AGENT_OUTPUT_DIR) ofagent_libraries
+	mkdir -p $(abspath $(OUTPATH)/client)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/client) -f $(realpath $(OFDPA_BASE)/ofagent/Make.agent)
+
+##ofagentapp: $(DELIVERABLES_DIR) $(OF_AGENT_OUTPUT_DIR) rpc libraries ofagent_libraries
+ofagentapp: $(DELIVERABLES_DIR) $(OF_AGENT_OUTPUT_DIR) core ofagent_libraries
+	$(MAKE) $(DEBUG_PARMS) -C $(OF_AGENT_OUTPUT_DIR) -f $(realpath $(OFDPA_BASE)/application/husky/Make.app)
+
+	
+app_lib: $(DELIVERABLES_DIR) $(LIBRARIES_DIR) 
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/application/husky/Makefile)
+
+#
+# The targets in this section are component-level targets
+#
+
+ofagent_libraries: $(OF_AGENT_OUTPUT_DIR) $(LIBRARIES_DIR)
+	$(MAKE) $(DEBUG_PARMS) -C $(OF_AGENT_OUTPUT_DIR) -f $(abspath $(OF_AGENT_BASE_DIR)/make.ofagent)
+
+
+ofagent_driver: $(OF_AGENT_OUTPUT_DIR) $(LIBRARIES_DIR)
+	$(MAKE) $(DEBUG_PARMS) -C $(OF_AGENT_OUTPUT_DIR) -f $(abspath $(OFDPA_BASE)/ofagent/ofdpadriver/Makefile)
+	
+	
+system: $(DELIVERABLES_DIR) $(LIBRARIES_DIR)
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/mapping/system/Makefile)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/mapping/driver/Makefile)
+#	rm $(OFDPA_BASE)/mapping/system/pclint_inc.lnt -rf
+#	rm $(OFDPA_BASE)/mapping/system/pclint_flag.lnt -rf
+
+		
+core: $(DELIVERABLES_DIR) $(LIBRARIES_DIR) rpc
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/application/Makefile)
+	$(DBG) cp --preserve=timestamps --force $(abspath $(OFDPA_BASE)/tools/launcher) $(DELIVERABLES_DIR)
+	$(DBG) chmod u+w $(DELIVERABLES_DIR)/launcher
+
+datapath: $(DELIVERABLES_DIR) $(LIBRARIES_DIR) 
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/datapath/Makefile)
+
+adpl: $(DELIVERABLES_DIR) $(LIBRARIES_DIR) 
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/adpl/Makefile)
+	
+rpc: $(DELIVERABLES_DIR) $(a_generated_file)
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -C $(realpath $(OUTPATH)/rpc) -f $(realpath $(rpc_support_dir)/Makefile)
+
+sdk: $(DELIVERABLES_DIR) $(LIBRARIES_DIR) $(KERNEL_PREREQ)
+	mkdir -p $(abspath $(OUTPATH)/$@)
+	$(MAKE) $(DEBUG_PARMS) -f $(SDK)/make/Make.linux
+
+#
+# Perform doxygen action for creating the documentation
+#
+#
+# documentation_dir is the directory where the documents will be placed after creation.
+# This will be within the OUTPATH
+#
+export documentation_dir := $(abspath $(OUTPATH)/documentation)
+
+ofdoc:
+	mkdir -p $(documentation_dir)
+	$(MAKE) $(DEBUG_PARMS) -C $(documentation_dir) -f $(abspath $(OFDPA_BASE)/tools/DoxygenMakefile)
+
+ifneq ($(dmode),)
+tar_options = --show-transformed-names -v
+endif
+
+#
+# This section is for the various package targets (.deb, cdp, odp)
+#
+
+#
+# Rules to build debian package
+#
+deb_working_directory = $(abspath $(OUTPATH)/scratch)
+equivs_control_file = $(deb_working_directory)/$(OFDPA_PLATFORM)
+excluded_files = ofagent
+debian_files_copied = $(realpath $(OFDPA_BASE)/tools/debian/ofdpa.conf) $(realpath $(OFDPA_BASE)/tools/debian/ofagentapp.conf) $(realpath $(OFDPA_BASE)/tools/debian/ofdpa-ld.conf) $(realpath $(OFDPA_BASE)/tools/debian/launcher)
+debian_files_static = $(debian_files_copied) $(realpath $(OFDPA_BASE)/LICENSE_CDP_BIN) $(realpath $(OFDPA_BASE)/tools/debian/stop.sh) $(realpath $(OFDPA_BASE)/tools/debian/postinst.sh)
+
+$(equivs_control_file): ofdpa client ofagentapp $(debian_files_copied)
+	mkdir -p $(deb_working_directory)
+# Copy "static" files into working directory
+	$(DBG) cp --preserve=timestamps --force $(debian_files_copied) $(deb_working_directory)
+# Create the equivs control file
+	$(DBG) echo "Package: ofdpa-$(OFDPA_PLATFORM)" > $(equivs_control_file)
+	$(DBG) echo "Maintainer: Broadcom Corporation <support@broadcom.com>"  >> $(equivs_control_file)
+	$(DBG) echo "Copyright: $(realpath $(OFDPA_BASE)/LICENSE_CDP_BIN)"  >> $(equivs_control_file)
+	$(DBG) echo "Architecture: $(DEB_ARCH)" >> $(equivs_control_file)
+	$(DBG) echo "Section: net" >> $(equivs_control_file)
+ifneq (,$(DEBIAN_DEPENDS))
+	$(DBG) echo "Depends: $(DEBIAN_DEPENDS)" >> $(equivs_control_file)
+endif
+	$(DBG) echo "preinst: $(realpath $(OFDPA_BASE)/tools/debian/stop.sh)" >> $(equivs_control_file)
+	$(DBG) echo "prerm: $(realpath $(OFDPA_BASE)/tools/debian/stop.sh)"   >> $(equivs_control_file)
+	$(DBG) echo "postinst: $(realpath $(OFDPA_BASE)/tools/debian/postinst.sh)"   >> $(equivs_control_file)
+	$(DBG) echo "Version: $(base_version)$(L7_REL_NUM).$(L7_VER_NUM).$(L7_MAINT_NUM).$(L7_BUILD_NUM)" >> $(equivs_control_file)
+	$(DBG) echo "Description: OpenFlow Data Plane Abstraction software for Broadcom Ethernet switches." >> $(equivs_control_file)
+	$(DBG) echo "Files: ofdpa.conf /etc/init" >> $(equivs_control_file)
+	$(DBG) echo " ofagentapp.conf /etc/init" >> $(equivs_control_file)
+	$(DBG) echo " ofdpa-ld.conf /etc/ld.so.conf.d" >> $(equivs_control_file)
+	$(DBG) for file in $$(find $(DELIVERABLES_DIR)/* -maxdepth 1 -not -type l -printf "%f "); do \
+		for excluded in $(excluded_files) $$(find $(DELIVERABLES_DIR)/* -name '*.dbg' -printf "%f "); do \
+			if [ $${file} = $${excluded} ] ; then \
+				continue 2; \
+			fi; \
+		done; \
+		cp -a $(DELIVERABLES_DIR)/$${file} $(deb_working_directory); \
+		chmod u+w $(deb_working_directory)/$${file}; \
+		echo " $${file} /broadcom/ofdpa" >> $(equivs_control_file); \
+	done
+
+%.deb: ofdpa client ofagentapp $(debian_files_static) $(equivs_control_file)
+	mkdir -p $(PACKAGES_DIR)
+	cd $(deb_working_directory); equivs-build --arch ${DEB_ARCH} $(equivs_control_file)
+	mv $(abspath $(deb_working_directory)/$@) $(PACKAGES_DIR)
+	cp --preserve=timestamps --force $(abspath $(OUTPATH))/INSTALL $(PACKAGES_DIR)
+
+#
+# This rule will allow only the debian package to be created as a make target (i.e., CDP is not built).
+#
+ifneq (,$(debian_package_name))
+package: $(debian_package_name)
+endif
+
+cdp: export CDP_EXCLUDE=1
+cdp: CFLAGS += -DCDP_EXCLUDE
+cdp: excluded_files += client_drivshell
+cdp: kernel ofdpa client ofdoc ofagentapp swig $(debian_package_name)
+
+ifneq ($(dmode),)
+	@echo
+	@echo L7_PLATFORM = $(L7_PLATFORM)
+	@echo OFDPA_RELEASE_NUMBER = $(OFDPA_RELEASE_NUMBER)
+	@echo
+endif
+	@if [ "$(OFDPA_RELEASE_NUMBER)" = "0000" ]; then \
+		echo -e \\nError: OFDPA release number must be non-zero\\n; \
+		exit 1; \
+	fi
+	@if [ -z "$(L7_PLATFORM)" ] ; then \
+		echo -e \\nError: L7_PLATFORM not specified\\n; \
+		exit 1; \
+	fi
+
+	mkdir -p $(PACKAGES_DIR)
+ifeq (,$(debian_package_name))
+	tar -cf $(CDP_BIN_PACKAGE) $(tar_options) --absolute-names --transform='s,$(DELIVERABLES_DIR),$(CDP_PACKAGE)/bin/$(L7_PLATFORM),' --exclude='*.dbg' --exclude=README --exclude=client_drivshell --exclude=ofagent --exclude=$(ofdpa_symbols_file) --exclude='*.h' --exclude-vcs --exclude-backups $(DELIVERABLES_DIR)/
+else
+	tar -cf $(CDP_BIN_PACKAGE) $(tar_options) --absolute-names --transform='s,$(PACKAGES_DIR),$(CDP_PACKAGE)/bin/$(L7_PLATFORM),' $(PACKAGES_DIR)/$(debian_package_name)
+endif
+ifeq ($(ONIE_INSTALLER),1)
+	tar -rf $(CDP_BIN_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OUTPATH)onie,$(CDP_PACKAGE)/bin/$(L7_PLATFORM),' --exclude='fs' --exclude='onie.bin' --exclude-vcs --exclude-backups $(OUTPATH)onie
+endif
+	tar -rf $(CDP_BIN_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OUTPATH),$(CDP_PACKAGE)/bin/$(L7_PLATFORM),' $(OUTPATH)/INSTALL
+	tar -rf $(CDP_BIN_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_CDP_BIN,$(CDP_PACKAGE)/bin/LICENSE,' $(OFDPA_BASE)/LICENSE_CDP_BIN
+	bzip2 -f $(CDP_BIN_PACKAGE)
+
+	tar -cf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/application,$(CDP_PACKAGE)/src,' --exclude=client_drivshell.c $(OFDPA_BASE)/application/example/*.c
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/application,$(CDP_PACKAGE)/src,' $(OFDPA_BASE)/application/example/Makefile.example
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/application,$(CDP_PACKAGE)/src,' $(OFDPA_BASE)/application/example/*.py
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/application/api,$(CDP_PACKAGE)/src,' $(OFDPA_BASE)/application/api/include/*.h
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/ofagent,$(CDP_PACKAGE)/src/ofagent,' --exclude='Make.agent*' --exclude=make.ofagent $(OFDPA_BASE)/ofagent
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/application/example,$(CDP_PACKAGE)/src,' $(OFDPA_BASE)/application/example/Ryu
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_APACHE20,$(CDP_PACKAGE)/src/Ryu/LICENSE,' $(OFDPA_BASE)/LICENSE_APACHE20
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_APACHE20,$(CDP_PACKAGE)/src/example/LICENSE,' $(OFDPA_BASE)/LICENSE_APACHE20
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_APACHE20,$(CDP_PACKAGE)/src/include/LICENSE,' $(OFDPA_BASE)/LICENSE_APACHE20
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_APACHE20,$(CDP_PACKAGE)/src/ofagent/application/LICENSE,' $(OFDPA_BASE)/LICENSE_APACHE20
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/LICENSE_APACHE20,$(CDP_PACKAGE)/src/ofagent/ofdpadriver/LICENSE,' $(OFDPA_BASE)/LICENSE_APACHE20
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OUTPATH)/documentation/ofdpa,$(CDP_PACKAGE)/doc,' $(OUTPATH)/documentation/ofdpa/README
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE),$(CDP_PACKAGE),' $(OFDPA_BASE)/README.md
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE),$(CDP_PACKAGE),' $(OFDPA_BASE)/LEGAL_TERMS
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(OFDPA_BASE)/README_CDP_SRC,$(CDP_PACKAGE)/src/README,' $(OFDPA_BASE)/README_CDP_SRC
+	tar -rf $(CDP_DEV_PACKAGE) $(tar_options) --absolute-names --transform='s,$(realpath $(OUTPATH)/documentation/ofdpa),$(CDP_PACKAGE)/doc,' --exclude=xml $(abspath $(OUTPATH)/documentation/ofdpa)
+	bzip2 -f $(CDP_DEV_PACKAGE)
+
+odp: ofdoc
+ifneq ($(dmode),)
+	@echo
+	@echo OFDPA_RELEASE_NUMBER = $(OFDPA_RELEASE_NUMBER)
+	@echo
+endif
+	@if [ "$(OFDPA_RELEASE_NUMBER)" = "0000" ]; then \
+		echo -e \\nError: OFDPA release number must be non-zero\\n; \
+		exit 1; \
+	fi
+	mkdir -p $(PACKAGES_DIR)
+	tar -cf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --exclude=Makefile.example --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/application
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/mapping
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/ofagent
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/sdk
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/systems
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/tools
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/util
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/README
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/LEGAL_TERMS
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE),' $(OFDPA_BASE)/LICENSE_APACHE20
+	find $(realpath $(OFDPA_BASE)/output) -maxdepth 2 -type f | \
+		tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --exclude-vcs --exclude-backups --no-recursion --exclude='*.txt' --transform='s,$(OFDPA_BASE),$(ODP_PACKAGE)/,' --files-from=-
+	tar -rf $(ODP_PACKAGE_NAME) $(tar_options) --absolute-names --transform='s,$(realpath $(OUTPATH)/documentation/ofdpa),$(ODP_PACKAGE)/doc,' --exclude=xml $(abspath $(OUTPATH)/documentation/ofdpa)
+	bzip2 -f $(ODP_PACKAGE_NAME)
+
+#
+# The target responsible for creating the SWIG bindings for OFDPA
+# follows.
+#
+ofdpaswig_dir := swig
+swig: rpc
+	mkdir -p $(abspath $(OUTPATH)/$(ofdpaswig_dir))
+	cd $(abspath $(OUTPATH)/$(ofdpaswig_dir))
+	$(MAKE) -C $(abspath $(OUTPATH)/$(ofdpaswig_dir)) -f $(abspath $(OFDPA_BASE)/tools/swig/python/Makefile)
+
+#
+# These are targets for cleaning:
+#
+# clean: cleans all but the SDK (which takes the longest time to build)
+# clean-all: cleans everything
+#
+
+clean:
+	for dir in $$(find $(OUTPATH) -maxdepth 1 -mindepth 1 -type d) ; do 	\
+		if [ "`basename $$dir`" != "sdk" ]; then 			\
+			(cd $$dir; $(RM) -rf *); 				\
+			rmdir $$dir; 						\
+		fi 								\
+	done
+
+clean-all:
+	@for dir in $$(find $(OUTPATH) -maxdepth 1 -mindepth 1 -type d) ; do 	\
+		(cd $$dir; $(RM) -rf *); 					\
+		rmdir $$dir; 							\
+	done
+
+#
+# end of Command Line Targets
+#
+
+#
+# The rest of the targets are supporting targets.  These should never be specified in the make command.
+#
+
+$(DELIVERABLES_DIR) $(LIBRARIES_DIR) $(OF_AGENT_OUTPUT_DIR):
+	mkdir -p $@
+
+#
+# This target builds the unittests library, but only when UNITTEST is defined (by the test target).
+#
+unittests: $(LIBRARIES_DIR)
+	if [ -n "$${UNITTEST}" ]; then \
+		mkdir -p $(abspath $(OUTPATH)/$@); \
+		$(MAKE) $(DEBUG_PARMS) -C $(abspath $(OUTPATH)/$@) -f $(abspath $(OFDPA_BASE)/test/unittests/Makefile); \
+	fi
+
+
+#
+# Check to see if the RPC generated files need to be regenerated.
+# Will also regerate files if the Perl script is updated.
+# This check needs to be in this make file to ensure that the generated
+# files are created before make tries to remake the included make files (*.d).
+#
+$(a_generated_file) : $(rpcgen_input_files)
+	mkdir -p $(abspath $(OUTPATH)/rpc)
+	echo $(rpcgen_input_files) | $(SED) -e 's/ /\n/' | $(PERL) $(rpcgen_script) --pkgid="rpcgen/ofdpa" --proto_api $(rpcgen_debug)
+
+
+#
+# Debugging targets
+#
+dump-variables:
+	@echo AR 			= $(AR)
+	@echo AS 			= $(AS)
+	@echo base_version		= $(base_version)
+	@echo CC 			= $(CC)
+	@echo CDP_BIN_PACKAGE 		= $(CDP_BIN_PACKAGE)
+	@echo CDP_DEV_PACKAGE 		= $(CDP_DEV_PACKAGE)
+	@echo CFLAGS 			= $(CFLAGS)
+	@echo CPU_ARCH_FOLDERS		= $(CPU_ARCH_FOLDERS)
+	@echo CPU_BASE_DIR		= $(CPU_BASE_DIR)
+	@echo CPU_MAKEFILE		= $(CPU_MAKEFILE)
+	@echo CREATE_DEBIAN_PACKAGE	= $(CREATE_DEBIAN_PACKAGE)
+	@echo CROSS_COMPILE 		= $(CROSS_COMPILE)
+	@echo debian_files_static	= $(debian_files_static)
+	@echo debian_package_name	= $(debian_package_name)
+	@echo DEBUG_OPTIMIZE 		= $(DEBUG_OPTIMIZE)
+	@echo DEBUG_PARMS 		= $(DEBUG_PARMS)
+	@echo DEBUG_SYMBOLS 		= $(DEBUG_SYMBOLS)
+	@echo DELIVERABLES_DIR 		= $(DELIVERABLES_DIR)
+	@echo equivs_control_file	= $(equivs_control_file)
+	@echo excluded_files		= $(excluded_files)
+	@echo GIT_COMMIT_ID		= $(GIT_COMMIT_ID)
+	@echo KERNDIR 			= $(KERNDIR)
+	@echo KERNEL_PREREQ		= $(KERNEL_PREREQ)
+	@echo KERNEL_SRC		= $(KERNEL_SRC)
+	@echo kernel_version		= $(kernel_version)
+	@echo KFLAGS 			= $(KFLAGS)
+	@echo KFLAG_INCLD 		= $(KFLAG_INCLD)
+	@echo L7_CPU			= $(L7_CPU)
+	@echo L7_CPU_ARCH		= $(L7_CPU_ARCH)
+	@echo L7_GIT_REPO		= $(L7_GIT_REPO)
+	@echo L7_GIT_SERVER		= $(L7_GIT_SERVER)
+	@echo L7_LINUX_CONFIG_FILE	= $(L7_LINUX_CONFIG_FILE)
+	@echo L7_SDK_PLATFORM		= $(L7_SDK_PLATFORM)
+	@echo L7_TARGETOS_VARIANT	= $(L7_TARGETOS_VARIANT)
+	@echo LD 			= $(LD)
+	@echo LDFLAGS 			= $(LDFLAGS)
+	@echo LIBRARIES_DIR 		= $(LIBRARIES_DIR)
+	@echo LINUX_INCLUDE 		= $(LINUX_INCLUDE)
+	@echo MAKE_LOCAL 		= $(MAKE_LOCAL)
+	@echo NM 			= $(NM)
+	@echo NO_LOCAL_TARGETS 		= $(NO_LOCAL_TARGETS)
+	@echo OBJCOPY 			= $(OBJCOPY)
+	@echo OBJDUMP 			= $(OBJDUMP)
+	@echo OFDPA_BASE 		= $(OFDPA_BASE)
+	@echo OFDPA_CFLAGS 		= $(OFDPA_CFLAGS)
+	@echo OFDPA_LDFLAGS		= $(OFDPA_LDFLAGS)
+	@echo OFDPA_RELEASE 		= $(OFDPA_RELEASE)
+	@echo ODP_PACKAGE_NAME 		= $(ODP_PACKAGE_NAME)
+	@echo OUTPATH 			= $(OUTPATH)
+	@echo OF_ONIE_DIR 		= $(OF_ONIE_DIR)
+	@echo PERL 			= $(PERL)
+	@echo platform			= $(platform)
+	@echo PLATFORM_CODE 		= $(PLATFORM_CODE)
+	@echo QUIET 			= $(QUIET)
+	@echo RANLIB 			= $(RANLIB)
+	@echo RM 			= $(RM)
+	@echo SDK 			= $(SDK)
+	@echo SDKBUILD 			= $(SDKBUILD)
+	@echo SED 			= $(SED)
+	@echo SPLINT 			= $(SPLINT)
+	@echo STRIP 			= $(STRIP)
+	@echo UIMAGE_ADDR		= $(UIMAGE_ADDR)
+	@echo a_generated_file 		= $(a_generated_file)
+	@echo client_only_code 		= $(client_only_code)
+	@echo core_archive 		= $(core_archive)
+	@echo dmode 			= $(dmode)
+	@echo documentation_dir 	= $(documentation_dir)
+	@echo mapping_driver_archive 	= $(mapping_driver_archive)
+	@echo mapping_system_archive 	= $(mapping_system_archive)
+	@echo platform 			= $(platform)
+	@echo rpc_client_library 	= $(rpc_client_library)
+	@echo rpc_client_version 	= $(rpc_client_version)
+	@echo rpc_server_library 	= $(rpc_server_library)
+	@echo rpc_support_dir 		= $(rpc_support_dir)
+	@echo rpcgen_debug 		= $(rpcgen_debug)
+	@echo rpcgen_input_files 	= $(rpcgen_input_files)
+	@echo rpcgen_script 		= $(rpcgen_script)
+	@echo unit_test_archive 	= $(unit_test_archive)

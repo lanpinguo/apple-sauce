@@ -1,0 +1,18 @@
+OFDPA
+=====
+
+For documentation, please open doc/html/index.html.  This contains
+documentation for:
+
+ o Overview of OF-DPA with information necessary for installing and
+   configuring the environment.
+
+ o Information on the OF-DPA API including a reference of the OF-DPA API
+   functions, a list of example Client Applications and how they use the
+   OF-DPA API.
+
+Broadcom Corporation
+5300 California Avenue
+Irvine, CA 92617
++1 (949) 926-5000
+http://www.broadcom.com

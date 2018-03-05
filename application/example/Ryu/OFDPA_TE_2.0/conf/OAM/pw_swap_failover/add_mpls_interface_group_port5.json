@@ -1,0 +1,45 @@
+{
+"group_mod":
+    {
+    "_name" : "MPLS interface group",
+    "_description" : "Reference group for MPLS interface",
+    "cmd" : "add",
+    "type" : "indirect",
+    "group_id" : "0x90000000",
+    "buckets":
+        [
+            {
+            "weight" : "0",
+            "watch_port":"any",
+            "watch_group":"any",
+            "actions":
+                [
+                    {
+                    "set_field":
+                        {
+                        "vlan_vid":"101"
+                        }
+	                },
+                    {
+                    "set_field":
+                        {
+                        "eth_src":"00:01:02:03:04:05"
+                        }
+                    },
+                    {
+                    "set_field":
+                        {
+                        "eth_dst":"00:01:02:03:04:06"
+                        }
+                    },                  
+                    {
+                        "group":
+                            {
+                            "group_id":"0x650005"
+                            }
+                    }
+                ]
+            }
+        ]
+    }
+}

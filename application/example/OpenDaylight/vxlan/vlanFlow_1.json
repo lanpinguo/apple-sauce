@@ -1,0 +1,28 @@
+{
+  "flow": {
+    "strict": "false",
+    "table_id": "10",
+    "id": "2",
+    "cookie_mask": "255",
+    "match": {
+      "vlan-match": {
+        "vlan-id": {
+          "vlan-id": "200",
+          "vlan-id-present": "true"
+        }
+      },
+      "in-port": "2"
+    },
+    "instructions": {
+      "instruction": {
+        "order": "0",
+        "go-to-table": { "table_id": "20" }
+      }
+    },
+    "hard-timeout": "0",
+    "cookie": "0",
+    "idle-timeout": "0",
+    "flow-name": "Vlanflow_1",
+    "priority": "0"
+  }
+}

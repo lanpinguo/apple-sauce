@@ -1,0 +1,120 @@
+/*!
+\mainpage Introduction
+
+Welcome to the Broadcom OpenFlow Data Plane Abstraction (OF-DPA) API Guide and Reference Manual.
+This documentation is divided into sections accessed using the tabs at the top of the page.
+These sections are described below.
+
+\section OFDPATAB OF-DPA Documentation
+
+Contains a list of documents including an overview of OF-DPA and information necessary for installing and configuring the software.
+
+\section OFDPAAPITAB API Reference
+
+Contains a list of OF-DPA API functions, data structures, defines, typedefs and enumerations.
+
+\section OFDPAFILESTAB Files
+
+Documents the OF-DPA APIs.
+The File List tab provides a hyperlinked list of all files used to generate the documentation.
+The Globals tab provides an index of all the OF-DPA API functions.
+
+\page OFDPA_OVERVIEW OF-DPA Software Overview
+
+OpenFlow Data Plane Abstraction (OF-DPA) is an application software component that
+implements an adaptation layer between OpenFlow and the Broadcom Silicon SDK. OF-DPA
+enables scalable implementation of OpenFlow 1.3 on Broadcom switch devices.
+Figure 1 shows the OF-DPA software component and its relation to
+other OpenFlow system components.
+
+\image html OFDPAComponentLayers.jpg "Figure 1"
+
+In Figure 1, user applications obtain services from an OpenFlow Controller via a northbound API.
+The controller's northbound API enables applications to communicate with and control one or more OpenFlow switches.
+The controller maintains a channel with each OpenFlow switch, over which it exchanges OpenFlow
+protocol messages. At the switches, OpenFlow agents maintain their end of the channel, process
+received OpenFlow protocol messages and send OpenFlow messages in response to local events.
+OF-DPA fills a key role in this architecture by providing the OF-DPA API
+to the agent. This API represents hardware tables to the agent in terms of OpenFlow
+constructs such as flow tables, the group table, and ports. As OF-DPA maintains all of the state that
+matches the hardware tables to OpenFlow, the agent is expected to do a relatively
+straightforward and stateless translation of OpenFlow messages into OF-DPA API calls
+and vice versa. The application writer programs to the description of the OF-DPA Abstract Switch.
+Refer to the "OF-DPA Architecture Specification" document for details of the abstract
+switch model implemented by OF-DPA software.
+
+\section OFDPA_LAYER OF-DPA Software Architecture
+
+Figure 2 shows a block diagram representation of the various components of OF-DPA.
+
+\image html OFDPAArchBlocks.jpg "Figure 2"
+
+\li API Layer: Provides the northbound OF-DPA APIs. These are available via RPC in the inter-process mode or as
+direct function calls to a user application that links with the OF-DPA libraries. OF-DPA does not have a
+user interface (e.g. a CLI). All control is done via APIs. All APIs calls are synchronous and control
+is returned to the caller after changes are committed to the hardware.
+
+\li OFDB Layer: This is the OF-DPA database layer. OFDB is the software database for the flow, group and port tables. It provides APIs to manage these tables.
+OFDB APIs are invoked by the following layers of OF-DPA:
+- API: OFDB stores the management state of the system. OFDB APIs are invoked by the API layer for configuration updates like flow addition, deletion, etc.
+- Mapping: OFDB also stores system status information like port link status, etc. The mapping layer receives these port state updates from the
+hardware and invokes OFDB APIs to update the port tables in the database.
+- Datapath: The datapath layer invokes OFDB APIs to traverse through flow tables etc. and perform housekeeping operations like flow aging.
+
+\li Datapath Layer: Implements a task that wakes up periodically and traverses flow tables to perform flow aging operations. On detecting
+aged flows, it sends event notifications to client applications.
+
+\li Mapping/Driver Layer: Provides system mapping and driver functions.
+- All system initialization is done here. The driver, OFDB, and datapath layers are initialized during system startup. Functions to retrieve system
+specific information like table sizes, valid VLANs, etc. are implemented in this layer.
+- The driver functions provide an abstraction layer over the Broadcom SDK. These functions are invoked to program and query the hardware. The driver layer defines
+the interface OF-DPA requires when ported to other platforms.
+
+\li Platform Layer: Provides platform specific initialization structures and functions. These functions are invoked during system startup.
+
+\subsection OFDPA_MODE Operational Modes
+OF-DPA software can be built and used in two modes:
+\li Interprocess Mode: OF-DPA daemon runs as an independent process on the switch. The user application
+invokes OF-DPA APIs using RPC. Only a single client user application can interface with OF-DPA at a time.
+
+\li Single Process Mode: The user application is statically linked with OF-DPA.  A single Linux executable contains the user application,
+OF-DPA layers, and the Broadcom SDK.
+
+Interprocess communication overhead results in a performance difference between these two modes. Applications implemented using the
+single process mode are able to invoke OF-DPA APIs at a higher rate than when using the interprocess mode.  Interprocess mode is
+useful for experimenting with the OF-DPA software. An example of this is using the sample client applications included in the OF-DPA
+software package to configure the pipeline for test scenarios. Applications designed to configure the switch
+for network operation, like an OpenFlow agent, should use the single process mode.
+
+\note The interprocess interface can also be available when running in single process mode.
+
+\subsection OFDPA_INIT Initialization Overview
+
+The system initializes in the following sequence:
+
+\li SDK: The SDK is initialized with a default configuration for the chip.
+
+\li Platform: The platform's ID, description and physical port mapping information is read from the platform specific structures.
+
+\li Driver: The hardware is initialized here.
+
+\li OFDB: Memory is allocated for the various tables in the OFDB including flow, group, and port tables.
+
+\li Datapath: A socket is created that is used to send event notifications generated by the datapath layer.
+A task is started that provides flow entry housekeeping operations like aging.
+
+The RPC server task is started after system initialization. This task
+listens on a socket for RPC messages from client applications.
+
+\subsection OFDPA_STEADY Steady State Overview
+
+In steady state, a few background threads like the SDK counter, packet rx and datapath threads run periodically.
+All other processing is triggered only on API invocations.
+
+\subsection OFDPA_SDK SDK Configuration and Setup
+
+OF-DPA software is built on top of the BCM APIs and data structures. A reference integration
+of OF-DPA software with the SDK is provided as part of the OF-DPA software release.
+The reference integration builds the SDK in Linux 'User' mode. SDK initialization that is needed for OF-DPA software is done as
+part of the OF-DPA initialization. Customers can change the OF-DPA SDK integration to fit their environment.
+*/

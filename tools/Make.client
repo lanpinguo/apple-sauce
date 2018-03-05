@@ -1,0 +1,43 @@
+# -*- mode: makefile; -*-
+#*********************************************************************
+#
+# (C) Copyright Broadcom Corporation 2013-2014
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#*********************************************************************
+
+#
+# This make file builds the client object file(s) needed when the client code is not using RPCs.
+#
+vpath %.c $(realpath $(OFDPA_BASE)/application/api)
+
+CFLAGS += -I$(realpath $(OFDPA_BASE)/mapping/include)$(shell find $(realpath $(OFDPA_BASE)/application) -mindepth 1 -type d -printf " -I%p")
+
+export CPATH += $(realpath $(OFDPA_BASE)/util/rpc/rpcsrv/include):$(realpath $(OFDPA_BASE)/util/rpc/rpccom)
+
+$(client_only_code:.c=.o):
+
+#
+# This rule builds the dependency files
+#
+%.d: %.c
+	@set -e; $(RM) -f $@; \
+	$(CC) -MM $(CFLAGS) $< > $@.$$$$; \
+	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	$(RM) -f $@.$$$$
+
+#
+# include all the generated dependency files
+#
+-include $(client_only_code:.c=.d)
