@@ -617,6 +617,13 @@ OFDPA_ERROR_t datapathPipeMsgSend(int srcSockFd, ofdpaPcbMsg_t *msg)
 }
 
 
+uint32_t dpFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId)
+{
+  uint32_t valid = 1;
+
+
+  return(valid);
+}
 
 
 int datapathInit(void)

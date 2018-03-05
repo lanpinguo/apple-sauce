@@ -22,10 +22,13 @@
 
 
 
+uint32_t dpFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId);
 
-OFDPA_ERROR_t vlanPipeFlowAdd(ofdbVlanFlowTable_node_t *flow_node);
+OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node);
 OFDPA_ERROR_t vlanPipeFlowStatsGet(ofdbVlanFlowTable_node_t *flow_node,ofdpaFlowEntryStats_t *flowStats);
+OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node);
 OFDPA_ERROR_t mplsL2PortPipeFlowStatsGet(ofdbVlanFlowTable_node_t *flow_node,ofdpaFlowEntryStats_t *flowStats);
+
 
 
 

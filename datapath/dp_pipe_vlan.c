@@ -77,7 +77,7 @@ OFDPA_ERROR_t vlanPipeFlowStatsGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntryStats_t 
 }
 
 
-OFDPA_ERROR_t vlanPipeFlowAdd(ofdbVlanFlowTable_node_t *flow_node)
+OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 {
 	OFDPA_ERROR_t	rv;
 	ofdpaVlanPipeNode_t *pNode = NULL;
@@ -106,17 +106,20 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdbVlanFlowTable_node_t *flow_node)
 	}
 
 
+	flowData = &flow_node->flowData.vlanFlowEntry;
+
+
 	/* Start instert*/
 	pNode->priority 		= flow_node->priority;
 	pNode->hard_time 		= flow_node->hard_time;
 	pNode->idle_time 		= flow_node->idle_time;
-	pNode->flags				= flow_node->flags;
-	pNode->match.inPort = (1<<(flow_node->vlanFlowEntry.match_criteria.inPort - 1));
-	vlanId 							= (flow_node->vlanFlowEntry.match_criteria.vlanId) & 0xFFF; 
+	pNode->flags				= flow_node->cookie;
+	pNode->match.inPort = (1<<(flowData->match_criteria.inPort - 1));
+	vlanId 							= (flowData->match_criteria.vlanId) & 0xFFF; 
 	pNode->match.vlanId	= REORDER16_L2B(vlanId);
-	vlanId 							= flow_node->vlanFlowEntry.match_criteria.vlanIdMask;
+	vlanId 							= flowData->match_criteria.vlanIdMask;
 	pNode->match.vlanIdMask	= REORDER16_L2B(vlanId);
-	pNode->instructions.gotoTableId = flow_node->vlanFlowEntry.gotoTableId;
+	pNode->instructions.gotoTableId = flowData->gotoTableId;
 
 	/* Apply actions */
 	pNode->instructions.apply_action = dpActHolderMalloc(OFDPA_FT_VLAN_APLY_ACT_MAX);
@@ -128,7 +131,6 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdbVlanFlowTable_node_t *flow_node)
 	}
 
 	pHolder = pNode->instructions.apply_action;
-	flowData = &flow_node->vlanFlowEntry;
 	if (flowData->setVlanIdAction)
 	{
 		act.act = dpActSetVlanId;

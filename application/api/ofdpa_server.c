@@ -198,52 +198,160 @@ OFDPA_ERROR_t ofdpaFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *f
 
 OFDPA_ERROR_t ofdpaFlowAdd(ofdpaFlowEntry_t *flow)
 {
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+	OFDPA_ERROR_t rc = OFDPA_E_NONE;
 	uint32_t flowValid;
 	uint64_t flowId;
 
 	if ((flow == NULL) ||
-			(ofdbFlowTableSupported(flow->tableId) == 0))
+			(dpFlowTableSupported(flow->tableId) == 0))
 	{
 		return OFDPA_E_PARAM;
 	}
 
-	OFDB_WRITE_LOCK_TAKE;
 
-	/* check if there is room for another entry in this tableId */
-	if (ofdbFlowTableEntryCountGet(flow->tableId) >= ofdbFlowTableMaxCountGet(flow->tableId))
+	switch (flow->tableId)
 	{
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d max count (%d) is not larger than entry count (%d).\r\n",
-											 flow->tableId, ofdbFlowTableMaxCountGet(flow->tableId), ofdbFlowTableEntryCountGet(flow->tableId));
-		rc = OFDPA_E_FULL;
-	}
-	else
-	{
-		/* perform validity checks */
-		flowValid = ofdbFlowEntryValidate(flow);
-
-		if (!flowValid)
-		{
-			/* flow entry validity check failed */
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d flow entry did not pass validation.\r\n",
-												 flow->tableId);
-			rc = OFDPA_E_ERROR;
-		}
-		else
-		{
-			rc = ofdbFlowAdd(flow, &flowId);
-
-			if (OFDPA_E_NONE != rc)
+		case OFDPA_FLOW_TABLE_ID_INGRESS_PORT:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_PORT_DSCP_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_PORT_PCP_TRUST:
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_TUNNEL_DSCP_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_TUNNEL_PCP_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_INJECTED_OAM:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_VLAN:
 			{
-				/* error trying to add flow to OFDB */
-				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d failed adding flow entry to OFDB. rc = %d\r\n",
-													 flow->tableId, rc);
+				rc = vlanPipeFlowAdd(flow);
+				if(rc != OFDPA_E_NONE){
+					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE, "add VLAN pipe entry failed.\r\n", 0);
+					return rc;
+				}
 			}
-		
-		}
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_VLAN_1:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MAINTENANCE_POINT:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT:
+			{	
+				rc = mplsL2PortPipeFlowAdd(flow);
+				if(rc != OFDPA_E_NONE){
+					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE, "add mpls l2 port pipe entry failed.\r\n", 0);
+					return rc;
+				}			
+			}
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_DSCP_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_PCP_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_QOS_CLASS:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_L2_POLICER:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_L2_POLICER_ACTIONS:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_TERMINATION_MAC:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_0:
+		case OFDPA_FLOW_TABLE_ID_MPLS_1:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_MAINTENANCE_POINT:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MPLS_LABEL_TRUST:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_UNICAST_ROUTING:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_MULTICAST_ROUTING:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_BRIDGING:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_ACL_POLICY:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_COLOR_BASED_ACTIONS:
+			
+			break;
+	
+	
+		case OFDPA_FLOW_TABLE_ID_EGRESS_VLAN:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_EGRESS_VLAN_1:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_EGRESS_MAINTENANCE_POINT:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_EGRESS_DSCP_PCP_REMARK:
+			
+			break;
+	
+		case OFDPA_FLOW_TABLE_ID_EGRESS_TPID:
+			
+			break;
+	
+		default:
+			/* unknown table ID */
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
+												 "Unknown flow table ID. (%d)\r\n",
+												 flow->tableId);
+			return(OFDPA_E_FAIL);
+			break;
+	
 	}
 
-	OFDB_LOCK_GIVE;
+
+
 	return(rc);
 }
 
