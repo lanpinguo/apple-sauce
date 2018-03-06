@@ -11,7 +11,7 @@
   Description   : mpls l2 port flow table instance
   Function List :
               executeMplsL2PortActOnPkt
-              findMatchMplsL2PortNode
+              mplsL2PortEntryMatchFind
               getMplsL2PortSockFd
               mplsL2PortNodeSocketCreate
               mplsL2PortPipeFlowAdd
@@ -120,6 +120,60 @@ OFDPA_ERROR_t mplsL2PortPipeFlowStatsGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntrySt
 }
 
 
+
+/*********************************************************************
+*
+* @purpose  Get information for the next flow after the specified flow.
+*
+* @param    flow @b{(input)} Flow information.
+* @param    nextFlow @b{(output)} Configured information for next flow.
+*
+* @returns  OFDPA_E_NONE - Entry found.
+* @returns  OFDPA_E_FAIL - Entry is not found.
+*
+* @end
+*
+*********************************************************************/
+OFDPA_ERROR_t mplsL2PortPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
+{
+	ofdpaMplsL2PortPipeNode_t *pNode = NULL;
+	ofdpaMplsL2PortFlowEntry_t *flowData;
+	int i;
+	
+
+	if(flow == NULL || next == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Null flow_node passed!\r\n", 0);
+		return OFDPA_E_PARAM;
+	}
+
+
+	if((flow->priority + 1) >= mplsL2Port_pipe_config.max_entrys){
+
+		return OFDPA_E_FAIL;
+
+	}
+	
+	for(i = flow->priority + 1; i< mplsL2Port_pipe_config.max_entrys; i++){
+		pNode = &mplsL2Port_pipe_config.entrys[i];
+		flowData = &next->flowData.mplsL2PortFlowEntry;
+
+		if(pNode->valid){
+
+			/* Start instert*/
+			next->priority		= 	pNode->priority; 		
+			next->hard_time		= 	pNode->hard_time; 		
+			next->idle_time		= 	pNode->idle_time ;		
+			next->cookie			= 	pNode->flags;				
+
+			return OFDPA_E_NONE;
+		
+		}
+	}
+	return OFDPA_E_FAIL;
+
+}
+
 OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 {
 	OFDPA_ERROR_t	rv;
@@ -211,9 +265,10 @@ OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	}
 
 	pNode->valid = 1;
+	mplsL2Port_pipe_config.count++;
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "vlan pipe flow add here!\r\n", 0);
+										 "mplsL2Port pipe flow add here!\r\n", 0);
 
 
 	return OFDPA_E_NONE;
@@ -245,7 +300,7 @@ OFDPA_ERROR_t mplsL2PortMatchKeyCreate(ofdpaPktCb_t *pcb,ofdpaMplsL2PortMatchKey
 }
 
 
-void *findMatchMplsL2PortNode(struct ofdpaMplsL2PortPipeNodeConfig_s *mplsL2Port_pipe_config,ofdpaPktCb_t *pcb)
+void *mplsL2PortEntryMatchFind(struct ofdpaMplsL2PortPipeNodeConfig_s *mplsL2Port_pipe_config,ofdpaPktCb_t *pcb)
 {
 	OFDPA_ERROR_t rv;
 	ofdpaMplsL2PortPipeNode_t *pNode = NULL;
@@ -365,7 +420,7 @@ static OFDPA_ERROR_t mplsL2PortPktProcess( ofdpaPktCb_t *pcb)
 
 	//dump_pcb(&pcb);
 	//dump_pkt((const char *)pcb.this, pcb.len);
-	pNode = findMatchMplsL2PortNode(&mplsL2Port_pipe_config,pcb);
+	pNode = mplsL2PortEntryMatchFind(&mplsL2Port_pipe_config,pcb);
 	if(pNode){
 		pNode->recv_pkts++;
 		pNode->recv_bytes += pcb->pkt_len;
@@ -489,6 +544,19 @@ static void mplsL2Port_pipe_thread_core(void * arg)
 
 }
 
+
+uint32_t mplsL2PortFtMaxCountGet(void)
+{
+	return mplsL2Port_pipe_config.max_entrys;
+}
+
+uint32_t mplsL2PortFtEntryCountGet(void)
+{
+	return mplsL2Port_pipe_config.count;
+}
+
+
+
 /*****************************************************************************
  Prototype    : mplsL2Port_pipe_init
  Description  : this is vlan pipe init
@@ -507,6 +575,23 @@ static void mplsL2Port_pipe_thread_core(void * arg)
 *****************************************************************************/
 int mplsL2Port_pipe_init(int argc, char *argv[])
 {
+	OFDPA_ERROR_t rv;
+	ofdpaTblPipeNodeOps_t ops;
+
+	
+	
+	ops.flowAdd 									= mplsL2PortPipeFlowAdd;
+	ops.flowNextGet 							= mplsL2PortPipeFlowNextGet;
+	ops.flowStatsGet 							= mplsL2PortPipeFlowStatsGet;
+	ops.flowTableEntryCountGet		= mplsL2PortFtEntryCountGet;
+	ops.flowTableMaxCountGet			= mplsL2PortFtMaxCountGet;
+	rv = dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT, &ops);
+	if(rv != OFDPA_E_NONE){
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                      "Failed to register node %d.\r\n",rv);
+		return OFDPA_E_INTERNAL;
+	}
+
 	
 	mplsL2Port_pipe_config.max_entrys = 4094;
 	mplsL2Port_pipe_config.entrys = calloc(mplsL2Port_pipe_config.max_entrys,sizeof(ofdpaMplsL2PortPipeNode_t));
@@ -514,6 +599,10 @@ int mplsL2Port_pipe_init(int argc, char *argv[])
 	if(mplsL2Port_pipe_config.entrys == NULL){
 		return OFDPA_E_INTERNAL;	
 	}
+
+
+
+
 
 	mplsL2Port_pipe_config.nodeTid = (pthread_t)dpaThreadCreate("mplsL2PortFT", 62, mplsL2Port_pipe_thread_core, NULL);
 

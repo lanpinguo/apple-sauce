@@ -106,6 +106,7 @@ typedef struct ofdpaMplsL2PortPipeNodeConfig_s
 
 	ofdpaMplsL2PortPipeNode_t 	*entrys;
 	uint32_t										max_entrys;
+	uint32_t										count;			/* the number of current entrys*/
 	int 												nodeSock;
 	pthread_t 									nodeTid ;
 

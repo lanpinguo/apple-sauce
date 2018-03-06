@@ -60,14 +60,26 @@
 #define OFDPA_FT_VLAN_APLY_ACT_MAX		8
 #define OFDPA_FT_VLAN_WR_ACT_MAX			1
 
+#define OFDPA_FT_VLAN_IN_PORT_MASK		0xFFFFFFFFFFFFFFFFUL
+
+
+
+typedef struct ofdpaVlanMatchKey_s
+{
+  uint64_t    inPort;
+  uint16_t    vlanId;
+
+  uint8_t pad[6];
+}ofdpaVlanMatchKey_t;
+
+
+
+
 /** VLAN Flow Table Match */
 typedef struct ofdpaVlanPipeMatch_s
 {
-  /** OpenFlow Ingress Port number */
-  uint64_t    inPort;
-  uint16_t    vlanId;
-  uint16_t    vlanIdMask;
-
+	ofdpaVlanMatchKey_t key;
+	ofdpaVlanMatchKey_t keyMask;
 }ofdpaVlanPipeMatch_t;
 
 
@@ -81,6 +93,7 @@ typedef struct ofdpaVlanPipeNode_s
   uint32_t                				hard_time;
   uint32_t                				idle_time;			
   uint32_t                				flags;     	/* flags alter the way flow entries are managed*/
+  uint32_t                				up_ts;     	/*first add up time stamp*/
   uint64_t												recv_pkts;
   uint64_t												recv_bytes;
   uint64_t                				valid;  	  
@@ -95,6 +108,7 @@ typedef struct ofdpaVlanPipeNodeConfig_s
 
 	ofdpaVlanPipeNode_t 				*entrys;
 	uint32_t										max_entrys;
+	uint32_t										count;			/* the number of current entrys*/
 	int 												nodeSock;
 	pthread_t 									nodeTid ;
 

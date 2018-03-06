@@ -438,6 +438,9 @@ typedef enum
   OFDPA_FLOW_TABLE_ID_EGRESS_DSCP_PCP_REMARK            =  230,  /**< Egress DSCP PCP Remark Flow Table */
   OFDPA_FLOW_TABLE_ID_EGRESS_TPID                       =  235,  /**< Egress TPID Flow Table */
 
+
+	OFDPA_FLOW_TABLE_ID_END																=  256
+
 } OFDPA_FLOW_TABLE_ID_t;
 
 /** Source MAC Lookup Table */
@@ -3623,6 +3626,10 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 
 #define RESERVED_BLOCK_SIZE		256
 
+/* big endian to little endian */
+#define REORDER16_B2L(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
+
+/* little endian to big endian */
 #define REORDER16_L2B(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
 #define REORDER32_L2B(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
 

@@ -90,6 +90,10 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 };
 
 
+ofdpaTblPipeNode_t pipe_tbl_nodes[256];
+
+
+
  void dump_pcb(ofdpaPktCb_t *pcb)
 {
 	char *feild_name[] = {
@@ -621,8 +625,156 @@ uint32_t dpFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId)
 {
   uint32_t valid = 1;
 
+	if (tableId >= OFDPA_FLOW_TABLE_ID_END){
+		return OFDPA_E_PARAM;	
+	}
+
+
+  if(pipe_tbl_nodes[tableId].valid){
+		valid = pipe_tbl_nodes[tableId].valid;
+	}
 
   return(valid);
+}
+
+
+uint32_t dpFlowTableMaxCountGet(OFDPA_FLOW_TABLE_ID_t tableId)
+{
+  uint32_t value = 0;
+
+	if (tableId >= OFDPA_FLOW_TABLE_ID_END){
+		return OFDPA_E_PARAM;	
+	}
+
+
+  if(pipe_tbl_nodes[tableId].ops.flowTableMaxCountGet){
+		value = pipe_tbl_nodes[tableId].ops.flowTableMaxCountGet();
+	}
+	
+  return(value);
+
+}
+
+uint32_t dpFlowTableEntryCountGet(OFDPA_FLOW_TABLE_ID_t tableId)
+{
+  uint32_t value = 0;
+
+	if (tableId >= OFDPA_FLOW_TABLE_ID_END){
+		return OFDPA_E_PARAM;	
+	}
+
+
+  if(pipe_tbl_nodes[tableId].ops.flowTableEntryCountGet){
+		value = pipe_tbl_nodes[tableId].ops.flowTableEntryCountGet();
+	}
+  return(value);
+}
+
+
+
+
+
+OFDPA_ERROR_t dpFlowAdd(ofdpaFlowEntry_t *flow)
+{
+	OFDPA_ERROR_t rc = OFDPA_E_NONE;
+
+
+
+	if (flow == NULL)
+	{
+		return OFDPA_E_PARAM;
+	}
+
+	if (flow->tableId >= OFDPA_FLOW_TABLE_ID_END){
+		return OFDPA_E_PARAM;	
+	}
+
+
+  if(pipe_tbl_nodes[flow->tableId].ops.flowAdd){
+		rc = pipe_tbl_nodes[flow->tableId].ops.flowAdd(flow);
+	}
+
+
+	return(rc);
+}
+
+
+
+
+OFDPA_ERROR_t dpFlowNextGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntry_t *nextFlow)
+{
+	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+	ofdbFlowStatus_t flow_status;
+
+	if ((flow == NULL) ||
+			(nextFlow == NULL))
+	{
+		return OFDPA_E_PARAM;
+	}
+			
+	if (flow->tableId >= OFDPA_FLOW_TABLE_ID_END){
+		return OFDPA_E_PARAM; 
+	}
+	
+	
+	if(pipe_tbl_nodes[flow->tableId].ops.flowNextGet){
+		rc = pipe_tbl_nodes[flow->tableId].ops.flowNextGet(flow,nextFlow);
+	}
+	
+	return(rc);
+}
+
+
+
+OFDPA_ERROR_t dpFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flowStats)
+{
+	OFDPA_ERROR_t rc;
+
+	if ((flow == NULL) ||
+			(flowStats == NULL))
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "null pointer %d !\r\n", __LINE__);
+		return OFDPA_E_PARAM;
+	}
+
+	if (flow->tableId >= OFDPA_FLOW_TABLE_ID_END){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "wrong paramater %d !\r\n", __LINE__);
+		return OFDPA_E_PARAM; 
+	}
+	
+	
+	if(pipe_tbl_nodes[flow->tableId].ops.flowStatsGet){
+		rc = pipe_tbl_nodes[flow->tableId].ops.flowStatsGet(flow,flowStats);
+	}
+
+
+
+	
+	return(rc);
+}
+
+OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t					tableId,ofdpaTblPipeNodeOps_t *ops)
+{
+
+	if ((tableId >= OFDPA_FLOW_TABLE_ID_END) ||
+			(ops == NULL))
+	{
+		return OFDPA_E_PARAM;
+	}
+
+	if(pipe_tbl_nodes[tableId].valid){
+		return OFDPA_E_EXISTS;
+	}
+	
+	pipe_tbl_nodes[tableId].tableId = tableId;
+	
+	pipe_tbl_nodes[tableId].ops = *ops;
+
+	pipe_tbl_nodes[tableId].valid = 1;
+	
+	return OFDPA_E_NONE;
 }
 
 
@@ -630,6 +782,8 @@ int datapathInit(void)
 {
   printf("starting datapathInit ...\r\n");
 
+	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
+	
 	(void)datapathPipeTransferSocketsAddrCreate();
 	(void)port_manager_init(0, NULL);
 	(void)port_pipe_init(0, NULL);

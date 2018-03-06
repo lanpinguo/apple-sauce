@@ -54,19 +54,25 @@ OFDPA_ERROR_t vlanPipeFlowStatsGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntryStats_t 
 	ofdpaVlanPipeNode_t *pNode = NULL;
 
 	
-
 	if(flow == NULL || flowStats == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "null paramater %d !\r\n", __LINE__);
 		return OFDPA_E_PARAM;
 	}
 
 	if(flow->priority >= vlan_pipe_config.max_entrys){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "wrong paramater %d !\r\n", __LINE__);
 		return OFDPA_E_PARAM;
 	}
 
 	pNode = &vlan_pipe_config.entrys[flow->priority];
+	
 	if(pNode->valid){
 		flowStats->receivedBytes = pNode->recv_bytes;
 		flowStats->receivedPackets = pNode->recv_pkts;
+		flowStats->durationSec = dpaUpTimeSeconds() - pNode->up_ts;
+		
 	}
 	else{
 		return OFDPA_E_FAIL;
@@ -114,11 +120,13 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pNode->hard_time 		= flow_node->hard_time;
 	pNode->idle_time 		= flow_node->idle_time;
 	pNode->flags				= flow_node->cookie;
-	pNode->match.inPort = (1<<(flowData->match_criteria.inPort - 1));
+	pNode->up_ts				= dpaUpTimeSeconds();
+	pNode->match.key.inPort 		= (1<<(flowData->match_criteria.inPort - 1));
+	pNode->match.keyMask.inPort = OFDPA_FT_VLAN_IN_PORT_MASK;
 	vlanId 							= (flowData->match_criteria.vlanId) & 0xFFF; 
-	pNode->match.vlanId	= REORDER16_L2B(vlanId);
+	pNode->match.key.vlanId	= REORDER16_L2B(vlanId);
 	vlanId 							= flowData->match_criteria.vlanIdMask;
-	pNode->match.vlanIdMask	= REORDER16_L2B(vlanId);
+	pNode->match.keyMask.vlanId	= REORDER16_L2B(vlanId);
 	pNode->instructions.gotoTableId = flowData->gotoTableId;
 
 	/* Apply actions */
@@ -208,6 +216,7 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	}
 
 	pNode->valid = 1;
+	vlan_pipe_config.count++;
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "vlan pipe flow add here!\r\n", 0);
@@ -218,34 +227,133 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 }
 
 
-
-
-void *findMatchVlanNode(struct ofdpaVlanPipeNodeConfig_s *vlan_pipe_config,ofdpaPktCb_t *pcb)
+/*********************************************************************
+*
+* @purpose  Get information for the next flow after the specified flow.
+*
+* @param    flow @b{(input)} Flow information.
+* @param    nextFlow @b{(output)} Configured information for next flow.
+*
+* @returns  OFDPA_E_NONE - Entry found.
+* @returns  OFDPA_E_FAIL - Entry is not found.
+*
+* @end
+*
+*********************************************************************/
+OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 {
 	ofdpaVlanPipeNode_t *pNode = NULL;
+	ofdpaVlanFlowEntry_t *flowData;
 	int i;
+	
+
+	if(flow == NULL || next == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Null flow_node passed!\r\n", 0);
+		return OFDPA_E_PARAM;
+	}
+
+
+	if((flow->priority + 1) >= vlan_pipe_config.max_entrys){
+
+		return OFDPA_E_FAIL;
+
+	}
+
+	for(i = flow->priority + 1 ; i < vlan_pipe_config.max_entrys; i++ ){
+	
+		pNode = &vlan_pipe_config.entrys[i];
+		flowData = &next->flowData.vlanFlowEntry;
+
+		if(pNode->valid){
+
+			/* Start instert*/
+			next->priority		= 	pNode->priority; 		
+			next->hard_time		= 	pNode->hard_time; 		
+			next->idle_time		= 	pNode->idle_time ;		
+			next->cookie			= 	pNode->flags;				
+			flowData->match_criteria.inPort 		= pNode->match.key.inPort;
+			flowData->match_criteria.vlanId 		= REORDER16_B2L(pNode->match.key.vlanId);
+			flowData->match_criteria.vlanIdMask = REORDER16_B2L(pNode->match.keyMask.vlanId);
+			flowData->gotoTableId 							= pNode->instructions.gotoTableId ;
+
+			return OFDPA_E_NONE;
+		}
+	}
+	return OFDPA_E_FAIL;
+
+}
+
+
+
+OFDPA_ERROR_t vlanPktKeyCreate(ofdpaPktCb_t *pcb,ofdpaVlanMatchKey_t *key)
+{
+	uint16_t	 *pEtherType;
 	struct OFDPA_VLAN *vlan;
 	
 	vlan = (struct OFDPA_VLAN *)getFeild(pcb, FEILD_VLAN_0);
 	if(vlan ==  NULL){
-		return NULL;
+		return OFDPA_E_PARAM;
 	}
+
+
+	if((pcb ==  NULL)||(key ==  NULL)){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Null flow_node passed!\r\n", 0);
+		return OFDPA_E_FAIL;
+	}
+
 	
-	for(i = 0; i < vlan_pipe_config->max_entrys ; i++){
-		pNode = &vlan_pipe_config->entrys[i];
+
+	key->inPort = pcb->port;
+	key->vlanId = vlan->vid;
+	
+
+	return OFDPA_E_NONE;
+}
+
+
+
+
+
+void *vlanEntryMatchFind(ofdpaVlanMatchKey_t *searchKey )
+{
+	int i,j;
+	ofdpaVlanPipeNode_t *pNode = NULL;
+	uint64_t	*pEntryKey, *pEntryKeyMask, *key;
+	uint64_t unmatch = 0;
+
+
+	
+	key = (uint64_t*)searchKey;
+	
+	for(i = 0; i < vlan_pipe_config.max_entrys ; i++){
+		pNode = &vlan_pipe_config.entrys[i];
 
 		if(pNode->valid){
-		
-			if(pNode->match.inPort != pcb->port){
-				continue;												 
+
+			pEntryKey 			= (uint64_t*)&pNode->match.key;
+			pEntryKeyMask 	= (uint64_t*)&pNode->match.keyMask;
+			unmatch 	= 0;
+			for(j = 0 ; j < sizeof(ofdpaVlanMatchKey_t)/sizeof(uint64_t); j++){
+
+				/*printf("i = %d, j = %d, in = %016llx , Key:Mask = %016llx:%016llx\r\n"
+								,i,j,key[j],pEntryKey[j],pEntryKeyMask[j]);*/
+								
+				if((key[j] & pEntryKeyMask[j]) ^ pEntryKey[j]){
+					unmatch = 1;
+					break;
+				}
+
 			}
-			
-			if((vlan->vid & pNode->match.vlanIdMask) == pNode->match.vlanId){
-				return pNode;
-			}
-			else {
+
+			if(unmatch){
 				continue;
 			}
+			
+			/* Found match node, return */
+			return pNode;
+			
 		}
 	}
 
@@ -307,10 +415,19 @@ static OFDPA_ERROR_t vlanPktProcess( ofdpaPktCb_t *pcb)
 	OFDPA_ERROR_t rv;
 	ofdpaPcbMsg_t msg;
 	ofdpaVlanPipeNode_t *pNode = NULL;
+	ofdpaVlanMatchKey_t	pktKey = {.pad = {0}};
 
-	//dump_pcb(&pcb);
-	//dump_pkt((const char *)pcb.this, pcb.len);
-	pNode = findMatchVlanNode(&vlan_pipe_config,pcb);
+
+
+	rv = vlanPktKeyCreate(pcb,&pktKey);
+	if(rv != OFDPA_E_NONE){
+	
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "create search key failed!\r\n", 0);
+		return OFDPA_E_INTERNAL;
+	}
+
+	pNode = vlanEntryMatchFind(&pktKey);
 	if(pNode){
 		pNode->recv_pkts++;
 		pNode->recv_bytes += pcb->pkt_len;
@@ -433,6 +550,21 @@ static void vlan_pipe_thread_core(void * arg)
 
 }
 
+
+
+uint32_t vlanFtMaxCountGet(void)
+{
+	return vlan_pipe_config.max_entrys;
+}
+
+uint32_t vlanFtEntryCountGet(void)
+{
+	return vlan_pipe_config.count;
+}
+
+
+
+
 /*****************************************************************************
  Prototype    : vlan_pipe_init
  Description  : this is vlan pipe init
@@ -451,13 +583,30 @@ static void vlan_pipe_thread_core(void * arg)
 *****************************************************************************/
 int vlan_pipe_init(int argc, char *argv[])
 {
+	OFDPA_ERROR_t rv;
+	ofdpaTblPipeNodeOps_t ops;
+
 	
+
+	ops.flowAdd 									= vlanPipeFlowAdd;
+	ops.flowNextGet 							= vlanPipeFlowNextGet;
+	ops.flowStatsGet 							= vlanPipeFlowStatsGet;
+	ops.flowTableEntryCountGet		= vlanFtEntryCountGet;
+	ops.flowTableMaxCountGet			= vlanFtMaxCountGet;
+	rv = dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_VLAN, &ops);
+	if(rv != OFDPA_E_NONE){
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                      "Failed to register node %d.\r\n",rv);
+		return OFDPA_E_INTERNAL;
+	}
+
 	vlan_pipe_config.max_entrys = 4094;
 	vlan_pipe_config.entrys = calloc(vlan_pipe_config.max_entrys,sizeof(ofdpaVlanPipeNode_t));
 	
 	if(vlan_pipe_config.entrys == NULL){
 		return OFDPA_E_INTERNAL;	
 	}
+
 
 	vlan_pipe_config.nodeTid = (pthread_t)dpaThreadCreate("vlanFT", 62, vlan_pipe_thread_core, NULL);
 
