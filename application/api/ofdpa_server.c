@@ -74,7 +74,7 @@ OFDPA_ERROR_t ofdpaFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId)
   OFDPA_ERROR_t rc = OFDPA_E_UNAVAIL;
   uint32_t result;
 
-  result = ofdbFlowTableSupported(tableId);
+  result = dpFlowTableSupported(tableId);
   if (result == 1)
   {
     rc = OFDPA_E_NONE;
@@ -94,15 +94,13 @@ OFDPA_ERROR_t ofdpaFlowTableInfoGet(OFDPA_FLOW_TABLE_ID_t tableId, ofdpaFlowTabl
 		return OFDPA_E_PARAM;
 	}
 
-	if (ofdbFlowTableSupported(tableId) == 0)
+	if (dpFlowTableSupported(tableId) == 0)
 	{
 		return OFDPA_E_NOT_FOUND;
 	}
 
-	OFDB_READ_LOCK_TAKE;
-	info->maxEntries = ofdbFlowTableMaxCountGet(tableId);
-	info->numEntries = ofdbFlowTableEntryCountGet(tableId);
-	OFDB_LOCK_GIVE;
+	info->maxEntries = dpFlowTableMaxCountGet(tableId);
+	info->numEntries = dpFlowTableEntryCountGet(tableId);
 
 	return OFDPA_E_NONE;
 }
@@ -111,139 +109,62 @@ OFDPA_ERROR_t ofdpaFlowTableInfoGet(OFDPA_FLOW_TABLE_ID_t tableId, ofdpaFlowTabl
 
 OFDPA_ERROR_t ofdpaFlowNextGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntry_t *nextFlow)
 {
-	OFDPA_ERROR_t rc;
-	ofdbFlowStatus_t flow_status;
+	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
 
 	if ((flow == NULL) ||
 			(nextFlow == NULL))
 	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "null pointer passed %d!\r\n", __LINE__);
 		return OFDPA_E_PARAM;
 	}
 
-	OFDB_READ_LOCK_TAKE;
-	rc = ofdbFlowNextGet(flow, nextFlow, NULL, &flow_status);
-	OFDB_LOCK_GIVE;
+	rc = dpFlowNextGet(flow, nextFlow);
+
+
 	return(rc);
 }
 
 
 
 OFDPA_ERROR_t ofdpaFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flowStats)
+{
+	OFDPA_ERROR_t rc;
+
+	if ((flow == NULL) ||
+			(flowStats == NULL))
 	{
-		OFDPA_ERROR_t rc;
-		ofdbFlowStatus_t flow_status;
-	
-		if ((flow == NULL) ||
-				(flowStats == NULL))
-		{
-			return OFDPA_E_PARAM;
-		}
-	
-		OFDB_READ_LOCK_TAKE;
-		rc = ofdbFlowGet(flow, NULL, &flow_status);
-		OFDB_LOCK_GIVE;
-		
-		if (rc == OFDPA_E_NONE)
-		{
-			flowStats->durationSec = dpaUpTimeSeconds() - flow_status.flow_add_up_time;
-	
-			switch ( flow->tableId )
-			{
-					case OFDPA_FLOW_TABLE_ID_INGRESS_PORT :
-							
-							break;
-					case OFDPA_FLOW_TABLE_ID_VLAN :
-							rc = vlanPipeFlowStatsGet(flow,flowStats); 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MAINTENANCE_POINT :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT :
-							rc = mplsL2PortPipeFlowStatsGet(flow,flowStats); 
-							break;
-					case OFDPA_FLOW_TABLE_ID_L2_POLICER :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_TERMINATION_MAC :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_0 :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_1 :
-							
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_2 :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_MAINTENANCE_POINT :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_MPLS_TYPE :
-							 
-							break;
-					case OFDPA_FLOW_TABLE_ID_ACL_POLICY :
-							break;
-					case OFDPA_FLOW_TABLE_ID_EGRESS_VLAN :
-							 
-							break;
-					default:
-							break;
-			}
-		}
-		return(rc);
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "null pointer %d!\r\n", __LINE__);
+		return OFDPA_E_PARAM;
 	}
+
+	rc = dpFlowStatsGet(flow, flowStats);
+
+
+	
+	return rc;
+}
 
 
 
 OFDPA_ERROR_t ofdpaFlowAdd(ofdpaFlowEntry_t *flow)
 {
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+	OFDPA_ERROR_t rc = OFDPA_E_NONE;
 	uint32_t flowValid;
 	uint64_t flowId;
 
 	if ((flow == NULL) ||
-			(ofdbFlowTableSupported(flow->tableId) == 0))
+			(dpFlowTableSupported(flow->tableId) == 0))
 	{
 		return OFDPA_E_PARAM;
 	}
 
-	OFDB_WRITE_LOCK_TAKE;
 
-	/* check if there is room for another entry in this tableId */
-	if (ofdbFlowTableEntryCountGet(flow->tableId) >= ofdbFlowTableMaxCountGet(flow->tableId))
-	{
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d max count (%d) is not larger than entry count (%d).\r\n",
-											 flow->tableId, ofdbFlowTableMaxCountGet(flow->tableId), ofdbFlowTableEntryCountGet(flow->tableId));
-		rc = OFDPA_E_FULL;
-	}
-	else
-	{
-		/* perform validity checks */
-		flowValid = ofdbFlowEntryValidate(flow);
+	rc = dpFlowAdd(flow);	
 
-		if (!flowValid)
-		{
-			/* flow entry validity check failed */
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d flow entry did not pass validation.\r\n",
-												 flow->tableId);
-			rc = OFDPA_E_ERROR;
-		}
-		else
-		{
-			rc = ofdbFlowAdd(flow, &flowId);
 
-			if (OFDPA_E_NONE != rc)
-			{
-				/* error trying to add flow to OFDB */
-				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE, "Table ID %d failed adding flow entry to OFDB. rc = %d\r\n",
-													 flow->tableId, rc);
-			}
-		
-		}
-	}
 
-	OFDB_LOCK_GIVE;
 	return(rc);
 }
 

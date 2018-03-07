@@ -62,24 +62,24 @@
 #define OFDPA_FT_MPLS_L2_PORT_WR_ACT_MAX			1
 
 
+typedef struct ofdpaMplsL2PortMatchKey_s
+{
+  uint32_t mplsL2Port;
+
+  uint32_t tunnelId;
+  
+  uint16_t etherType;
+
+  uint8_t pad[6];
+}ofdpaMplsL2PortMatchKey_t;
+
+
 
 /** Mpls l2 port Flow Table Match */
 typedef struct ofdpaMplsL2PortPipeMatch_s
 {
-  /** MPLS L2 Port identifier
-      Ports are classified by the numbering:
-      0x0000nnnn - VPWS Local
-      0x0001nnnn - VPLS Local
-      0x0002nnnn - VPWS Network
-      0x0003nnnn - VPLS Network
-   */
-  uint32_t mplsL2Port;
-  uint32_t mplsL2PortMask;
-
-  uint16_t etherType;
-  uint16_t etherTypeMask;
-
-  uint32_t tunnelId;
+	ofdpaMplsL2PortMatchKey_t	key;
+	ofdpaMplsL2PortMatchKey_t	keyMask;
 }ofdpaMplsL2PortPipeMatch_t;
 
 
@@ -106,6 +106,7 @@ typedef struct ofdpaMplsL2PortPipeNodeConfig_s
 
 	ofdpaMplsL2PortPipeNode_t 	*entrys;
 	uint32_t										max_entrys;
+	uint32_t										count;			/* the number of current entrys*/
 	int 												nodeSock;
 	pthread_t 									nodeTid ;
 

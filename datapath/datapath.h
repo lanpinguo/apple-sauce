@@ -116,9 +116,33 @@ struct PIPE_ENTRY_ADDR
 #define OFDPA_FAST_FAILOVER_GRP			(4UL<<8)  
 
 
+/* Flow Table Operation function prototype */
+typedef OFDPA_ERROR_t (*flowAdd_fn)(ofdpaFlowEntry_t *flow);
+typedef OFDPA_ERROR_t (*flowStatsGet_fn)(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flowStats);
+typedef OFDPA_ERROR_t (*flowNextGet_fn)(ofdpaFlowEntry_t *flow, ofdpaFlowEntry_t *nextFlow);
+
+typedef uint32_t (*flowTableEntryCountGet_fn)(void);
+typedef uint32_t (*flowTableMaxCountGet_fn)(void);
 
 
+typedef struct ofdpaPipeTblNodeOps_s
+{
+	flowAdd_fn										flowAdd;
+	flowStatsGet_fn								flowStatsGet;
+	flowNextGet_fn								flowNextGet;
+	
+	flowTableEntryCountGet_fn			flowTableEntryCountGet;
+	flowTableMaxCountGet_fn				flowTableMaxCountGet;
+	
+}ofdpaTblPipeNodeOps_t;
 
+typedef struct ofdpaPipeTblNode_s
+{
+	OFDPA_FLOW_TABLE_ID_t					tableId;
+	struct ofdpaPipeTblNode_s 		*this;
+	ofdpaTblPipeNodeOps_t					ops;
+	uint32_t											valid;
+}ofdpaTblPipeNode_t;
 
 
 /****************************EXPORT API ****************************************/
@@ -134,6 +158,7 @@ struct PIPE_ENTRY_ADDR
 }while(0)
 
 
+OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t 	tableId,ofdpaTblPipeNodeOps_t *ops);
 
 uint32_t getPktLen(ofdpaPktCb_t *pcb);
 void *getFeild(ofdpaPktCb_t *pcb, int type);

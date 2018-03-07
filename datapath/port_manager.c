@@ -173,9 +173,9 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 		l3_type = getFeild(pcb, FEILD_L3_TYPE);
 
 
-		printf("\r\n eth_type: %04x\r\n",l3_type->type);
+		//printf("\r\n eth_type: %04x\r\n",l3_type->type);
 		
-		printf("\r\n mpls mask: %08x\r\n",REORDER32_L2B(1<<8));
+		//printf("\r\n mpls mask: %08x\r\n",REORDER32_L2B(1<<8));
 
 		if(l3_type->type == IP_TYPE) {
 
