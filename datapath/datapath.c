@@ -477,7 +477,7 @@ int generateSockUnAddr(struct sockaddr_un * sockaddr,char * path)
 *
 * @end
 *********************************************************************/
-int datapathPipeTransferSocketsAddrCreate(void)
+int dpPipeNodeSocketsAddrCreate(void)
 {
 	uint32_t 	i;
 
@@ -755,6 +755,15 @@ OFDPA_ERROR_t dpFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flow
 	return(rc);
 }
 
+
+
+uint32_t dpFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
+{
+  /* if you get here, you are valid */
+  return(1);
+}
+
+
 OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t					tableId,ofdpaTblPipeNodeOps_t *ops)
 {
 
@@ -784,7 +793,7 @@ int datapathInit(void)
 
 	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
 	
-	(void)datapathPipeTransferSocketsAddrCreate();
+	(void)dpPipeNodeSocketsAddrCreate();
 	(void)port_manager_init(0, NULL);
 	(void)port_pipe_init(0, NULL);
 	(void)vlan_pipe_init(0, NULL);

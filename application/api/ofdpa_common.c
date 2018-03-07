@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 #include "ofdpa_api.h"
 #include "ofdb_api.h"
-
+#include "datapath_api.h"
 /*
  * This macro is for use in the decode functions below. It is specialized for those functions and
  * detects the case when adding new text to the string results in the buffer becoming full. If that
@@ -1600,7 +1600,9 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
       {
         ofdpaVlanFlowEntry_t *flowData;
         ofdpaVlanFlowMatch_t *match;
-
+				int i;
+				dpActionFuncOpt_t	ops;
+				
         flowData = &flow->flowData.vlanFlowEntry;
         match = &flowData->match_criteria;
 
@@ -1612,47 +1614,34 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
         APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " |");
         APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " GoTo = %d (%s)", flowData->gotoTableId, gotoFlowTableNameGet(flowData->gotoTableId));
 
-        if (flowData->setVlanIdAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " newVlanId = 0x%04x (VLAN %d)", flowData->newVlanId, flowData->newVlanId  & OFDPA_VID_EXACT_MASK);
-        }
-        if (flowData->popVlanAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " popVlanAction");
-        }
-        if (flowData->pushVlan2Action)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " newTpid2 = 0x%x", flowData->newTpid2);
-        }
-        if (flowData->setVlanId2Action)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " newVlanId2 = 0x%04x (VLAN %d)", flowData->newVlanId2, flowData->newVlanId2  & OFDPA_VID_EXACT_MASK);
-        }
-        if (flowData->ovidAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " ovid = %d", flowData->ovid);
-        }
-        if (flowData->vrfAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " vrf = %d", flowData->vrf);
-        }
-        if (flowData->mplsL2PortAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " mplsL2Port = 0x%x", flowData->mplsL2Port);
-        }
-        if (flowData->tunnelIdAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " tunnelId = 0x%x", flowData->tunnelId);
-        }
-        if (flowData->mplsTypeAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " mplsType = %d (%s)", flowData->mplsType, mplsTypeSubTypeName[flowData->mplsType] );
-        }
-        if (flowData->classBasedCountAction)
-        {
-          APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " classBasedCountId = %d", flowData->classBasedCountId);
-        }
-      }
+				for(i = 0; i < flowData->apply_cnt ; i ++){
+					if (count < bufSize) 																															 
+					{ 																																											 
+						ops.buf = &outBuf[count];
+						ops.bufSize = bufSize - count;
+						count += (dpActGetFuncFromType(flowData->apply_actions[i].act))(&ops,NULL,flowData->apply_actions[i].arg);
+					} 																																											 
+					if (count >= bufSize)																															 
+					{ 																																											 
+						outBuf[bufSize - 1] = '\0';																													
+						return OFDPA_E_FULL;																																	 
+					} 																																											 
+				}
+				
+				for(i = 0; i < flowData->write_cnt ; i ++){
+					if (count < bufSize) 																															 
+					{ 																																											 
+						ops.buf = &outBuf[count];
+						ops.bufSize = bufSize - count;
+						count += (dpActGetFuncFromType(flowData->write_actions[i].act))(&ops,NULL,flowData->write_actions[i].arg);
+					} 																																											 
+					if (count >= bufSize)																															 
+					{ 																																											 
+						outBuf[bufSize - 1] = '\0';																													
+						return OFDPA_E_FULL;																																	 
+					} 																																											 
+	      }
+			}
       break;
 
     case OFDPA_FLOW_TABLE_ID_VLAN_1:
