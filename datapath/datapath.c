@@ -769,6 +769,42 @@ uint32_t dpFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
 }
 
 
+
+
+
+
+OFDPA_ERROR_t dpFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+
+
+
+	if((flow == NULL) || (buf == NULL)){
+		return OFDPA_E_PARAM;
+	}
+
+	if (flow->tableId >= OFDPA_FLOW_TABLE_ID_END){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "wrong paramater %d !\r\n", __LINE__);
+		return OFDPA_E_PARAM; 
+	}
+
+	if(pipe_tbl_nodes[flow->tableId].valid){
+
+		if(pipe_tbl_nodes[flow->tableId].ops.flowEntryPrint){
+			rc = pipe_tbl_nodes[flow->tableId].ops.flowEntryPrint(flow,buf);
+		}
+
+		return(rc);
+	}
+
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, buf->len, "Unable to decode flow entry for table ID %d ", flow->tableId);
+	return OFDPA_E_NOT_FOUND;
+
+
+}
+
+
 OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t					tableId,ofdpaTblPipeNodeOps_t *ops)
 {
 

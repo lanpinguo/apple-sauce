@@ -552,6 +552,60 @@ uint32_t mplsL2PortFtEntryCountGet(void)
 
 
 
+
+OFDPA_ERROR_t mplsl2PortFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NONE;
+  uint32_t count = 0, mdlLevel = 0;
+	ofdpaMplsL2PortFlowEntry_t *flowData;
+	ofdpaMplsL2PortFlowMatch_t *match;
+
+
+
+	if((flow == NULL) || (buf == NULL)){
+		return OFDPA_E_PARAM;
+	}
+
+	flowData = &flow->flowData.mplsL2PortFlowEntry;
+	match = &flowData->match_criteria;
+
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " mplsL2Port:mask = 0x%08x:0x%08x", match->mplsL2Port, match->mplsL2PortMask);
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " tunnelId = 0x%x", match->tunnelId);
+
+	if (OFDPA_FLOW_TABLE_ID_MPLS_DSCP_TRUST == flowData->gotoTableId)
+	{
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " etherType:mask = 0x%04x:0x%04x", match->etherType, match->etherTypeMask);
+	}
+
+	/* instructions */
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "%s", " |");
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " GoTo = %d (%s)", flowData->gotoTableId, gotoFlowTableNameGet(flowData->gotoTableId));
+	/* Apply actions */
+	if (0 != flowData->qosIndexAction)
+	{
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " QOS Index = %d", flowData->qosIndex);
+	}
+	/* Write actions */
+	if (flowData->groupId != 0)
+	{
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " groupId = 0x%08x", flowData->groupId);
+	}
+		
+	/* configuration data common to all flow entries */
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " | ");
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "priority = %d ", flow->priority);
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "hard_time = %d ", flow->hard_time);
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "idle_time = %d ", flow->idle_time);
+	APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "cookie = %llu", (unsigned long long int)flow->cookie);
+		
+
+	buf->len = count;
+	
+	return(rc);
+}
+
+
+
 /*****************************************************************************
  Prototype    : mplsL2Port_pipe_init
  Description  : this is vlan pipe init
@@ -580,6 +634,7 @@ int mplsL2Port_pipe_init(int argc, char *argv[])
 	ops.flowStatsGet 							= mplsL2PortPipeFlowStatsGet;
 	ops.flowTableEntryCountGet		= mplsL2PortFtEntryCountGet;
 	ops.flowTableMaxCountGet			= mplsL2PortFtMaxCountGet;
+	ops.flowEntryPrint						= mplsl2PortFlowEntryPrint;
 	rv = dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT, &ops);
 	if(rv != OFDPA_E_NONE){
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
