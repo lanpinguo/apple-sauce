@@ -103,6 +103,7 @@ typedef struct ofdpaVlanPipeNode_s
 
 typedef struct ofdpaVlanPipeNodeConfig_s
 {
+	ofdpaRWlock_t 							lock;
 
 	ofdpaVlanPipeNode_t 				*entrys;
 	uint32_t										max_entrys;
