@@ -437,14 +437,49 @@ typedef enum
   OFDPA_FLOW_TABLE_ID_EGRESS_MAINTENANCE_POINT          =  226,  /**< Egress Maintenance Point Flow Table */
   OFDPA_FLOW_TABLE_ID_EGRESS_DSCP_PCP_REMARK            =  230,  /**< Egress DSCP PCP Remark Flow Table */
   OFDPA_FLOW_TABLE_ID_EGRESS_TPID                       =  235,  /**< Egress TPID Flow Table */
+	OFDPA_FLOW_TABLE_ID_SA_LOOKUP 												=  254,	/** Source MAC Lookup Table */
 
 
 	OFDPA_FLOW_TABLE_ID_END																=  256
 
 } OFDPA_FLOW_TABLE_ID_t;
 
-/** Source MAC Lookup Table */
-#define OFDPA_FLOW_TABLE_ID_SA_LOOKUP 254
+
+typedef  uint64_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
+
+typedef struct ofdpaAct_s 
+{
+	ofdpaAct_f											act;
+	uint64_t												arg;
+}ofdpaAct_t;
+
+typedef struct ofdpaPrettyPrintBuf_s
+{
+#define OFDPA_PRETTY_MAX_LEN	700
+	uint32_t 	len;
+	uint8_t		data[OFDPA_PRETTY_MAX_LEN];
+}ofdpaPrettyPrintBuf_t;
+
+/*
+ * This macro is for use in the decode functions below. It is specialized for those functions and
+ * detects the case when adding new text to the string results in the buffer becoming full. If that
+ * condition is detected, the last byte in the buffer is set to NULL and a return statement is executed
+ * with the return code OFDPA_E_FULL.
+ *
+ * This behavior means this macro MUST be invoked only within a function call. It should not be copied
+ * or moved to any header file due to this specialization.
+ */
+#define APPEND_BUFFER_CHECK_SIZE(__buffer, __buffsize, __count, ...)                       \
+  if (__count < __buffsize)                                                                \
+  {                                                                                        \
+    __count += snprintf(&__buffer[__count], (__buffsize-__count), __VA_ARGS__);            \
+  }                                                                                        \
+  if (__count >= __buffsize)                                                               \
+  {                                                                                        \
+    __buffer[__buffsize-1] = '\0';                                                           \
+    return OFDPA_E_FULL;                                                                   \
+  }                                                                                        \
+
 
 /** Ingress Port Flow Table Match */
 typedef struct ofdpaIngressPortFlowMatch_s
@@ -644,6 +679,8 @@ typedef struct ofdpaVlanFlowEntry_s
       or 0 to drop */
   OFDPA_FLOW_TABLE_ID_t gotoTableId;
 
+#define OFDPA_FT_VLAN_APLY_ACT_MAX		9
+#define OFDPA_FT_VLAN_WR_ACT_MAX			1
   /** Apply Actions Instructions */
   /**
      The effect of setting and pushing VLAN IDs depends upon the order of the
@@ -654,44 +691,13 @@ typedef struct ofdpaVlanFlowEntry_s
      The latter will add two tags and set the outer tag twice.
   */
 
-  uint16_t    setVlanIdAction;          /**< If non-zero, set the VLAN ID */
-  uint16_t    newVlanId;                /**< VLAN ID for first Set Field VLAN_VID instruction.
-                                           Sets the VLAN id for an untagged port VLAN assignment
-                                           rule. If the packet does not have a VLAN tag then one
-                                           is pushed with the specified VLAN id and priority zero.
-                                           If the VLAN tag exists, then the VLAN id will be
-                                           replaced with the specified value.*/
-
-  uint16_t    popVlanAction;            /**< If non-zero, pop one VLAN tag. */
-
-  uint16_t    pushVlan2Action;          /**< If non-zero, push a new VLAN tag using data in newTpid field. */
-  uint16_t    newTpid2;                 /**< The TPID for the new VLAN tag to be pushed. */
-
-  uint16_t    setVlanId2Action;         /**< If non-zero and flow contains pushVlan2Action, set the VLAN ID in the new tag */
-  uint16_t    newVlanId2;               /**< VLAN ID for second Set VLAN action. */
-
-  uint16_t    ovidAction;               /**< If non-zero, set the OVID meta-data field
-                                           for matching in the VLAN 1 flow table. */
-  uint16_t    ovid;                     /**< Metadata representing the outer tag VLAN Id
-                                           as a match field in the VLAN 1 Flow Table. */
-
-  uint16_t    vrfAction;                /**< If non-zero, set the VRF. */
-  uint16_t    vrf;                      /**< Must be the same in all rules for the same VLAN. */
-
-  uint16_t    mplsL2PortAction;         /**< If non-zero, set the MPLS L2 Port.  Required for VPWS or VPLS. */
-  uint32_t    mplsL2Port;               /**< For MPLS L2 VPN classification. */
-
-  uint32_t    tunnelIdAction;           /**< If non-zero, set the Tunnel ID.  */
-  uint32_t    tunnelId;                 /**< For MPLS L2 VPN classification. */
-
-  uint32_t    mplsTypeAction;           /**< Non-zero value indicates Set-field MPLS Type */
-  uint32_t    mplsType;                 /**< MPLS Type value used in Set-field action */
+  uint32_t							apply_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						apply_actions[OFDPA_FT_VLAN_APLY_ACT_MAX];
 
   /** Write-Action(s) instruction */
-  uint32_t    classBasedCountAction;    /**< Non-zero value indicates increment the specified Class Based Counter table entry
-                                             when the flow entry is hit. */
-  uint32_t    classBasedCountId;        /**< Identifier of Class Based Counter table entry to be incremented. The counter entry
-                                             must be present when the flow entry is added. */
+  uint32_t							write_cnt;				/** Indicate the last action count in wr_actions list*/
+	ofdpaAct_t						write_actions[OFDPA_FT_VLAN_WR_ACT_MAX];
+
 
 } ofdpaVlanFlowEntry_t;
 
@@ -3710,18 +3716,19 @@ typedef enum {
 }ofdpaGrpType_e;
 
 
-typedef  OFDPA_ERROR_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
 
-typedef struct ofdpaAct_s 
+typedef struct ofdpaActionFuncOps_s
 {
-	ofdpaAct_f											act;
-	uint64_t												arg;
-}ofdpaAct_t;
-
+#define OP_PRETTY_PRINT			1
+	uint32_t 									ops;
+	void											*buf;
+	uint32_t									bufSize;
+}ofdpaActionFuncOpt_t;
 
 
 typedef struct ofdpaActBucket_s 
 {
+  uint32_t                				maxNum;			
   uint32_t                				numAct;			
 	ofdpaAct_t											act[0];
 }ofdpaActBucket_t;
@@ -3729,6 +3736,7 @@ typedef struct ofdpaActBucket_s
 
 typedef struct ofdpaActHolder_s 
 {
+  uint32_t                				maxNum;			
   uint32_t                				numAct;			
 	ofdpaAct_t											act[0];
 }ofdpaActHolder_t;
@@ -3824,7 +3832,6 @@ enum DROP_REASON{
 	DROP_UNSUPPORTED = (1<<1),
 	DROP_ERROR_FORMAT = (1<<2),
 };
-
 
 
 

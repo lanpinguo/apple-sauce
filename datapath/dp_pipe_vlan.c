@@ -91,7 +91,10 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	ofdpaVlanFlowEntry_t *flowData;
 	ofdpaAct_t						act;
 	ofdpaActHolder_t			*pHolder;
+	int i;
 
+
+	
 	if(flow_node == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Null flow_node passed!\r\n", 0);
@@ -139,60 +142,9 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	}
 
 	pHolder = pNode->instructions.apply_action;
-	if (flowData->setVlanIdAction)
-	{
-		act.act = dpActSetVlanId;
-		act.arg = flowData->newVlanId;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 
-	}
-	if (flowData->popVlanAction)
-	{
-		act.act = dpActPopVlan;
-		act.arg = 0;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->pushVlan2Action)
-	{
-		act.act = dpActPushVlan;
-		act.arg = flowData->newTpid2;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-
-	}
-	if (flowData->setVlanId2Action)
-	{
-		act.act = dpActSetVlanId2;
-		act.arg = flowData->newVlanId2;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->ovidAction)
-	{
-		act.act = dpActSetMetaDataOvid;
-		act.arg = flowData->ovid;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->vrfAction)
-	{
-		act.act = dpActSetMetaDataVrf;
-		act.arg = flowData->vrf;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->mplsL2PortAction)
-	{
-		act.act = dpActSetMetaDataMplsL2Port;
-		act.arg = flowData->mplsL2Port;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->tunnelIdAction)
-	{
-		act.act = dpActSetMetaDataTunId;
-		act.arg = flowData->tunnelId;
-		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
-	}
-	if (flowData->mplsTypeAction)
-	{
-		act.act = dpActSetMetaDataMplsType;
-		act.arg = flowData->mplsType;
+	for(i = 0; i < flowData->apply_cnt; i++){
+		act = flowData->apply_actions[i];
 		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 	}
 	
@@ -208,10 +160,9 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	}
 
 	pHolder =	&pNode->instructions.write_action->actHolder;
-	if (flowData->classBasedCountAction)
-	{
-		act.act = dpActIncClassBasedCounter;
-		act.arg = flowData->classBasedCountId;
+
+	for(i = 0; i < flowData->write_cnt; i++){
+		act = flowData->write_actions[i];
 		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 	}
 
@@ -244,7 +195,7 @@ OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 {
 	ofdpaVlanPipeNode_t *pNode = NULL;
 	ofdpaVlanFlowEntry_t *flowData;
-	int i;
+	int i,j;
 	
 
 	if(flow == NULL || next == NULL){
@@ -276,6 +227,18 @@ OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 			flowData->match_criteria.vlanId 		= REORDER16_B2L(pNode->match.key.vlanId);
 			flowData->match_criteria.vlanIdMask = REORDER16_B2L(pNode->match.keyMask.vlanId);
 			flowData->gotoTableId 							= pNode->instructions.gotoTableId ;
+
+			
+			for(j = 0,flowData->apply_cnt = 0; j < pNode->instructions.apply_action->numAct ; j++){
+				flowData->apply_actions[j] = pNode->instructions.apply_action->act[j];
+				flowData->apply_cnt++;
+			}
+
+
+			for(j = 0 , flowData->write_cnt = 0; j < pNode->instructions.write_action->actHolder.numAct ; j++){
+				flowData->write_actions[j] = pNode->instructions.write_action->actHolder.act[j];
+				flowData->write_cnt++;
+			}
 
 			return OFDPA_E_NONE;
 		}

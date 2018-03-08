@@ -173,11 +173,12 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 		 return OFDPA_E_PARAM;
 	 }
  
-	 for(i = 0; i < pHolder->numAct ; i++){
+	 for(i = 0; i < pHolder->maxNum ; i++){
 		 if(pHolder->act[i].act){
 			 continue;
 		 }
 		 pHolder->act[i] = *pAct;
+		 pHolder->numAct++;
 		 return OFDPA_E_NONE;
 	 }
 	 return OFDPA_E_FULL;  
@@ -192,7 +193,8 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	 pHolder = calloc(1,sizeof(ofdpaActHolder_t) + numAct * sizeof(ofdpaAct_t));
  
 	 if(pHolder){
-		 pHolder->numAct = numAct;
+		 pHolder->maxNum = numAct;
+		 pHolder->numAct = 0;
 	 }
  
 	 return pHolder;
@@ -206,7 +208,8 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	 pHolder = calloc(1,sizeof(ofdpaActSetHolder_t) + numAct * sizeof(ofdpaAct_t));
  
 	 if(pHolder){
-		 pHolder->actHolder.numAct = numAct;
+		 pHolder->actHolder.maxNum = numAct;
+		 pHolder->actHolder.numAct = 0;
 	 }
  
 	 return pHolder;
@@ -265,11 +268,12 @@ ofdpaGrpPipeNode_t *dpGrpNodeMalloc(ofdpaGrpType_e type, uint32_t numActBukt)
 		 return OFDPA_E_PARAM;
 	 }
  
-	 for(i = 0; i < pBukt->numAct; i++){
+	 for(i = 0; i < pBukt->maxNum; i++){
 		 if(pBukt->act[i].act){
 			 continue;
 		 }
 		 pBukt->act[i] = *pAct;
+		 pBukt->numAct++;
 		 return OFDPA_E_NONE;
 	 }
 	 return OFDPA_E_FULL;  
@@ -286,7 +290,8 @@ ofdpaGrpPipeNode_t *dpGrpNodeMalloc(ofdpaGrpType_e type, uint32_t numActBukt)
 	 pBukt = calloc(1,sizeof(ofdpaActBucket_t) + numAct * sizeof(ofdpaAct_t));
  
 	 if(pBukt){
-		 pBukt->numAct = numAct;
+		 pBukt->maxNum = numAct;
+		 pBukt->numAct = 0;
 	 }
  
 	 return pBukt;
@@ -477,7 +482,7 @@ int generateSockUnAddr(struct sockaddr_un * sockaddr,char * path)
 *
 * @end
 *********************************************************************/
-int datapathPipeTransferSocketsAddrCreate(void)
+int dpPipeNodeSocketsAddrCreate(void)
 {
 	uint32_t 	i;
 
@@ -755,6 +760,15 @@ OFDPA_ERROR_t dpFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flow
 	return(rc);
 }
 
+
+
+uint32_t dpFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
+{
+  /* if you get here, you are valid */
+  return(1);
+}
+
+
 OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t					tableId,ofdpaTblPipeNodeOps_t *ops)
 {
 
@@ -784,7 +798,7 @@ int datapathInit(void)
 
 	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
 	
-	(void)datapathPipeTransferSocketsAddrCreate();
+	(void)dpPipeNodeSocketsAddrCreate();
 	(void)port_manager_init(0, NULL);
 	(void)port_pipe_init(0, NULL);
 	(void)vlan_pipe_init(0, NULL);

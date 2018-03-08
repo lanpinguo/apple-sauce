@@ -229,14 +229,9 @@ OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pHolder = pNode->instructions.apply_action;
 	if (flowData->qosIndexAction)
 	{
-		act.act = dpActSetQosIndex;
+		act.act = ofdpaActSetQosIndex;
 		act.arg = flowData->qosIndex;
-		rv = dpAddAct2Holder(pHolder,&act);
-		if(rv != OFDPA_E_NONE){
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Add action failed, rv = %d !\r\n", rv);
-			return rv;
-		}
+		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 
 	}
 
@@ -254,7 +249,7 @@ OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pHolder =	&pNode->instructions.write_action->actHolder;
 	if (flowData->groupId)
 	{
-		act.act = dpActSetGrpId;
+		act.act = ofdpaActSetGrpId;
 		act.arg = flowData->groupId;
 		rv = dpAddAct2Holder(pHolder,&act);
 		if(rv != OFDPA_E_NONE){

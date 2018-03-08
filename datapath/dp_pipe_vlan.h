@@ -57,8 +57,6 @@
 #include "ofdpa_list.h"
 
 
-#define OFDPA_FT_VLAN_APLY_ACT_MAX		8
-#define OFDPA_FT_VLAN_WR_ACT_MAX			1
 
 #define OFDPA_FT_VLAN_IN_PORT_MASK		0xFFFFFFFFFFFFFFFFUL
 

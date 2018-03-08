@@ -778,97 +778,7 @@ uint32_t ofdbFlowTunnelPcpTrustEntryValidate(ofdpaPcpTrustFlowEntry_t *flowData)
 
 uint32_t ofdbFlowVrfValidate(uint16_t vlanId, uint16_t vrfAction, uint16_t vrf)
 {
-  ofdpaFlowEntry_t flow;
-  uint16_t effectiveVlanId;
-
-  /* all VRF assignment rules for a particular VLAN must specify the same VRF
-     value in all entries across the VLAN and VLAN_1 flow tables */
-  memset(&flow, 0, sizeof(flow));
-  flow.tableId = OFDPA_FLOW_TABLE_ID_VLAN;
-
-  /* only need to find one entry for comparison since all existing entries are consistent */
-  while (ofdbFlowNextGet(&flow, &flow, NULL, NULL) == OFDPA_E_NONE)
-  {
-    /* only examine flow entries whose type allow setting VRF */
-    if (flow.flowData.vlanFlowEntry.gotoTableId == OFDPA_FLOW_TABLE_ID_TERMINATION_MAC)
-    {
-      /* the VLAN ID used in comparison depends on the actions of the VLAN flow entry under consideration */
-      if (flow.flowData.vlanFlowEntry.setVlanId2Action != 0)
-      {
-        effectiveVlanId = (flow.flowData.vlanFlowEntry.newVlanId2 & OFDPA_VID_EXACT_MASK);
-      }
-      else if (flow.flowData.vlanFlowEntry.setVlanIdAction != 0)
-      {
-        effectiveVlanId = (flow.flowData.vlanFlowEntry.newVlanId & OFDPA_VID_EXACT_MASK);
-      }
-      else
-      {
-        effectiveVlanId = (flow.flowData.vlanFlowEntry.match_criteria.vlanId & OFDPA_VID_EXACT_MASK);
-      }
-
-      if (effectiveVlanId == vlanId)
-      {
-        if ((flow.flowData.vlanFlowEntry.vrfAction != vrfAction) ||
-            ((flow.flowData.vlanFlowEntry.vrfAction != 0) &&
-             (flow.flowData.vlanFlowEntry.vrf != vrf)))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                             "VLAN entry for VLAN ID with different vrf action and/or value. (vlanId = %d: ",
-                             (vlanId & OFDPA_VID_EXACT_MASK));
-
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                             " existing entry vrfAction/vrf = %d/%d, new entry vrfAction/vrf = %d/%d)\r\n",
-                             flow.flowData.vlanFlowEntry.vrfAction, flow.flowData.vlanFlowEntry.vrf, vrfAction, vrf);
-          return(0);
-        }
-        /* found one entry with same VLAN and VRF data matches, no need to continue */
-        return(1);
-      }
-    }
-  }
-
-  memset(&flow, 0, sizeof(flow));
-  flow.tableId = OFDPA_FLOW_TABLE_ID_VLAN_1;
-
-  /* only need to find one entry for comparison since all existing entries are consistent */
-  while (ofdbFlowNextGet(&flow, &flow, NULL, NULL) == OFDPA_E_NONE)
-  {
-    /* only examine flow entries whose type allow setting VRF */
-    if (flow.flowData.vlan1FlowEntry.gotoTableId == OFDPA_FLOW_TABLE_ID_TERMINATION_MAC)
-    {
-      /* the VLAN ID used in comparison depends on the actions of the VLAN flow entry under consideration */
-      if (flow.flowData.vlan1FlowEntry.setVlanIdAction != 0)
-      {
-        effectiveVlanId = (flow.flowData.vlan1FlowEntry.newVlanId & OFDPA_VID_EXACT_MASK);
-      }
-      else
-      {
-        effectiveVlanId = (flow.flowData.vlan1FlowEntry.match_criteria.vlanId & OFDPA_VID_EXACT_MASK);
-      }
-
-      if (effectiveVlanId == vlanId)
-      {
-        if ((flow.flowData.vlan1FlowEntry.vrfAction != vrfAction) ||
-            ((flow.flowData.vlan1FlowEntry.vrfAction != 0) &&
-             (flow.flowData.vlan1FlowEntry.vrf != vrf)))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                             "VLAN_1 entry for VLAN ID with different vrf action and/or value. (vlanId = %d: ",
-                             (vlanId & OFDPA_VID_EXACT_MASK));
-
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                             " existing entry vrfAction/vrf = %d/%d, new entry vrfAction/vrf = %d/%d)\r\n",
-                             flow.flowData.vlan1FlowEntry.vrfAction, flow.flowData.vlan1FlowEntry.vrf, vrfAction, vrf);
-          return(0);
-        }
-        /* found one entry with same VLAN and VRF data matches, no need to continue */
-        return(1);
-      }
-    }
-  }
-
-  /* no existing entries match VLAN, so new flow is OK */
-  return(1);
+	return 1;
 }
 
 OFDPA_ERROR_t ofdbFlowInjectedOamEntryTypeGet(ofdpaInjectedOamFlowEntry_t *flowData,
@@ -1218,6 +1128,11 @@ uint32_t ofdbFlowInjectedOamEntryValidate(ofdpaInjectedOamFlowEntry_t *flowData)
   return 1;
 }
 
+uint32_t ofdbFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
+{
+	return 1;
+}
+#if 0
 uint32_t ofdbFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
 {
   ofdpaVlanFlowMatch_t *matchCriteria;
@@ -2050,6 +1965,7 @@ uint32_t ofdbFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData)
   /* if you get here, you are valid */
   return(1);
 }
+#endif
 
 uint32_t ofdbFlowVlan1EntryValidate(ofdpaVlan1FlowEntry_t *flowData)
 {
@@ -7439,7 +7355,7 @@ uint32_t ofdbFlowEntryValidate(ofdpaFlowEntry_t *flow)
       break;
 
     case OFDPA_FLOW_TABLE_ID_VLAN:
-      flowValid = ofdbFlowVlanEntryValidate(&flow->flowData.vlanFlowEntry);
+      flowValid = dpFlowVlanEntryValidate(&flow->flowData.vlanFlowEntry);
       break;
 
     case OFDPA_FLOW_TABLE_ID_VLAN_1:
@@ -7566,50 +7482,6 @@ uint32_t ofdbFlowIngressPortDeletionValidate(ofdpaIngressPortFlowEntry_t *flowDa
 
 uint32_t ofdbFlowVlanDeletionValidate(ofdpaVlanFlowEntry_t *flowData)
 {
-  ofdpaVlanFlowMatch_t *matchCriteria;
-  ofdpaFlowEntry_t unTaggedFlow;
-  ofdbFlowStatus_t flowStatus;
-
-  matchCriteria = &flowData->match_criteria;
-
-  /*
-     the flow entry that allows tagged packets on a port/vlan
-     cannot be deleted if a flow entry admitting untagged packets on
-     same port/vlan exists
-   */
-  if (((matchCriteria->vlanId & matchCriteria->vlanIdMask) == OFDPA_VID_NONE) ||
-      ((matchCriteria->vlanId & matchCriteria->vlanIdMask) == OFDPA_VID_PRESENT))
-  {
-    /* entry being deleted does not match tagged packets */
-    return(1);
-  }
-
-  if (flowData->gotoTableId == 0)
-  {
-    /* entry being deleted drops tagged packets on VLAN
-       (which is the default action on unmatched packets),
-       so OK to delete
-     */
-    return(1);
-  }
-
-  memset(&unTaggedFlow, 0, sizeof(unTaggedFlow));
-  unTaggedFlow.tableId = OFDPA_FLOW_TABLE_ID_VLAN;
-
-  unTaggedFlow.flowData.vlanFlowEntry.match_criteria.inPort = matchCriteria->inPort;
-  unTaggedFlow.flowData.vlanFlowEntry.match_criteria.vlanId = OFDPA_VID_NONE;
-
-  if ((ofdbFlowGet(&unTaggedFlow, NULL, &flowStatus) == OFDPA_E_NONE) &&
-      (unTaggedFlow.flowData.vlanFlowEntry.gotoTableId != 0)  &&
-      (unTaggedFlow.flowData.vlanFlowEntry.newVlanId == matchCriteria->vlanId))
-  {
-    /* flow admitting untagged traffic to VLAN on port found, cannot delete flow */
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                       "flow admitting untagged packets for port/VLAN exists, deletion invalid. inPort = %d, vlanId = %d\r\n",
-                       matchCriteria->inPort, matchCriteria->vlanId);
-    return(0);
-  }
-
   /* if you get here, OK to delete flow */
   return(1);
 }
@@ -9267,12 +9139,13 @@ OFDPA_ERROR_t ofdbFlowAdd(ofdpaFlowEntry_t *flow, uint64_t *flowId)
           /* successful insertion */
           flowInserted = 1;
 
+					#if 0
           /* update counter entry reference count */
           if (flow->flowData.vlanFlowEntry.classBasedCountAction != 0)
           {
             ofdbClassBasedCounterReferenceUpdate(flow->flowData.vlanFlowEntry.classBasedCountId, 1);
           }
-
+					#endif
           /* retrieve dataPtr */
           dataPtr = avlSearch(&ofdbAVLTrees.ofdbVlanFlowTable_tree, &flow_node.key, AVL_EXACT);
         }
@@ -10334,13 +10207,13 @@ OFDPA_ERROR_t ofdbFlowDelete(ofdpaFlowEntry_t *flow)
     case OFDPA_FLOW_TABLE_ID_VLAN:
       {
         ofdbVlanFlowEntryKey_t key;
-
+				#if 0
         /* update counter entry reference count */
         if (flow->flowData.vlanFlowEntry.classBasedCountAction != 0)
         {
           ofdbClassBasedCounterReferenceUpdate(flow->flowData.vlanFlowEntry.classBasedCountId, 0);
         }
-
+				#endif
         ofdbVlanFlowUtilKeyCreate(&flow->flowData.vlanFlowEntry.match_criteria, &key);
         dataPtr = avlDeleteEntry(&ofdbAVLTrees.ofdbVlanFlowTable_tree, &key);
       }

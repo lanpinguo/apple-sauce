@@ -10,9 +10,9 @@
   Last Modified :
   Description   : action function list
   Function List :
-              dpActAllowVlanTrans
-              dpActIdentifyOutPort
-              dpActPopVlan
+              ofdpaActAllowVlanTrans
+              ofdpaActIdentifyOutPort
+              ofdpaActPopVlan
   History       :
   1.Date        : 2018/2/26
     Author      : lanpinguo
@@ -72,7 +72,23 @@
 
 
 
-OFDPA_ERROR_t dpActSetGrpId(void *this,void *pcb, uint64_t arg)
+
+
+
+static char *mplsTypeSubTypeName[] =
+{
+  [OFDPA_MPLS_TYPE_VPWS         ] = "VPWS",
+  [OFDPA_MPLS_TYPE_VPLS         ] = "VPLS",
+  [OFDPA_MPLS_TYPE_OAM          ] = "OAM",
+  [OFDPA_MPLS_TYPE_L3_UNICAST   ] = "L3 Route Unicast",
+  [OFDPA_MPLS_TYPE_L3_MULTICAST ] = "L3 Route Multicast",
+  [OFDPA_MPLS_TYPE_L3_PHP       ] = "L3 PHP",
+};
+
+
+
+
+uint64_t ofdpaActSetGrpId(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -80,7 +96,7 @@ OFDPA_ERROR_t dpActSetGrpId(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetQosIndex(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetQosIndex(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -88,42 +104,78 @@ OFDPA_ERROR_t dpActSetQosIndex(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetVlanId(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetVlanId(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " newVlanId = 0x%04x (VLAN %d)", (uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
+
+	}										 
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActSetVlanId2(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize," newVlanId2 = 0x%04x (VLAN %d)",(uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
+
+	}										 
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActPushVlan(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActSetVlanId2(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActPushVlan2(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " newTpid2 = 0x%x", (uint16_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActPushVlan(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMetaDataOvid(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " ovid = %d", (uint16_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 
 
-OFDPA_ERROR_t dpActSetMetaDataOvid(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-
-OFDPA_ERROR_t dpActSetMetaDataTunId(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMetaDataTunId(void *this,void *pcb, uint64_t arg)
 {
 	ofdpaPktCb_t *pPkt;
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "arg = %lld \r\n", arg);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize,  " tunnelId = 0x%x", (uint32_t)arg);
+
+	}										 
 
 	pPkt = (ofdpaPktCb_t *)pcb;
 	pPkt->meta_data.tunnelId = (uint32_t)arg;
@@ -132,20 +184,33 @@ OFDPA_ERROR_t dpActSetMetaDataTunId(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetMetaDataVrf(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMetaDataVrf(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " vrf = %d", (uint32_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 
 
-OFDPA_ERROR_t dpActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg)
 {
 	ofdpaPktCb_t *pPkt;
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "arg = %lld \r\n", arg);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize,  " mplsL2Port = 0x%x", (uint32_t)arg);
+
+	}										 
+
 
 	pPkt = (ofdpaPktCb_t *)pcb;
 
@@ -157,12 +222,18 @@ OFDPA_ERROR_t dpActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg)
 {
 	ofdpaPktCb_t *pPkt;
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "arg = %lld \r\n", arg);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " mplsType = %d (%s)", (uint32_t)arg, mplsTypeSubTypeName[(uint32_t)arg] );
+
+	}										 
 
 	pPkt = (ofdpaPktCb_t *)pcb;
 	pPkt->meta_data.mplsType = (uint32_t)arg;
@@ -170,7 +241,42 @@ OFDPA_ERROR_t dpActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg)
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActIncClassBasedCounter(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActIncClassBasedCounter(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " classBasedCountId = %d", (uint32_t)arg);
+
+	}										 
+	return OFDPA_E_NONE;
+}
+
+
+uint64_t ofdpaActIdentifyOutPort(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActPopVlan(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, " popVlanAction");
+
+	}										 
+	return OFDPA_E_NONE;
+}
+
+
+uint64_t ofdpaActAllowVlanTrans(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -178,22 +284,14 @@ OFDPA_ERROR_t dpActIncClassBasedCounter(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActIdentifyOutPort(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActOamLmTxCount(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActPopVlan(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-
-OFDPA_ERROR_t dpActAllowVlanTrans(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetDstMac(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -201,14 +299,7 @@ OFDPA_ERROR_t dpActAllowVlanTrans(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActOamLmTxCount(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpActSetDstMac(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetSrcMac(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -216,7 +307,21 @@ OFDPA_ERROR_t dpActSetDstMac(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetSrcMac(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetLmepId(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActIncColorBasedCount(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActPushL2Hdr(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -224,21 +329,14 @@ OFDPA_ERROR_t dpActSetSrcMac(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetLmepId(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetTpid(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActIncColorBasedCount(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpActPushL2Hdr(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActPushMplsHdr(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -246,14 +344,7 @@ OFDPA_ERROR_t dpActPushL2Hdr(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetTpid(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpActPushMplsHdr(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetEtherType(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -261,7 +352,7 @@ OFDPA_ERROR_t dpActPushMplsHdr(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetEtherType(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActPushMplsCw(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -269,7 +360,14 @@ OFDPA_ERROR_t dpActSetEtherType(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActPushMplsCw(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMplsLabel(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActSetMplsBos(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -277,14 +375,7 @@ OFDPA_ERROR_t dpActPushMplsCw(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetMplsLabel(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpActSetMplsBos(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMplsTtl(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -292,7 +383,7 @@ OFDPA_ERROR_t dpActSetMplsBos(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetMplsTtl(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetMplsExp(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -300,29 +391,21 @@ OFDPA_ERROR_t dpActSetMplsTtl(void *this,void *pcb, uint64_t arg)
 }
 
 
-OFDPA_ERROR_t dpActSetMplsExp(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActCpyMplsExpOutwards(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
 
-
-OFDPA_ERROR_t dpActCpyMplsExpOutwards(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActSetRemarkTableId(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
 
-OFDPA_ERROR_t dpActSetRemarkTableId(void *this,void *pcb, uint64_t arg)
-{
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "%s!\r\n", __FUNCTION__);
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);

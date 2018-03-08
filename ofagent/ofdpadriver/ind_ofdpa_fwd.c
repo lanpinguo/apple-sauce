@@ -1029,8 +1029,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             of_oxm_tunnel_id_value_get(&oxm.tunnel_id, &tunnel_id);
             if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              flow->flowData.vlanFlowEntry.tunnelIdAction = 1;
-              flow->flowData.vlanFlowEntry.tunnelId = tunnel_id;
+            	int i = flow->flowData.vlanFlowEntry.apply_cnt;
+            	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+            	}
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataTunId;
+              flow->flowData.vlanFlowEntry.apply_actions[i].arg = tunnel_id;
+              flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN_1)
             {
@@ -1061,8 +1066,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             of_oxm_ofdpa_mpls_l2_port_value_get(&oxm.ofdpa_mpls_l2_port, &mpls_l2_port);
             if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              flow->flowData.vlanFlowEntry.mplsL2PortAction = 1;
-              flow->flowData.vlanFlowEntry.mplsL2Port = mpls_l2_port;
+            	int i = flow->flowData.vlanFlowEntry.apply_cnt;
+            	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+            	}
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataMplsL2Port;
+              flow->flowData.vlanFlowEntry.apply_actions[i].arg = mpls_l2_port;
+              flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN_1)
             {
@@ -1239,8 +1249,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              flow->flowData.vlanFlowEntry.vrfAction = 1;
-              flow->flowData.vlanFlowEntry.vrf = vrf;
+            	int i = flow->flowData.vlanFlowEntry.apply_cnt;
+            	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+            	}
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataVrf;
+              flow->flowData.vlanFlowEntry.apply_actions[i].arg = vrf;
+              flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN_1)
             {
@@ -1266,8 +1281,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             of_oxm_ofdpa_ovid_value_get(&oxm.ofdpa_ovid, &vlan_vid);
             if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              flow->flowData.vlanFlowEntry.ovidAction = 1;
-              flow->flowData.vlanFlowEntry.ovid = vlan_vid;
+            	int i = flow->flowData.vlanFlowEntry.apply_cnt;
+            	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+            	}
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataOvid;
+              flow->flowData.vlanFlowEntry.apply_actions[i].arg = vlan_vid;
+              flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_EGRESS_VLAN)
             {
@@ -1287,16 +1307,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             of_oxm_vlan_vid_value_get(&oxm.vlan_vid, &vlan_vid);
             if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              if (flow->flowData.vlanFlowEntry.pushVlan2Action == 1)
-              {
-                flow->flowData.vlanFlowEntry.newVlanId2 = vlan_vid;
-                flow->flowData.vlanFlowEntry.setVlanId2Action = 1;
-              }
-              else
-              {
-                flow->flowData.vlanFlowEntry.newVlanId = vlan_vid;
-                flow->flowData.vlanFlowEntry.setVlanIdAction = 1;
-              }
+							int i = flow->flowData.vlanFlowEntry.apply_cnt;
+							if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+							}
+							flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetVlanId;
+							flow->flowData.vlanFlowEntry.apply_actions[i].arg = vlan_vid;
+							flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_EGRESS_VLAN)
             {
@@ -1592,8 +1609,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
             {
-              flow->flowData.vlanFlowEntry.mplsType = mpls_type;
-              flow->flowData.vlanFlowEntry.mplsTypeAction = 1;
+            	int i = flow->flowData.vlanFlowEntry.apply_cnt;
+            	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+								return INDIGO_ERROR_BAD_ACTION;
+            	}
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataMplsType;
+              flow->flowData.vlanFlowEntry.apply_actions[i].arg = mpls_type;
+              flow->flowData.vlanFlowEntry.apply_cnt++;
             }
             else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN_1)
             {
@@ -1617,7 +1639,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
       case OF_ACTION_POP_VLAN:
         if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
         {
-          flow->flowData.vlanFlowEntry.popVlanAction = 1;
+					int i = flow->flowData.vlanFlowEntry.apply_cnt;
+					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+						return INDIGO_ERROR_BAD_ACTION;
+					}
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActPopVlan;
+					flow->flowData.vlanFlowEntry.apply_actions[i].arg = 0;
+					flow->flowData.vlanFlowEntry.apply_cnt++;
         }
         else if (flow->tableId == OFDPA_FLOW_TABLE_ID_EGRESS_VLAN)
         {
@@ -1662,8 +1690,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
         }
         if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
         {
-          flow->flowData.vlanFlowEntry.pushVlan2Action = 1;
-          flow->flowData.vlanFlowEntry.newTpid2 = eth_type;
+					int i = flow->flowData.vlanFlowEntry.apply_cnt;
+					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+						return INDIGO_ERROR_BAD_ACTION;
+					}
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActPushVlan;
+					flow->flowData.vlanFlowEntry.apply_actions[i].arg = eth_type;
+					flow->flowData.vlanFlowEntry.apply_cnt++;
         }
         else if (flow->tableId == OFDPA_FLOW_TABLE_ID_EGRESS_VLAN)
         {
@@ -2147,8 +2180,13 @@ static indigo_error_t ind_ofdpa_translate_openflow_write_actions(of_list_action_
         of_action_ofdpa_class_based_count_index_get(&act.ofdpa_class_based_count, &counterIndex);
         if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN)
         {
-          flow->flowData.vlanFlowEntry.classBasedCountAction = 1;
-          flow->flowData.vlanFlowEntry.classBasedCountId = counterIndex;
+					int i = flow->flowData.vlanFlowEntry.write_cnt;
+					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
+						return INDIGO_ERROR_BAD_ACTION;
+					}
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActIncClassBasedCounter;
+					flow->flowData.vlanFlowEntry.apply_actions[i].arg = counterIndex;
+					flow->flowData.vlanFlowEntry.apply_cnt++;
         }
         else if (flow->tableId == OFDPA_FLOW_TABLE_ID_VLAN_1)
         {

@@ -139,18 +139,18 @@ OFDPA_ERROR_t dpGrpL2IntfBuktBuild(ofdpaL2InterfaceGroupBucketData_t       * pDa
 											 "Bucket Malloc failed!\r\n", 0);
 		return OFDPA_E_PARAM;
 	}
-	action.act = dpActIdentifyOutPort;
+	action.act = ofdpaActIdentifyOutPort;
 	action.arg = pData->outputPort;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
 	if(pData->popVlanTag){
-		action.act = dpActPopVlan;
+		action.act = ofdpaActPopVlan;
 		action.arg = 0;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 	
 	if(pData->allowVlanTranslation){
-		action.act = dpActAllowVlanTrans;
+		action.act = ofdpaActAllowVlanTrans;
 		action.arg = 0;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
@@ -174,35 +174,35 @@ OFDPA_ERROR_t dpGrpMplsIntfBuktBuild(ofdpaMPLSInterfaceGroupBucketData_t       *
 	}
 
 	if(pData->oamLmTxCountAction){
-		action.act = dpActOamLmTxCount;
+		action.act = ofdpaActOamLmTxCount;
 		action.arg = 0;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 		
 	
-	action.act = dpActSetSrcMac;
+	action.act = ofdpaActSetSrcMac;
 	action.arg = *(uint64_t *)&pData->srcMac;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActSetDstMac;
+	action.act = ofdpaActSetDstMac;
 	action.arg = *(uint64_t *)&pData->dstMac;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActSetVlanId;
+	action.act = ofdpaActSetVlanId;
 	action.arg = pData->vlanId;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
 
 	
 	if(pData->lmepIdAction){
-		action.act = dpActSetLmepId;
+		action.act = ofdpaActSetLmepId;
 		action.arg = pData->lmepId;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
 	}
 	
 	if(pData->colorBasedCountAction){
-		action.act = dpActIncColorBasedCount;
+		action.act = ofdpaActIncColorBasedCount;
 		action.arg = pData->colorBasedCountId;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
@@ -226,86 +226,86 @@ OFDPA_ERROR_t dpGrpMplsLabelBuktBuild(ofdpaMPLSLabelGroupBucketData_t       * pD
 		return OFDPA_E_PARAM;
 	}
 	
-	action.act = dpActPushL2Hdr;
+	action.act = ofdpaActPushL2Hdr;
 	action.arg = 0;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
 
-	action.act = dpActPushVlan;
+	action.act = ofdpaActPushVlan;
 	action.arg = 0;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
 
-	action.act = dpActSetTpid;
+	action.act = ofdpaActSetTpid;
 	action.arg = pData->newTpid;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActPushMplsHdr;
+	action.act = ofdpaActPushMplsHdr;
 	action.arg = pData->newTpid;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActSetEtherType;
+	action.act = ofdpaActSetEtherType;
 	action.arg = pData->mplsEtherType;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
-	action.act = dpActPushMplsCw;
+	action.act = ofdpaActPushMplsCw;
 	action.arg = 0;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActSetMplsLabel;
+	action.act = ofdpaActSetMplsLabel;
 	action.arg = pData->mplsLabel;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = dpActSetMplsBos;
+	action.act = ofdpaActSetMplsBos;
 	action.arg = pData->mplsBOS;
 	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
 	
 	if(pData->mplsEXPAction){
-		action.act = dpActSetMplsExp;
+		action.act = ofdpaActSetMplsExp;
 		action.arg = pData->mplsEXP;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->mplsCopyEXPOutwards){
-		action.act = dpActCpyMplsExpOutwards;
+		action.act = ofdpaActCpyMplsExpOutwards;
 		action.arg = pData->mplsCopyEXPOutwards;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	
 	if(pData->remarkTableIndexAction){
-		action.act = dpActSetRemarkTableId;
+		action.act = ofdpaActSetRemarkTableId;
 		action.arg = pData->remarkTableIndex;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->mplsTTLAction){
-		action.act = dpActSetMplsTtl;
+		action.act = ofdpaActSetMplsTtl;
 		action.arg = pData->mplsTTL;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->mplsCopyTTLOutwards){
-		action.act = dpActCpyMplsTtlOutwards;
+		action.act = ofdpaActCpyMplsTtlOutwards;
 		action.arg = pData->mplsCopyTTLOutwards;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->lmepIdAction){
-		action.act = dpActSetLmepId;
+		action.act = ofdpaActSetLmepId;
 		action.arg = pData->lmepId;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->oamLmTxCountAction){
-		action.act = dpActOamLmTxCount;
+		action.act = ofdpaActOamLmTxCount;
 		action.arg = 0;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
 	if(pData->colorBasedCountAction){
-		action.act = dpActIncColorBasedCount;
+		action.act = ofdpaActIncColorBasedCount;
 		action.arg = pData->colorBasedCountId;
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
