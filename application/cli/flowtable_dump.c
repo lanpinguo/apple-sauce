@@ -113,7 +113,7 @@ void dumpFlowTable(OFDPA_FLOW_TABLE_ID_t tableId, int entryPrintLimit, int *entr
 {
   int i;
   OFDPA_ERROR_t rc;
-  char buffer[700];
+	ofdpaPrettyPrintBuf_t buffer;
   ofdpaFlowTableInfo_t info;
   ofdpaFlowEntry_t flow;
   ofdpaFlowEntryStats_t flowStats;
@@ -131,18 +131,18 @@ void dumpFlowTable(OFDPA_FLOW_TABLE_ID_t tableId, int entryPrintLimit, int *entr
 
   if (entryPrintLimit == 0)
   {
-    sprintf(buffer, "all entries");
+    sprintf(buffer.data, "all entries");
   }
   else if (entryPrintLimit == 1)
   {
-    sprintf(buffer, "up to 1 entry");
+    sprintf(buffer.data, "up to 1 entry");
   }
   else
   {
-    sprintf(buffer, "up to %d entries", entryPrintLimit);
+    sprintf(buffer.data, "up to %d entries", entryPrintLimit);
   }
 
-  printf("  Retrieving %s. ", buffer);
+  printf("  Retrieving %s. ", buffer.data);
 
   if (rc != OFDPA_E_NONE)
   {
@@ -171,9 +171,11 @@ void dumpFlowTable(OFDPA_FLOW_TABLE_ID_t tableId, int entryPrintLimit, int *entr
   while ((rc == OFDPA_E_NONE) &&
          ((entryPrintLimit == 0) || (i < entryPrintLimit)))
   {
-    rc = ofdpaFlowEntryDecode(&flow, buffer, sizeof(buffer));
-		
-    printf("-- %s%s\r\n", buffer, (rc == OFDPA_E_FULL) ? " -- OUTPUT TRUNCATED! --":"");
+		rc = ofdpaFlowEntryPrint(&flow, &buffer);
+
+    //rc = ofdpaFlowEntryDecode(&flow, buffer.data, sizeof(buffer.data));
+	
+    printf("-- %s%s\r\n", buffer.data, (rc == OFDPA_E_FULL) ? " -- OUTPUT TRUNCATED! --":"");
 
 		memset(&flowStats, 0, sizeof(flowStats));
 		rc = ofdpaFlowStatsGet(&flow, &flowStats);

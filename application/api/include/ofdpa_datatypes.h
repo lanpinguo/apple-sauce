@@ -453,7 +453,32 @@ typedef struct ofdpaAct_s
 	uint64_t												arg;
 }ofdpaAct_t;
 
+typedef struct ofdpaPrettyPrintBuf_s
+{
+#define OFDPA_PRETTY_MAX_LEN	700
+	uint32_t 	len;
+	uint8_t		data[OFDPA_PRETTY_MAX_LEN];
+}ofdpaPrettyPrintBuf_t;
 
+/*
+ * This macro is for use in the decode functions below. It is specialized for those functions and
+ * detects the case when adding new text to the string results in the buffer becoming full. If that
+ * condition is detected, the last byte in the buffer is set to NULL and a return statement is executed
+ * with the return code OFDPA_E_FULL.
+ *
+ * This behavior means this macro MUST be invoked only within a function call. It should not be copied
+ * or moved to any header file due to this specialization.
+ */
+#define APPEND_BUFFER_CHECK_SIZE(__buffer, __buffsize, __count, ...)                       \
+  if (__count < __buffsize)                                                                \
+  {                                                                                        \
+    __count += snprintf(&__buffer[__count], (__buffsize-__count), __VA_ARGS__);            \
+  }                                                                                        \
+  if (__count >= __buffsize)                                                               \
+  {                                                                                        \
+    __buffer[__buffsize-1] = '\0';                                                           \
+    return OFDPA_E_FULL;                                                                   \
+  }                                                                                        \
 
 
 /** Ingress Port Flow Table Match */
@@ -3703,6 +3728,7 @@ typedef struct ofdpaActionFuncOps_s
 
 typedef struct ofdpaActBucket_s 
 {
+  uint32_t                				maxNum;			
   uint32_t                				numAct;			
 	ofdpaAct_t											act[0];
 }ofdpaActBucket_t;
@@ -3710,6 +3736,7 @@ typedef struct ofdpaActBucket_s
 
 typedef struct ofdpaActHolder_s 
 {
+  uint32_t                				maxNum;			
   uint32_t                				numAct;			
 	ofdpaAct_t											act[0];
 }ofdpaActHolder_t;
@@ -3805,7 +3832,6 @@ enum DROP_REASON{
 	DROP_UNSUPPORTED = (1<<1),
 	DROP_ERROR_FORMAT = (1<<2),
 };
-
 
 
 

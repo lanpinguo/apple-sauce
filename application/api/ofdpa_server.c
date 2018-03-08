@@ -2233,3 +2233,101 @@ OFDPA_ERROR_t ofdpaQueueRateGet(uint32_t portNum, uint32_t queueId, uint32_t *mi
 }
 
 
+
+
+OFDPA_ERROR_t ofdpaFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NONE;
+  uint32_t count = 0, mdlLevel = 0;;
+	static char *mplsTypeSubTypeName[] =
+	{
+		[OFDPA_MPLS_TYPE_VPWS 				] = "VPWS",
+		[OFDPA_MPLS_TYPE_VPLS 				] = "VPLS",
+		[OFDPA_MPLS_TYPE_OAM					] = "OAM",
+		[OFDPA_MPLS_TYPE_L3_UNICAST 	] = "L3 Route Unicast",
+		[OFDPA_MPLS_TYPE_L3_MULTICAST ] = "L3 Route Multicast",
+		[OFDPA_MPLS_TYPE_L3_PHP 			] = "L3 PHP",
+	};
+
+	if((flow == NULL) || (buf == NULL)){
+		return OFDPA_E_PARAM;
+	}
+
+
+
+  switch (flow->tableId)
+  {
+    case OFDPA_FLOW_TABLE_ID_INGRESS_PORT:
+      break;
+		case OFDPA_FLOW_TABLE_ID_VLAN:
+			{
+				ofdpaVlanFlowEntry_t *flowData;
+				ofdpaVlanFlowMatch_t *match;
+				int i;
+				ofdpaActionFuncOpt_t	ops;
+				
+				flowData = &flow->flowData.vlanFlowEntry;
+				match = &flowData->match_criteria;
+		
+				APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " inPort = ");
+				ofdpaPortDecode(buf->data, OFDPA_PRETTY_MAX_LEN, &count, match->inPort);
+				APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " vlanId:mask = 0x%04x:0x%04x (VLAN %d)", match->vlanId, match->vlanIdMask, match->vlanId & OFDPA_VID_EXACT_MASK);
+		
+				/* instructions */
+				APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " |");
+				APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " GoTo = %d (%s)", flowData->gotoTableId, gotoFlowTableNameGet(flowData->gotoTableId));
+		
+				for(i = 0; i < flowData->apply_cnt ; i ++){
+					if (count < OFDPA_PRETTY_MAX_LEN)																															 
+					{ 
+						if(flowData->apply_actions[i].act){
+							ops.buf = &buf->data[count];
+							ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
+							count += (flowData->apply_actions[i].act)(&ops,NULL,flowData->apply_actions[i].arg);
+						}
+					} 																																											 
+					if (count >= OFDPA_PRETTY_MAX_LEN) 																														 
+					{ 																																											 
+						buf->data[OFDPA_PRETTY_MAX_LEN - 1] = '\0'; 																												
+						return OFDPA_E_FULL;																																	 
+					} 																																											 
+				}
+				
+				for(i = 0; i < flowData->write_cnt ; i ++){
+					if (count < OFDPA_PRETTY_MAX_LEN)																															 
+					{ 
+						if(flowData->write_actions[i].act){
+							ops.buf = &buf->data[count];
+							ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
+							count += (flowData->write_actions[i].act)(&ops,NULL,flowData->write_actions[i].arg);
+						}
+					} 																																											 
+					if (count >= OFDPA_PRETTY_MAX_LEN) 																														 
+					{ 																																											 
+						buf->data[OFDPA_PRETTY_MAX_LEN - 1] = '\0'; 																												
+						return OFDPA_E_FULL;																																	 
+					} 																																											 
+				}
+			}
+			break;
+		default:
+			APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "Unable to decode flow entry for table ID %d ", flow->tableId);
+			rc = OFDPA_E_NOT_FOUND;
+			break;
+	}
+		
+		/* configuration data common to all flow entries */
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, " | ");
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "priority = %d ", flow->priority);
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "hard_time = %d ", flow->hard_time);
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "idle_time = %d ", flow->idle_time);
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "cookie = %llu", (unsigned long long int)flow->cookie);
+		
+		return(rc);
+
+	buf->len = count;
+	
+	return OFDPA_E_NONE;
+}
+
+

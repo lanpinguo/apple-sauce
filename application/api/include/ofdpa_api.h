@@ -3850,7 +3850,9 @@ int ofdpaBcmCommand(ofdpa_buffdesc buffer);
 
 OFDPA_ERROR_t ofdpaDevshellCommand(ofdpa_buffdesc buffer);
 
+const char *gotoFlowTableNameGet(OFDPA_FLOW_TABLE_ID_t tableId);
 
+OFDPA_ERROR_t ofdpaFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf);
 
 
 /** Action list */

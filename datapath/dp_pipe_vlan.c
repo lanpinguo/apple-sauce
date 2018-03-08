@@ -229,13 +229,15 @@ OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 			flowData->gotoTableId 							= pNode->instructions.gotoTableId ;
 
 			
-			for(j = 0; j < pNode->instructions.apply_action->numAct ; j++){
+			for(j = 0,flowData->apply_cnt = 0; j < pNode->instructions.apply_action->numAct ; j++){
 				flowData->apply_actions[j] = pNode->instructions.apply_action->act[j];
+				flowData->apply_cnt++;
 			}
 
 
-			for(j = 0; j < pNode->instructions.write_action->actHolder.numAct ; j++){
-				flowData->apply_actions[j] = pNode->instructions.write_action->actHolder.act[j];
+			for(j = 0 , flowData->write_cnt = 0; j < pNode->instructions.write_action->actHolder.numAct ; j++){
+				flowData->write_actions[j] = pNode->instructions.write_action->actHolder.act[j];
+				flowData->write_cnt++;
 			}
 
 			return OFDPA_E_NONE;

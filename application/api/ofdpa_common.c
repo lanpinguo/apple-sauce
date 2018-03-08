@@ -24,25 +24,6 @@
 #include "ofdpa_api.h"
 #include "ofdb_api.h"
 #include "datapath_api.h"
-/*
- * This macro is for use in the decode functions below. It is specialized for those functions and
- * detects the case when adding new text to the string results in the buffer becoming full. If that
- * condition is detected, the last byte in the buffer is set to NULL and a return statement is executed
- * with the return code OFDPA_E_FULL.
- *
- * This behavior means this macro MUST be invoked only within a function call. It should not be copied
- * or moved to any header file due to this specialization.
- */
-#define APPEND_BUFFER_CHECK_SIZE(__buffer, __buffsize, __count, ...)                       \
-  if (__count < __buffsize)                                                                \
-  {                                                                                        \
-    __count += snprintf(&__buffer[__count], (__buffsize-__count), __VA_ARGS__);            \
-  }                                                                                        \
-  if (__count >= __buffsize)                                                               \
-  {                                                                                        \
-    __buffer[__buffsize-1] = '\0';                                                           \
-    return OFDPA_E_FULL;                                                                   \
-  }                                                                                        \
 
 typedef enum
 {
@@ -1405,7 +1386,7 @@ const char *ofdpaFlowTableNameGet(OFDPA_FLOW_TABLE_ID_t tableId)
   return("[Table name not found]");
 }
 
-static const char *gotoFlowTableNameGet(OFDPA_FLOW_TABLE_ID_t tableId)
+const char *gotoFlowTableNameGet(OFDPA_FLOW_TABLE_ID_t tableId)
 {
   /* when used as a Goto table value, return "None" instead of the name for TableId == 0 */
   return(tableId ? ofdpaFlowTableNameGet(tableId) : "None");
