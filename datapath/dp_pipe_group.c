@@ -3,7 +3,7 @@
   Copyright (C), 2001-2011, Pure Co., Ltd.
 
  ******************************************************************************
-  File Name     : dp_pipe_indirect_grp.c
+  File Name     : dp_pipe_grp.c
   Version       : Initial Draft
   Author        : lanpinguo
   Created       : 2018/2/23
@@ -65,7 +65,7 @@
 #include "ofdpa_util.h"
 #include "ofdpa_porting.h"
 #include "datapath.h"
-#include "dp_pipe_indirect_grp.h"
+#include "dp_pipe_group.h"
 
 
 #define DP_ADD_ACTION_TO_BUCKET(pBukt,pAct) \
@@ -78,12 +78,12 @@
 	} \
 }while(0)
 
-ofdpaIndirectGrpPipeNodeConfig_t indirect_grp_pipe_config;
+ofdpaGrpPipeNodeConfig_t grp_pipe_config;
 
 
-int getIndirectGrpSockFd(void)
+int getGrpSockFd(void)
 {
-	return	indirect_grp_pipe_config.nodeSock;
+	return	grp_pipe_config.nodeSock;
 }
 
 
@@ -108,7 +108,7 @@ OFDPA_ERROR_t indirectGroupAdd(ofdpaGroupEntry_t *group)
 		
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Add new node to list!\r\n", 0);
-		ofdpa_list_add(&pNew->list,&indirect_grp_pipe_config.entrys);
+		ofdpa_list_add(&pNew->list,&grp_pipe_config.entrys);
 		
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
 											 "New group 0x%08x node added!\r\n", group->groupId);
@@ -488,7 +488,7 @@ static OFDPA_ERROR_t indirectGrpPipeInPktRecv(struct timeval *timeout)
 
 	
 
-  pipeInPktSockFd = getIndirectGrpSockFd();
+  pipeInPktSockFd = getGrpSockFd();
   if (pipeInPktSockFd < 0)
   {
     return OFDPA_E_FAIL;
@@ -543,18 +543,18 @@ static OFDPA_ERROR_t indirectGrpPipeInPktRecv(struct timeval *timeout)
 
 
 
-static void indirect_grp_pipe_thread_core(void * arg)
+static void grp_pipe_thread_core(void * arg)
 {
 	OFDPA_ERROR_t rv;
 
-	rv = dpPipeNodeSocketCreate(OFDPA_INDIRECT_GRP, &indirect_grp_pipe_config.nodeSock);
+	rv = dpPipeNodeSocketCreate(OFDPA_INDIRECT_GRP, &grp_pipe_config.nodeSock);
 	if(rv != OFDPA_E_NONE){
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
                       "Failed to create socket %d. errno %s.\r\n",rv);
 		return;
 	}
 	
-	OFDPA_INIT_LIST_HEAD(&indirect_grp_pipe_config.entrys);
+	OFDPA_INIT_LIST_HEAD(&grp_pipe_config.entrys);
 
 	while(1){
 	
@@ -566,7 +566,7 @@ static void indirect_grp_pipe_thread_core(void * arg)
 }
 
 /*****************************************************************************
- Prototype    : indirect_grp_pipe_init
+ Prototype    : group_pipe_init
  Description  : this is vlan pipe init
  Input        : int argc      
                 char *argv[]  
@@ -581,12 +581,12 @@ static void indirect_grp_pipe_thread_core(void * arg)
     Modification : Created function
 
 *****************************************************************************/
-int indirect_grp_pipe_init(int argc, char *argv[])
+int group_pipe_init(int argc, char *argv[])
 {
 	
-	indirect_grp_pipe_config.max_entrys = 4094;
+	grp_pipe_config.max_entrys = 4094;
 
-	indirect_grp_pipe_config.nodeTid = (pthread_t)dpaThreadCreate("indirectGrpTask", 62, indirect_grp_pipe_thread_core, NULL);
+	grp_pipe_config.nodeTid = (pthread_t)dpaThreadCreate("indirectGrpTask", 62, grp_pipe_thread_core, NULL);
 
 
 	return OFDPA_E_NONE;

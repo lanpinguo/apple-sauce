@@ -103,6 +103,7 @@ typedef struct ofdpaMplsL2PortPipeNode_s
 
 typedef struct ofdpaMplsL2PortPipeNodeConfig_s
 {
+	ofdpaRWlock_t 							lock;
 
 	ofdpaMplsL2PortPipeNode_t 	*entrys;
 	uint32_t										max_entrys;
