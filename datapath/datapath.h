@@ -120,7 +120,7 @@ struct PIPE_ENTRY_ADDR
 typedef OFDPA_ERROR_t (*flowAdd_fn)(ofdpaFlowEntry_t *flow);
 typedef OFDPA_ERROR_t (*flowStatsGet_fn)(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flowStats);
 typedef OFDPA_ERROR_t (*flowNextGet_fn)(ofdpaFlowEntry_t *flow, ofdpaFlowEntry_t *nextFlow);
-
+typedef OFDPA_ERROR_t (*flowEntryPrint_fn)(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf);
 typedef uint32_t (*flowTableEntryCountGet_fn)(void);
 typedef uint32_t (*flowTableMaxCountGet_fn)(void);
 
@@ -130,7 +130,7 @@ typedef struct ofdpaPipeTblNodeOps_s
 	flowAdd_fn										flowAdd;
 	flowStatsGet_fn								flowStatsGet;
 	flowNextGet_fn								flowNextGet;
-	
+	flowEntryPrint_fn							flowEntryPrint;
 	flowTableEntryCountGet_fn			flowTableEntryCountGet;
 	flowTableMaxCountGet_fn				flowTableMaxCountGet;
 	

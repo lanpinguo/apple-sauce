@@ -24,6 +24,7 @@
 OFDPA_ERROR_t dpFlowAdd(ofdpaFlowEntry_t *flow);
 OFDPA_ERROR_t dpFlowStatsGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntryStats_t *flowStats);
 OFDPA_ERROR_t dpFlowNextGet(ofdpaFlowEntry_t *flow, ofdpaFlowEntry_t *nextFlow);
+OFDPA_ERROR_t dpFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *buf);
 
 uint32_t dpFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId);
 uint32_t dpFlowTableEntryCountGet(OFDPA_FLOW_TABLE_ID_t tableId);
