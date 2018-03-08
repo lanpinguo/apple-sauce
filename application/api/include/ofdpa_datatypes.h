@@ -445,51 +445,14 @@ typedef enum
 } OFDPA_FLOW_TABLE_ID_t;
 
 
-typedef enum
+typedef  uint64_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
+
+typedef struct ofdpaAct_s 
 {
-	OFDPA_ActAllowVlanTrans,
-	OFDPA_ActCpyMplsExpOutwards,
-	OFDPA_ActCpyMplsTtlOutwards,
-	OFDPA_ActIdentifyOutPort,
-	OFDPA_ActIncClassBasedCounter,
-	OFDPA_ActIncColorBasedCount,
-	OFDPA_ActOamLmTxCount,
-	OFDPA_ActPopVlan,
-	OFDPA_ActPushL2Hdr,
-	OFDPA_ActPushMplsCw,
-	OFDPA_ActPushMplsHdr,
-	OFDPA_ActPushVlan,
-	OFDPA_ActPushVlan2,
-	OFDPA_ActSetDstMac,
-	OFDPA_ActSetEtherType,
-	OFDPA_ActSetGrpId,
-	OFDPA_ActSetLmepId,
-	OFDPA_ActSetMetaDataMplsL2Port,
-	OFDPA_ActSetMetaDataMplsType,
-	OFDPA_ActSetMetaDataOvid,
-	OFDPA_ActSetMetaDataTunId,
-	OFDPA_ActSetMetaDataVrf,
-	OFDPA_ActSetMplsBos,
-	OFDPA_ActSetMplsExp,
-	OFDPA_ActSetMplsLabel,
-	OFDPA_ActSetMplsTtl,
-	OFDPA_ActSetQosIndex,
-	OFDPA_ActSetRemarkTableId,
-	OFDPA_ActSetSrcMac,
-	OFDPA_ActSetTpid,
-	OFDPA_ActSetVlanId,
-	OFDPA_ActSetVlanId2,
-	
-	OFDPA_ActCount,
+	ofdpaAct_f											act;
+	uint64_t												arg;
+}ofdpaAct_t;
 
-}OFDPA_FLOW_ACTION_TYPE_t;
-
-
-typedef struct ofdpaAction_s
-{
-	OFDPA_FLOW_ACTION_TYPE_t 	act;
-	uint64_t								 	arg;
-}ofdpaAction_t;
 
 
 
@@ -704,11 +667,11 @@ typedef struct ofdpaVlanFlowEntry_s
   */
 
   uint32_t							apply_cnt;				/** Indicate the last action count in apy_actions list*/
-	ofdpaAction_t					apply_actions[OFDPA_FT_VLAN_APLY_ACT_MAX];
+	ofdpaAct_t						apply_actions[OFDPA_FT_VLAN_APLY_ACT_MAX];
 
   /** Write-Action(s) instruction */
   uint32_t							write_cnt;				/** Indicate the last action count in wr_actions list*/
-	ofdpaAction_t					write_actions[OFDPA_FT_VLAN_WR_ACT_MAX];
+	ofdpaAct_t						write_actions[OFDPA_FT_VLAN_WR_ACT_MAX];
 
 
 } ofdpaVlanFlowEntry_t;
@@ -3728,21 +3691,14 @@ typedef enum {
 }ofdpaGrpType_e;
 
 
-typedef  uint64_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
 
-typedef struct ofdpaAct_s 
-{
-	ofdpaAct_f											act;
-	uint64_t												arg;
-}ofdpaAct_t;
-
-typedef struct dpActionFuncOps_s
+typedef struct ofdpaActionFuncOps_s
 {
 #define OP_PRETTY_PRINT			1
 	uint32_t 									ops;
 	void											*buf;
 	uint32_t									bufSize;
-}dpActionFuncOpt_t;
+}ofdpaActionFuncOpt_t;
 
 
 typedef struct ofdpaActBucket_s 

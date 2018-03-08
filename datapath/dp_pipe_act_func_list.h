@@ -59,38 +59,38 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 
- uint64_t dpActAllowVlanTrans(void *this,void *pcb, uint64_t arg);
- uint64_t dpActCpyMplsExpOutwards(void *this,void *pcb, uint64_t arg);
- uint64_t dpActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg);
- uint64_t dpActIdentifyOutPort(void *this,void *pcb, uint64_t arg);
- uint64_t dpActIncClassBasedCounter(void *this,void *pcb, uint64_t arg);
- uint64_t dpActIncColorBasedCount(void *this,void *pcb, uint64_t arg);
- uint64_t dpActOamLmTxCount(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPopVlan(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPushL2Hdr(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPushMplsCw(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPushMplsHdr(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPushVlan(void *this,void *pcb, uint64_t arg);
- uint64_t dpActPushVlan2(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetDstMac(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetEtherType(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetGrpId(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetLmepId(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMetaDataOvid(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMetaDataTunId(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMetaDataVrf(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMplsBos(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMplsExp(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMplsLabel(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetMplsTtl(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetQosIndex(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetRemarkTableId(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetSrcMac(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetTpid(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetVlanId(void *this,void *pcb, uint64_t arg);
- uint64_t dpActSetVlanId2(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActAllowVlanTrans(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActCpyMplsExpOutwards(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActIdentifyOutPort(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActIncClassBasedCounter(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActIncColorBasedCount(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActOamLmTxCount(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPopVlan(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushL2Hdr(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushMplsCw(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushMplsHdr(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushVlan(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushVlan2(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetDstMac(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetEtherType(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetGrpId(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetLmepId(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMetaDataOvid(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMetaDataTunId(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMetaDataVrf(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMplsBos(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMplsExp(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMplsLabel(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMplsTtl(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetQosIndex(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetRemarkTableId(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetSrcMac(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetTpid(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetVlanId(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetVlanId2(void *this,void *pcb, uint64_t arg);
 
 #ifdef __cplusplus
 #if __cplusplus

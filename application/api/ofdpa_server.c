@@ -2118,46 +2118,46 @@ OFDPA_ERROR_t  ofdpaPortDiscardConfigGet(uint32_t port, uint32_t cosq,uint32_t c
 		return rc;
 	}
 	
-	OFDPA_ERROR_t ofdpaQueueRateSet(uint32_t portNum, uint32_t queueId, uint32_t minRate, uint32_t maxRate)
+OFDPA_ERROR_t ofdpaQueueRateSet(uint32_t portNum, uint32_t queueId, uint32_t minRate, uint32_t maxRate)
+{
+	OFDPA_ERROR_t rc;
+
+	OFDB_WRITE_LOCK_TAKE;
+
+	if (!ofdbPortIsValid(portNum))
 	{
-		OFDPA_ERROR_t rc;
-	
-		OFDB_WRITE_LOCK_TAKE;
-	
-		if (!ofdbPortIsValid(portNum))
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Invalid input port %u.\r\n",
-												 portNum);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_NOT_FOUND;
-		}
-	
-		rc = ofdbPortQueueIdIsValid(portNum, queueId);
-		if (rc != OFDPA_E_NONE)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Invalid port queue %u; rc = %d.\r\n", queueId, rc);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_PARAM;
-		}
-	
-		if (minRate > maxRate)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Min queue rate must be less than max queue rate.\r\n", 0);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_PARAM;
-		}
-	
-		if ((minRate < 1 || minRate > 1000) || (maxRate < 1 || maxRate > 1000))
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Min and Max queue rates must range between 1-1000%.\r\n", 0);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_PARAM;
-		}
-	
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Invalid input port %u.\r\n",
+											 portNum);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_NOT_FOUND;
+	}
+
+	rc = ofdbPortQueueIdIsValid(portNum, queueId);
+	if (rc != OFDPA_E_NONE)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Invalid port queue %u; rc = %d.\r\n", queueId, rc);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_PARAM;
+	}
+
+	if (minRate > maxRate)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Min queue rate must be less than max queue rate.\r\n", 0);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_PARAM;
+	}
+
+	if ((minRate < 1 || minRate > 1000) || (maxRate < 1 || maxRate > 1000))
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Min and Max queue rates must range between 1-1000%.\r\n", 0);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_PARAM;
+	}
+
 //		rc = driverPortQueueMinMaxRateSet(portNum, queueId, minRate, maxRate);
 //		if (OFDPA_E_NONE != rc)
 //		{
@@ -2166,69 +2166,70 @@ OFDPA_ERROR_t  ofdpaPortDiscardConfigGet(uint32_t port, uint32_t cosq,uint32_t c
 //			OFDB_LOCK_GIVE;
 //			return rc;
 //		}
-	
-		rc = ofdbPortQueueMinMaxRateSet(portNum, queueId, minRate, maxRate);
-	
-		OFDB_LOCK_GIVE;
-	
-		if (OFDPA_E_NONE != rc)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Port Queue rate set failed; rc = %d!\r\n", rc);
-		}
-	
-		return rc;
-	}
-	
-	OFDPA_ERROR_t ofdpaQueueRateGet(uint32_t portNum, uint32_t queueId, uint32_t *minRate, uint32_t *maxRate)
+
+	rc = ofdbPortQueueMinMaxRateSet(portNum, queueId, minRate, maxRate);
+
+	OFDB_LOCK_GIVE;
+
+	if (OFDPA_E_NONE != rc)
 	{
-		OFDPA_ERROR_t rc;
-	
-		if (minRate == NULL)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Null min rate passed!\r\n", 0);
-			return OFDPA_E_PARAM;
-	
-		}
-	
-		if (maxRate == NULL)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Null max rate passed!\r\n", 0);
-			return OFDPA_E_PARAM;
-		}
-	
-		OFDB_READ_LOCK_TAKE;
-	
-		if (!ofdbPortIsValid(portNum))
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Invalid input port %u.\r\n",
-												 portNum);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_NOT_FOUND;
-		}
-	
-		rc = ofdbPortQueueIdIsValid(portNum, queueId);
-		if (rc != OFDPA_E_NONE)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Invalid port queue %u; rc = %d.\r\n", queueId, rc);
-			OFDB_LOCK_GIVE;
-			return OFDPA_E_PARAM;
-		}
-	
-		rc = ofdbPortQueueMinMaxRateGet(portNum, queueId, minRate, maxRate);
-	
-		OFDB_LOCK_GIVE;
-	
-		if (OFDPA_E_NONE != rc)
-		{
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "Port Queue rate get failed; rc = %d!\r\n", rc);
-		}
-	
-		return rc;
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Port Queue rate set failed; rc = %d!\r\n", rc);
 	}
+
+	return rc;
+}
+	
+OFDPA_ERROR_t ofdpaQueueRateGet(uint32_t portNum, uint32_t queueId, uint32_t *minRate, uint32_t *maxRate)
+{
+	OFDPA_ERROR_t rc;
+
+	if (minRate == NULL)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Null min rate passed!\r\n", 0);
+		return OFDPA_E_PARAM;
+
+	}
+
+	if (maxRate == NULL)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Null max rate passed!\r\n", 0);
+		return OFDPA_E_PARAM;
+	}
+
+	OFDB_READ_LOCK_TAKE;
+
+	if (!ofdbPortIsValid(portNum))
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Invalid input port %u.\r\n",
+											 portNum);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_NOT_FOUND;
+	}
+
+	rc = ofdbPortQueueIdIsValid(portNum, queueId);
+	if (rc != OFDPA_E_NONE)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Invalid port queue %u; rc = %d.\r\n", queueId, rc);
+		OFDB_LOCK_GIVE;
+		return OFDPA_E_PARAM;
+	}
+
+	rc = ofdbPortQueueMinMaxRateGet(portNum, queueId, minRate, maxRate);
+
+	OFDB_LOCK_GIVE;
+
+	if (OFDPA_E_NONE != rc)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Port Queue rate get failed; rc = %d!\r\n", rc);
+	}
+
+	return rc;
+}
+
 

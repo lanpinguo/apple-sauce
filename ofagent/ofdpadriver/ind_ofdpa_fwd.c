@@ -1033,7 +1033,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
             	}
-              flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetMetaDataTunId;
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataTunId;
               flow->flowData.vlanFlowEntry.apply_actions[i].arg = tunnel_id;
               flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1070,7 +1070,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
             	}
-              flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetMetaDataMplsL2Port;
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataMplsL2Port;
               flow->flowData.vlanFlowEntry.apply_actions[i].arg = mpls_l2_port;
               flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1253,7 +1253,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
             	}
-              flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetMetaDataVrf;
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataVrf;
               flow->flowData.vlanFlowEntry.apply_actions[i].arg = vrf;
               flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1285,7 +1285,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
             	}
-              flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetMetaDataOvid;
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataOvid;
               flow->flowData.vlanFlowEntry.apply_actions[i].arg = vlan_vid;
               flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1311,7 +1311,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
 							if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
 							}
-							flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetVlanId;
+							flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetVlanId;
 							flow->flowData.vlanFlowEntry.apply_actions[i].arg = vlan_vid;
 							flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1613,7 +1613,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
             	if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 								return INDIGO_ERROR_BAD_ACTION;
             	}
-              flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActSetMetaDataMplsType;
+              flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActSetMetaDataMplsType;
               flow->flowData.vlanFlowEntry.apply_actions[i].arg = mpls_type;
               flow->flowData.vlanFlowEntry.apply_cnt++;
             }
@@ -1643,7 +1643,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
 					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 						return INDIGO_ERROR_BAD_ACTION;
 					}
-					flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActPopVlan;
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActPopVlan;
 					flow->flowData.vlanFlowEntry.apply_actions[i].arg = 0;
 					flow->flowData.vlanFlowEntry.apply_cnt++;
         }
@@ -1694,7 +1694,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_apply_actions(of_list_action_
 					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 						return INDIGO_ERROR_BAD_ACTION;
 					}
-					flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActPushVlan;
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActPushVlan;
 					flow->flowData.vlanFlowEntry.apply_actions[i].arg = eth_type;
 					flow->flowData.vlanFlowEntry.apply_cnt++;
         }
@@ -2184,7 +2184,7 @@ static indigo_error_t ind_ofdpa_translate_openflow_write_actions(of_list_action_
 					if(i >= OFDPA_FT_VLAN_APLY_ACT_MAX){
 						return INDIGO_ERROR_BAD_ACTION;
 					}
-					flow->flowData.vlanFlowEntry.apply_actions[i].act = OFDPA_ActIncClassBasedCounter;
+					flow->flowData.vlanFlowEntry.apply_actions[i].act = ofdpaActIncClassBasedCounter;
 					flow->flowData.vlanFlowEntry.apply_actions[i].arg = counterIndex;
 					flow->flowData.vlanFlowEntry.apply_cnt++;
         }

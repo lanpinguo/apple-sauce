@@ -144,8 +144,7 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pHolder = pNode->instructions.apply_action;
 
 	for(i = 0; i < flowData->apply_cnt; i++){
-		act.act = dpActGetFuncFromType(flowData->apply_actions[i].act);
-		act.arg = flowData->apply_actions[i].arg;
+		act = flowData->apply_actions[i];
 		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 	}
 	
@@ -163,8 +162,7 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pHolder =	&pNode->instructions.write_action->actHolder;
 
 	for(i = 0; i < flowData->write_cnt; i++){
-		act.act = dpActGetFuncFromType(flowData->write_actions[i].act);
-		act.arg = flowData->write_actions[i].arg;
+		act = flowData->write_actions[i];
 		DP_FT_ADD_ACTION_TO_HOLDER(pHolder,&act);
 	}
 
@@ -197,7 +195,7 @@ OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 {
 	ofdpaVlanPipeNode_t *pNode = NULL;
 	ofdpaVlanFlowEntry_t *flowData;
-	int i;
+	int i,j;
 	
 
 	if(flow == NULL || next == NULL){
@@ -229,6 +227,16 @@ OFDPA_ERROR_t vlanPipeFlowNextGet(ofdpaFlowEntry_t *flow,ofdpaFlowEntry_t *next)
 			flowData->match_criteria.vlanId 		= REORDER16_B2L(pNode->match.key.vlanId);
 			flowData->match_criteria.vlanIdMask = REORDER16_B2L(pNode->match.keyMask.vlanId);
 			flowData->gotoTableId 							= pNode->instructions.gotoTableId ;
+
+			
+			for(j = 0; j < pNode->instructions.apply_action->numAct ; j++){
+				flowData->apply_actions[j] = pNode->instructions.apply_action->act[j];
+			}
+
+
+			for(j = 0; j < pNode->instructions.write_action->actHolder.numAct ; j++){
+				flowData->apply_actions[j] = pNode->instructions.write_action->actHolder.act[j];
+			}
 
 			return OFDPA_E_NONE;
 		}

@@ -1601,7 +1601,7 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
         ofdpaVlanFlowEntry_t *flowData;
         ofdpaVlanFlowMatch_t *match;
 				int i;
-				dpActionFuncOpt_t	ops;
+				ofdpaActionFuncOpt_t	ops;
 				
         flowData = &flow->flowData.vlanFlowEntry;
         match = &flowData->match_criteria;
@@ -1619,7 +1619,7 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
 					{ 																																											 
 						ops.buf = &outBuf[count];
 						ops.bufSize = bufSize - count;
-						count += (dpActGetFuncFromType(flowData->apply_actions[i].act))(&ops,NULL,flowData->apply_actions[i].arg);
+						count += (flowData->apply_actions[i].act)(&ops,NULL,flowData->apply_actions[i].arg);
 					} 																																											 
 					if (count >= bufSize)																															 
 					{ 																																											 
@@ -1633,7 +1633,7 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
 					{ 																																											 
 						ops.buf = &outBuf[count];
 						ops.bufSize = bufSize - count;
-						count += (dpActGetFuncFromType(flowData->write_actions[i].act))(&ops,NULL,flowData->write_actions[i].arg);
+						count += (flowData->write_actions[i].act)(&ops,NULL,flowData->write_actions[i].arg);
 					} 																																											 
 					if (count >= bufSize)																															 
 					{ 																																											 
