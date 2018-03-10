@@ -58,7 +58,33 @@
 
 
 
+/*  Group Table Status. This information is aggregated for all Groups.
+*/
+typedef struct ofdpaGroupTableStatus_s
+{
+  uint32_t group_database_size; /* Maximum number of group records in the database */
+  uint32_t num_groups_in_database; /* Current number of group records in the database */
 
+  /* Maximum groups in each group table  */
+  uint32_t groupTableMaxCount[OFDPA_GROUP_ENTRY_TYPE_LAST];
+
+  /* Current number of groups in each group table  */
+  uint32_t groupTableEntryCount[OFDPA_GROUP_ENTRY_TYPE_LAST];
+
+} ofdpaGroupTableStatus_t;
+
+
+/*  Group Bucket Table Status. This information is aggregated for all Groups.
+*/
+typedef struct ofdpaGroupBucketTableStatus_s
+{
+  uint32_t group_bucket_ref_database_size; /* Maximum number of group bucket records in the database */
+  uint32_t group_bucket_data_database_size; /* Maximum number of group bucket records in the database */
+
+  /* Maximum buckets of each type */
+  uint32_t groupBucketTableMaxCount[OFDPA_GROUP_ENTRY_TYPE_LAST];
+
+} ofdpaGroupBucketTableStatus_t;
 
 
 
@@ -69,6 +95,9 @@ typedef struct ofdpaGrpPipeNodeConfig_s
 	int 												nodeSock;
 	pthread_t 									nodeTid ;
 
+
+	ofdpaGroupTableStatus_t			*grpStatus;
+	ofdpaGroupBucketTableStatus_t	 *grpBuktStatus;
   avlTree_t 									ofdbGroupTable_tree;
   avlTree_t 									ofdbGroupBucketRefTable_tree;
   avlTree_t 									ofdbGroupBucketDataTable_tree;

@@ -389,7 +389,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
   groupType = OFDB_GROUP_TYPE(group->groupId);
 
-  OFDB_WRITE_LOCK_TAKE;
+  //OFDB_WRITE_LOCK_TAKE;
 
   /* check if there is room for another entry in this groupId */
   if (ofdbGroupTableEntryCountGet(groupType) >= ofdbGroupTableMaxCountGet(groupType))
@@ -398,7 +398,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
                        "Group 0x%x max count (%d) is not larger than entry count (%d).\r\n",
                        group->groupId, ofdbGroupTableEntryCountGet(groupType),
                        ofdbGroupTableMaxCountGet(groupType));
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_FULL;
   }
 
@@ -423,7 +423,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
       {
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                            "Invalid VLAN %d for L2 Interface Group!\r\n", vlanId);
-        OFDB_LOCK_GIVE;
+        //OFDB_LOCK_GIVE;
         return OFDPA_E_PARAM;
       }
     }
@@ -433,7 +433,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
       {
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                            "Invalid VLAN %d for L2 Unfiltered Interface Group!\r\n", vlanId);
-        OFDB_LOCK_GIVE;
+        //OFDB_LOCK_GIVE;
         return OFDPA_E_PARAM;
       }
     }
@@ -445,7 +445,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     {
       OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                          "Invalid port %d!\r\n", portId);
-      OFDB_LOCK_GIVE;
+      //OFDB_LOCK_GIVE;
       return OFDPA_E_NOT_FOUND;
     }
 
@@ -490,7 +490,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
             OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                                "Port Id already used in L2 Interface group %x!\r\n",
                                nextGroup.groupId);
-            OFDB_LOCK_GIVE;
+            //OFDB_LOCK_GIVE;
             return OFDPA_E_PARAM;
           }
           groupId = nextGroup.groupId;
@@ -525,7 +525,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
                 OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
                                    "Tunnel access port configured to match all traffic on same physical port. groupId = %x, portId = %d, portNum = %x\r\n",
                                    group->groupId, portId, portNum);
-                OFDB_LOCK_GIVE;
+                //OFDB_LOCK_GIVE;
                 return OFDPA_E_ERROR;
               }
               else
@@ -535,7 +535,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
                   OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
                                      "Tunnel access port configured to match same VLAN traffic on same physical port. groupId = %x, portId = %d, vlanId = %d, portNum = %x\r\n",
                                      group->groupId, portId, vlanId, portNum);
-                  OFDB_LOCK_GIVE;
+                  //OFDB_LOCK_GIVE;
                   return OFDPA_E_ERROR;
                 }
               }
@@ -555,7 +555,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     {
       OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                          "Invalid VLAN %d!\r\n", vlanId);
-      OFDB_LOCK_GIVE;
+      //OFDB_LOCK_GIVE;
       return OFDPA_E_PARAM;
     }
 
@@ -569,7 +569,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     {
       OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                          "Invalid VLAN %d!\r\n", vlanId);
-      OFDB_LOCK_GIVE;
+      //OFDB_LOCK_GIVE;
       return OFDPA_E_PARAM;
     }
 
@@ -586,7 +586,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
         {
           OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                              "Found same VLAN Flood Group entry!\r\n", 0);
-          OFDB_LOCK_GIVE;
+          //OFDB_LOCK_GIVE;
           return OFDPA_E_PARAM;
         }
 
@@ -605,7 +605,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
       {
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                            "No tenant with matching tunnel ID found. (%d)\r\n", tunnelId);
-        OFDB_LOCK_GIVE;
+        //OFDB_LOCK_GIVE;
         return OFDPA_E_PARAM;
       }
 
@@ -618,7 +618,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
         {
           OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                              "Specified tenant has not configured for multicast. (%d)\r\n", tunnelId);
-          OFDB_LOCK_GIVE;
+          //OFDB_LOCK_GIVE;
           return OFDPA_E_PARAM;
         }
       }
@@ -647,7 +647,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
               OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                                  "Overlay flood group entry already exists for tenant. (tunnelId = %d)\r\n",
                                  tunnelId);
-              OFDB_LOCK_GIVE;
+              //OFDB_LOCK_GIVE;
               return OFDPA_E_PARAM;
             }
 
@@ -687,7 +687,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
       default:
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid MPLS Label Group Subtype!\r\n", 0);
-        OFDB_LOCK_GIVE;
+        //OFDB_LOCK_GIVE;
         return OFDPA_E_PARAM;
     }
 
@@ -705,7 +705,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
         {
           OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                              "MPLS ECMP not supported.\r\n", 0);
-          OFDB_LOCK_GIVE;
+          //OFDB_LOCK_GIVE;
           return OFDPA_E_UNAVAIL;
         }
         /* fall through */
@@ -722,7 +722,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
       default:
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid MPLS Forwarding Group Subtype!\r\n", 0);
-        OFDB_LOCK_GIVE;
+        //OFDB_LOCK_GIVE;
         return OFDPA_E_PARAM;
     }
 
@@ -730,17 +730,17 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
   default:
     /* Invalid Group ID */
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_PARAM;
   }
 
-  rc = ofdbGroupAdd(group);
+  rc = dpGroupAdd(group);
 
   if (rc != OFDPA_E_NONE)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Failed to add Software Group entry !\r\n", 0);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return rc;
   }
 
@@ -776,7 +776,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     ofdbGroupDelete(group->groupId);
   }
 
-	rc = ofdbGroupDataUpdate(group);
+	rc = dpGroupDataUpdate(group);
 	if (rc != OFDPA_E_NONE)
 	{
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
@@ -786,7 +786,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 	}
 
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -893,9 +893,9 @@ OFDPA_ERROR_t ofdpaGroupNextGet(uint32_t groupId, ofdpaGroupEntry_t *nextGroup)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupNextGet(groupId, nextGroup);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupNextGet(groupId, nextGroup);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -913,9 +913,9 @@ OFDPA_ERROR_t ofdpaGroupTypeNextGet(uint32_t groupId,
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupTypeNextGet(groupId, groupType, nextGroup);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupTypeNextGet(groupId, groupType, nextGroup);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -931,9 +931,9 @@ OFDPA_ERROR_t ofdpaGroupStatsGet(uint32_t groupId, ofdpaGroupEntryStats_t *group
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupStatsGet(groupId, groupStats);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupStatsGet(groupId, groupStats);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -953,12 +953,12 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_WRITE_LOCK_TAKE;
-  if (OFDPA_E_NONE != ofdbGroupStatsGet(groupBucket->groupId, &groupStats))
+  //OFDB_WRITE_LOCK_TAKE;
+  if (OFDPA_E_NONE != dpGroupStatsGet(groupBucket->groupId, &groupStats))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Group (0x%x) not present in Group Table!\r\n", groupBucket->groupId);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_NOT_FOUND;
   }
 
@@ -978,30 +978,30 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
                        "Group 0x%x max count (%d) is not larger than entry count (%d).\r\n",
                        groupBucket->groupId, groupStats.bucketCount,
                        ofdbGroupBucketTableMaxCountGet(groupBucket->groupId));
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_FULL;
   }
 
-  rc = ofdbGroupBucketValidate(groupBucket);
+  rc = dpGroupBucketValidate(groupBucket);
 
   if (OFDPA_E_NONE != rc)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Bucket validation failed; rc = %d!\r\n", rc);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return rc;
   }
 
   OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_TOO_VERBOSE,
                      "Adding Bucket in Software\r\n", 0);
 
-  rc = ofdbGroupBucketEntryAdd(groupBucket);
+  rc = dpGroupBucketEntryAdd(groupBucket);
 
   if (OFDPA_E_NONE != rc)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Failed to add Bucket in software database; rc = %d!\r\n", rc);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return rc;
   }
 
@@ -1073,7 +1073,7 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
     ofdbGroupBucketEntryDelete(groupBucket->groupId, groupBucket->bucketIndex);
   }
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   
   return rc;
@@ -1299,9 +1299,9 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryGet(uint32_t groupId, uint32_t bucketIndex,
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupBucketEntryGet(groupId, bucketIndex, groupBucket);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupBucketEntryGet(groupId, bucketIndex, groupBucket);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -1318,9 +1318,9 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryFirstGet(uint32_t groupId,
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupBucketEntryFirstGet(groupId, firstGroupBucket);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupBucketEntryFirstGet(groupId, firstGroupBucket);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -1337,9 +1337,9 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryNextGet(uint32_t groupId, uint32_t bucketInde
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbGroupBucketEntryNextGet(groupId, bucketIndex, nextBucketEntry);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpGroupBucketEntryNextGet(groupId, bucketIndex, nextBucketEntry);
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -1353,9 +1353,9 @@ OFDPA_ERROR_t ofdpaGroupTableTotalEntryCountGet(uint32_t *entryCount)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  *entryCount = ofdbGroupTableTotalEntryCountGet();
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  *entryCount = dpGroupTableTotalEntryCountGet();
+  //OFDB_LOCK_GIVE;
 
   return OFDPA_E_NONE;
 }
@@ -1377,11 +1377,11 @@ OFDPA_ERROR_t ofdpaGroupTableInfoGet(uint32_t groupId, ofdpaGroupTableInfo_t *in
     return OFDPA_E_NOT_FOUND;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  info->maxGroupEntries = ofdbGroupTableMaxCountGet(groupType);
-  info->numGroupEntries = ofdbGroupTableEntryCountGet(groupType);
-  info->maxBucketEntries = ofdbGroupBucketTableMaxCountGet(groupId);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  info->maxGroupEntries = dpGroupTableMaxCountGet(groupType);
+  info->numGroupEntries = dpGroupTableEntryCountGet(groupType);
+  info->maxBucketEntries = dpGroupBucketTableMaxCountGet(groupId);
+  //OFDB_LOCK_GIVE;
 
   return OFDPA_E_NONE;
 }
