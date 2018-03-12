@@ -50,6 +50,7 @@ uint32_t dpFlowTableEntryCountGet(OFDPA_FLOW_TABLE_ID_t tableId);
 uint32_t dpFlowTableMaxCountGet(OFDPA_FLOW_TABLE_ID_t tableId);
 
 uint32_t dpFlowVlanEntryValidate(ofdpaVlanFlowEntry_t *flowData);
+OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdpaPrettyPrintBuf_t *buf);
 
 
 

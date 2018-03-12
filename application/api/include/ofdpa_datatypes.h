@@ -2291,17 +2291,12 @@ typedef struct ofdpaL2RewriteGroupBucketData_s
 typedef struct ofdpaMPLSInterfaceGroupBucketData_s
 {
   /** bucket action set */
-  uint32_t           oamLmTxCountAction;         /**< Indicates MEP or MIP for which LM counters are to be incremented. */
 
-  /** data for Set-Field action */
-  ofdpaMacAddr_t     srcMac;
-  ofdpaMacAddr_t     dstMac;
-  uint32_t           vlanId;
-  uint32_t           lmepIdAction;         /**< Non-zero value indicates Set-field LMEP ID */
-  uint32_t           lmepId;               /**< LMEP ID value used in Set-field action */
-  uint32_t           colorBasedCountAction;    /**< Non-zero value indicates increment the specified Color Based Counter table */
-  uint32_t           colorBasedCountId;        /**< Identifier of Color Based Counter table entry to be incremented. The counter entry
-                                                    must be present when the bucket entry is added. */
+#define OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX		6
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX];
+
 } ofdpaMPLSInterfaceGroupBucketData_t;
 
 /** MPLS Label Group Bucket */
@@ -3728,6 +3723,7 @@ typedef struct ofdpaActionFuncOps_s
 
 typedef struct ofdpaActBucket_s 
 {
+  void    												*ptrRefGrpInst;
   uint32_t                				maxNum;			
   uint32_t                				numAct;			
 	ofdpaAct_t											act[0];

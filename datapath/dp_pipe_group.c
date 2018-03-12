@@ -163,7 +163,7 @@ OFDPA_ERROR_t dpGrpMplsIntfBuktBuild(ofdpaMPLSInterfaceGroupBucketData_t       *
 {
   OFDPA_ERROR_t rv;
 	ofdpaAct_t				action;
-
+	int i;
 
 
 	*ppBucket = dpGrpBucketMalloc(6);
@@ -173,40 +173,12 @@ OFDPA_ERROR_t dpGrpMplsIntfBuktBuild(ofdpaMPLSInterfaceGroupBucketData_t       *
 		return OFDPA_E_PARAM;
 	}
 
-	if(pData->oamLmTxCountAction){
-		action.act = ofdpaActOamLmTxCount;
-		action.arg = 0;
+
+	for(i = 0; i < pData->act_cnt; i++){
+		action = pData->actions[i];
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
-		
-	
-	action.act = ofdpaActSetSrcMac;
-	action.arg = *(uint64_t *)&pData->srcMac;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 
-	action.act = ofdpaActSetDstMac;
-	action.arg = *(uint64_t *)&pData->dstMac;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	action.act = ofdpaActSetVlanId;
-	action.arg = pData->vlanId;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-
-	
-	if(pData->lmepIdAction){
-		action.act = ofdpaActSetLmepId;
-		action.arg = pData->lmepId;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	
-	}
-	
-	if(pData->colorBasedCountAction){
-		action.act = ofdpaActIncColorBasedCount;
-		action.arg = pData->colorBasedCountId;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	
-	}
 
 	return OFDPA_E_NONE;
 }
@@ -318,6 +290,7 @@ OFDPA_ERROR_t indirectGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 {
   OFDPA_ERROR_t rv;
   uint32_t subType;
+  ofdpaGroupEntry_t group;
 	ofdpaActBucket_t	*pBukt = NULL;
 
 	if(groupBucket == NULL){
@@ -333,6 +306,7 @@ OFDPA_ERROR_t indirectGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 											 "Null Group passed!\r\n", 0);
 		return OFDPA_E_PARAM;
 	}
+
 
 
   switch (OFDB_GROUP_TYPE(groupBucket->groupId))
@@ -407,6 +381,15 @@ OFDPA_ERROR_t indirectGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 		  return OFDPA_E_UNAVAIL;                   
 	}
 
+
+  if (OFDPA_E_NONE != dpGroupGet(groupBucket->referenceGroupId, &group))
+  {
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+                       "Group (0x%x) not present in Group Table!\r\n", groupBucket->referenceGroupId);
+  }
+
+	
+	pBukt->ptrRefGrpInst = group.ptrGrpInst;
 
 	rv = dpBindBukt2Grp(groupBucket->ptrGrpInst,pBukt);
 	if(rv != OFDPA_E_NONE){
@@ -624,6 +607,41 @@ OFDPA_ERROR_t dpGroupAdd(ofdpaGroupEntry_t *group)
   ofdbGroupTable_node_t group_node;
   ofdbGroupTable_node_t *dataPtr;
 
+
+
+	switch ( OFDB_GROUP_TYPE(group->groupId) )
+	{
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE :
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE 	:
+			case	OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST 	:
+			case	OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE :
+			case	OFDPA_GROUP_ENTRY_TYPE_L3_ECMP			:
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY 	:
+			case	OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL 	:
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE	:
+				rc = indirectGroupAdd(group);
+				break;
+			case	OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING	 :
+				rc = indirectGroupAdd(group);
+				break;
+			case	OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST :
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD 		:
+			case	OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST :
+				break;
+	    default:
+				break;
+	}
+
+
+  if (rc != OFDPA_E_NONE)
+  {
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+                       "Failed to add Group entry !\r\n", 0);
+    return rc;                   
+  }
+
+
+
   memset(&group_node, 0, sizeof(group_node));
 
   memcpy(&group_node.group, group, sizeof(ofdpaGroupEntry_t));
@@ -718,206 +736,82 @@ OFDPA_ERROR_t dpGroupBucketCountUpdate(uint32_t groupId, uint32_t increment)
   return rc;
 }
 
-
-static
-OFDPA_ERROR_t _dpGroupBucketRefEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
-{
-  OFDPA_ERROR_t rc = OFDPA_E_NONE;
-  ofdbGroupBucketRefTable_node_t bucket_node;
-  ofdbGroupBucketRefTable_node_t *dataPtr;
-
-  memset(&bucket_node, 0, sizeof(bucket_node));
-
-  bucket_node.groupBucket.groupId = groupBucket->groupId;
-  bucket_node.groupBucket.bucketIndex = groupBucket->bucketIndex;
-  bucket_node.groupBucket.referenceGroupId = groupBucket->referenceGroupId;
-
-  dataPtr = avlInsertEntry(&grp_pipe_config.ofdbGroupBucketRefTable_tree, &bucket_node);
-
-  if (dataPtr == &bucket_node)
-  {
-    /* Table is full
-    */
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Group Bucket Table FULL!\r\n", 0);
-    rc = OFDPA_E_FULL;
-  }
-  else if (dataPtr != 0)
-  {
-    /* Duplicate Entry is found.
-    */
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Group Bucket entry already exists!\r\n", 0);
-    rc = OFDPA_E_EXISTS;
-  }
-  else
-  {
-    /* New entry is added to the database.
-    */
-    dpGroupBucketCountUpdate(groupBucket->groupId, 1);
-  }
-
-  if (rc == OFDPA_E_NONE)
-  {
-    switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-    {
-      case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-      case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-      case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-      case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-      case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-        dpGroupReferenceUpdate(groupBucket->referenceGroupId, 1);
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  return rc;
-}
-
-static
-OFDPA_ERROR_t _dpGroupBucketDataEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
-{
-  OFDPA_ERROR_t rc = OFDPA_E_NONE;
-  ofdbGroupBucketDataTable_node_t bucket_node;
-  ofdbGroupBucketDataTable_node_t *dataPtr;
-
-  memset(&bucket_node, 0, sizeof(bucket_node));
-  memcpy(&bucket_node.groupBucket, groupBucket, sizeof(ofdpaGroupBucketEntry_t));
-
-  dataPtr = avlInsertEntry(&grp_pipe_config.ofdbGroupBucketDataTable_tree, &bucket_node);
-
-  if (dataPtr == &bucket_node)
-  {
-    /* Table is full
-    */
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Group Bucket Table FULL!\r\n", 0);
-    rc = OFDPA_E_FULL;
-  }
-  else if (dataPtr != 0)
-  {
-    /* Duplicate Entry is found.
-    */
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Group Bucket entry already exists!\r\n", 0);
-    rc = OFDPA_E_EXISTS;
-  }
-  else
-  {
-    /* New entry is added to the database.
-    */
-    dpGroupBucketCountUpdate(groupBucket->groupId, 1);
-  }
-
-  if (rc == OFDPA_E_NONE)
-  {
-    switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-    {
-      case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-      case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-      case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-      case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-      case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-        dpGroupReferenceUpdate(groupBucket->referenceGroupId, 1);
-        break;
-
-      case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-        {
-        }
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  /* update counter entry reference count */
-  if (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL)
-  {
-    switch (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId))
-    {
-      case OFDPA_MPLS_L2_VPN_LABEL:
-      case OFDPA_MPLS_L3_VPN_LABEL:
-      case OFDPA_MPLS_TUNNEL_LABEL1:
-      case OFDPA_MPLS_TUNNEL_LABEL2:
-      case OFDPA_MPLS_SWAP_LABEL:
-        if (groupBucket->bucketData.mplsLabel.colorBasedCountAction != 0)
-        {
-          ofdbColorBasedCounterReferenceUpdate(groupBucket->bucketData.mplsLabel.colorBasedCountId, 1);
-        }
-        break;
-      case OFDPA_MPLS_INTERFACE:
-        if (groupBucket->bucketData.mplsInterface.colorBasedCountAction != 0)
-        {
-          ofdbColorBasedCounterReferenceUpdate(groupBucket->bucketData.mplsInterface.colorBasedCountId, 1);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  return rc;
-}
-
 OFDPA_ERROR_t dpGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 {
   OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
   uint32_t  subType;
 
+
+
   switch (OFDB_GROUP_TYPE(groupBucket->groupId))
+	{
+		case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
+		case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
+		case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
+		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
+		case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
+		case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
+			rc = indirectGroupBucketEntryAdd(groupBucket);
+		  break;
+		case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
+		case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
+		case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
+		case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
+		  break;
+
+		case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
+		  break;
+
+		case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
+		  /* Validate Group Sub-type */
+		  subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
+
+		  switch (subType)
+		  {
+		    case OFDPA_MPLS_ECMP:
+		      break;
+		    case OFDPA_MPLS_FAST_FAILOVER:
+		      break;
+		    case OFDPA_MPLS_L2_FLOOD:
+		    case OFDPA_MPLS_L2_MULTICAST:
+		    case OFDPA_MPLS_L2_LOCAL_FLOOD:
+		    case OFDPA_MPLS_L2_LOCAL_MULTICAST:
+		    case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
+		    case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
+		    case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
+		    case OFDPA_MPLS_L2_TAG:
+		      rc = OFDPA_E_NONE;
+		      break;
+
+		    default:
+		      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+		                     "Invalid MPLS Forwarding Group Subtype!\r\n", 0);
+		      rc = OFDPA_E_PARAM;
+		  }
+
+			rc = indirectGroupBucketEntryAdd(groupBucket);
+		  break;
+
+		default:
+		  /* Invalid Group ID */
+		  /* this should never happen since group ID has been validated above */
+		  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_ALWAYS,
+		                     "Unexpected Group ID in driver switch statement\r\n", 0);
+		  rc = OFDPA_E_PARAM;
+	}
+
+  if (OFDPA_E_NONE == rc)
   {
-    case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-    case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-    case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-    case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-      rc = _dpGroupBucketRefEntryAdd(groupBucket);
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-    case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-    case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-    case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-    case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-    case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-    case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-      rc = _dpGroupBucketDataEntryAdd(groupBucket);
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-      subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-
-      switch (subType)
-      {
-        case OFDPA_MPLS_FAST_FAILOVER:
-          break;
-        case OFDPA_MPLS_L2_TAG:
-          rc = _dpGroupBucketDataEntryAdd(groupBucket);
-          break;
-        case OFDPA_MPLS_L2_FLOOD:
-        case OFDPA_MPLS_L2_MULTICAST:
-        case OFDPA_MPLS_L2_LOCAL_FLOOD:
-        case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-        case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-        case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-        case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-        case OFDPA_MPLS_ECMP:
-          rc = _dpGroupBucketRefEntryAdd(groupBucket);
-          break;
-        default:
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                         "Invalid MPLS Group Subtype! SubType = 0x%x \r\n",
-                         subType);
-          rc = OFDPA_E_PARAM;
-      }
-      break;
-
-    default:
-      break;
+		dpGroupReferenceUpdate(groupBucket->referenceGroupId, 1);
+		dpGroupBucketCountUpdate(groupBucket->groupId, 1);
   }
+  else{
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+                       "Failed to add Bucket in Hardware; rc = %d!\r\n", rc);
+  }
+
+
+
 
   return rc;
 }
@@ -942,6 +836,20 @@ OFDPA_ERROR_t dpGroupDataUpdate(ofdpaGroupEntry_t *group)
 }
 
 
+OFDPA_ERROR_t dpGroupGet(uint32_t groupId, ofdpaGroupEntry_t *group)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+  ofdbGroupTable_node_t *dataPtr;
+
+  dataPtr = avlSearch(&grp_pipe_config.ofdbGroupTable_tree, &groupId, AVL_EXACT);
+  if (dataPtr != NULL)
+  {
+    rc = OFDPA_E_NONE;
+    memcpy(group, &dataPtr->group, sizeof(ofdpaGroupEntry_t));
+  }
+
+  return rc;
+}
 
 
 OFDPA_ERROR_t dpGroupStatsGet(uint32_t groupId, ofdpaGroupEntryStats_t *groupStats)
@@ -1372,83 +1280,7 @@ OFDPA_ERROR_t dpGroupBucketValidate(ofdpaGroupBucketEntry_t *groupBucket)
 
       if (OFDPA_MPLS_INTERFACE == subType)
       {
-        /* Referenced Group Entry should be of type L2 Interface */
-        if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)&&
-            (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                             "Referenced Group Id not of type L2 Interface or L2 Unfiltered interface! Referenced Group = 0x%x\r\n",
-                             groupBucket->referenceGroupId);
-          return OFDPA_E_PARAM;
-        }
 
-        /* validate source MAC */
-        if (groupBucket->bucketData.mplsInterface.srcMac.addr[0] & 0x01)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "Source MAC not Unicast!\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-
-        /* Validate VLANID */
-
-        /* Set Field value for VLAN Id should have OFDPA_VID_PRESENT. */
-        if ((groupBucket->bucketData.mplsInterface.vlanId & OFDPA_VID_PRESENT) != OFDPA_VID_PRESENT)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "Set field VLAN does not have OFDPA_VID_PRESENT set.\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-
-        tmpVlanId = groupBucket->bucketData.mplsInterface.vlanId & OFDPA_VID_EXACT_MASK;
-
-        if (!dpaVlanIsValid(tmpVlanId))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                             "Invalid VLAN %d!\r\n", tmpVlanId);
-          return OFDPA_E_PARAM;
-        }
-
-        if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) == OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE))
-        {
-          if (tmpVlanId != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "VLAN %d not equal to L2 Interface Group VLAN %d!\r\n",
-                               tmpVlanId, OFDB_GROUP_VLANID(groupBucket->referenceGroupId));
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validate lmepId */
-        if (groupBucket->bucketData.mplsInterface.lmepIdAction != 0)
-        {
-          if (OFDPA_E_NONE != ofdbOamMepGet(groupBucket->bucketData.mplsInterface.lmepId, NULL, NULL))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Invalid lmepId = 0x%x\r\n",
-                               groupBucket->bucketData.mplsInterface.lmepId);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validation for OAM_LM_TX_Count Action type with arguments LMEP_ID and Traffic
-           Class to be done after adding support for OAM Data Plane Counter Table. */
-
-        /* if colorBasedCountAction set, counter must exist in counter table */
-        if (groupBucket->bucketData.mplsInterface.colorBasedCountAction != 0)
-        {
-          if (ofdbColorBasedCounterRefCountGet(groupBucket->bucketData.mplsInterface.colorBasedCountId, NULL) != OFDPA_E_NONE)
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                               "Entry specifies colorBasedCountAction but counter not found in table. "
-                               "colorBasedCountAction = %d, colorBasedCountId = 0x%x\r\n",
-                               groupBucket->bucketData.mplsInterface.colorBasedCountAction,
-                               groupBucket->bucketData.mplsInterface.colorBasedCountId);
-            return(0);
-          }
-        }
-           
       }
       else
       {
@@ -1879,16 +1711,6 @@ OFDPA_ERROR_t dpGroupBucketValidate(ofdpaGroupBucketEntry_t *groupBucket)
                           "Port in Group Id does not match set field Port!\r\n", 0);
         return OFDPA_E_PARAM;
       }
-/* changed by yjg
-      if (groupBucket->bucketData.l2UnfilteredInterface.allowVlanTranslation == 0)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "L2 Unfiltered Interface Group bucket must set "
-                          "allowVlanTranslation. (allowVlanTranslation == %d)\r\n",
-                           groupBucket->bucketData.l2Interface.allowVlanTranslation);
-        return OFDPA_E_PARAM;
-      }
-*/
       break;
 
     default:
@@ -1954,271 +1776,25 @@ OFDPA_ERROR_t dpGroupTypeNextGet(uint32_t groupId,
 
 
  
- static
- OFDPA_ERROR_t _dpGroupBucketRefEntryGet(uint32_t groupId, uint32_t bucketIndex,
-															ofdpaGroupBucketEntry_t *groupBucket)
- {
-	 OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
-	 ofdbGroupBucketRefTable_node_t *dataPtr;
-	 ofdbGroupBucketRefTable_node_t bucketNode;
- 
-	 bucketNode.groupBucket.groupId = groupId;
-	 bucketNode.groupBucket.bucketIndex = bucketIndex;
- 
-	 dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketRefTable_tree, &bucketNode, AVL_EXACT);
- 
-	 if (dataPtr != NULL)
-	 {
-		 rc = OFDPA_E_NONE;
-		 groupBucket->groupId = dataPtr->groupBucket.groupId;
-		 groupBucket->bucketIndex = dataPtr->groupBucket.bucketIndex;
-		 groupBucket->referenceGroupId = dataPtr->groupBucket.referenceGroupId;
-	 }
- 
-	 return rc;
- }
- 
- static
- OFDPA_ERROR_t _dpGroupBucketDataEntryGet(uint32_t groupId, uint32_t bucketIndex,
-															ofdpaGroupBucketEntry_t *groupBucket)
- {
-	 OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
-	 ofdbGroupBucketDataTable_node_t *dataPtr;
-	 ofdbGroupBucketDataTable_node_t bucketNode;
- 
-	 bucketNode.groupBucket.groupId = groupId;
-	 bucketNode.groupBucket.bucketIndex = bucketIndex;
- 
-	 dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketDataTable_tree, &bucketNode, AVL_EXACT);
- 
-	 if (dataPtr != NULL)
-	 {
-		 rc = OFDPA_E_NONE;
-		 memcpy(groupBucket, &dataPtr->groupBucket, sizeof(ofdpaGroupBucketEntry_t));
-	 }
- 
-	 return rc;
- }
- 
+
+
  
  OFDPA_ERROR_t dpGroupBucketEntryGet(uint32_t groupId, uint32_t bucketIndex,
 															ofdpaGroupBucketEntry_t *groupBucket)
  {
 	 OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
-	 uint32_t subType;
- 
-	 switch (OFDB_GROUP_TYPE(groupId))
-	 {
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-		 case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-		 case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-			 rc = _dpGroupBucketRefEntryGet(groupId, bucketIndex, groupBucket);
-			 break;
- 
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-		 case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-		 case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-		 case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-		 case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-			 rc = _dpGroupBucketDataEntryGet(groupId, bucketIndex, groupBucket);
-			 break;
- 
-		 case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-			 subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
- 
-			 switch (subType)
-			 {
-				 case OFDPA_MPLS_FAST_FAILOVER:
-				 case OFDPA_MPLS_L2_TAG:
-					 rc = _dpGroupBucketDataEntryGet(groupId, bucketIndex, groupBucket);
-					 break;
-				 case OFDPA_MPLS_L2_FLOOD:
-				 case OFDPA_MPLS_L2_MULTICAST:
-				 case OFDPA_MPLS_L2_LOCAL_FLOOD:
-				 case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-				 case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-				 case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-				 case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-				 case OFDPA_MPLS_ECMP:
-					 rc = _dpGroupBucketRefEntryGet(groupId, bucketIndex, groupBucket);
-					 break;
-				 default:
-					 OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-													"Invalid MPLS Group Subtype!\r\n", 0);
-					 rc = OFDPA_E_PARAM;
-			 }
-			 break;
- 
-		 default:
-			 break;
-	 }
+	
  
 	 return rc;
  }
 
 
 
-static
-OFDPA_ERROR_t _dpGroupBucketRefEntryFirstGet(uint32_t groupId,
-																					 ofdpaGroupBucketEntry_t *firstGroupBucket)
-{
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	ofdbGroupBucketRefTable_node_t *dataPtr;
-	ofdbGroupBucketRefTable_node_t bucketNode;
-
-	bucketNode.groupBucket.groupId = groupId;
-	bucketNode.groupBucket.bucketIndex = 0;
-
-	dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketRefTable_tree, &bucketNode, AVL_EXACT);
-
-	if (dataPtr == NULL)
-	{
-		dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketRefTable_tree, &bucketNode, AVL_NEXT);
-	}
-
-	if ((dataPtr != NULL) && (groupId == dataPtr->groupBucket.groupId))
-	{
-		rc = OFDPA_E_NONE;
-
-		firstGroupBucket->groupId = dataPtr->groupBucket.groupId;
-		firstGroupBucket->bucketIndex = dataPtr->groupBucket.bucketIndex;
-		firstGroupBucket->referenceGroupId = dataPtr->groupBucket.referenceGroupId;
-	}
-
-	return rc;
-}
-
-static
-OFDPA_ERROR_t _dpGroupBucketDataEntryFirstGet(uint32_t groupId,
-																					 ofdpaGroupBucketEntry_t *firstGroupBucket)
-{
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	ofdbGroupBucketDataTable_node_t *dataPtr;
-	ofdbGroupBucketDataTable_node_t bucketNode;
-
-	bucketNode.groupBucket.groupId = groupId;
-	bucketNode.groupBucket.bucketIndex = 0;
-
-	dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketDataTable_tree, &bucketNode, AVL_EXACT);
-
-	if (dataPtr == NULL)
-	{
-		dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketDataTable_tree, &bucketNode, AVL_NEXT);
-	}
-
-	if ((dataPtr != NULL) && (groupId == dataPtr->groupBucket.groupId))
-	{
-		rc = OFDPA_E_NONE;
-		memcpy(firstGroupBucket, &dataPtr->groupBucket, sizeof(ofdpaGroupBucketEntry_t));
-	}
-
-	return rc;
-}
 
 OFDPA_ERROR_t dpGroupBucketEntryFirstGet(uint32_t groupId,
 																					 ofdpaGroupBucketEntry_t *firstGroupBucket)
 {
 	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	uint32_t subType;
-
-	switch (OFDB_GROUP_TYPE(groupId))
-	{
-		case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-			rc = _dpGroupBucketRefEntryFirstGet(groupId, firstGroupBucket);
-			break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-			rc = _dpGroupBucketDataEntryFirstGet(groupId, firstGroupBucket);
-			break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-			subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
-
-			switch (subType)
-			{
-				case OFDPA_MPLS_FAST_FAILOVER:
-				case OFDPA_MPLS_L2_TAG:
-					rc = _dpGroupBucketDataEntryFirstGet(groupId, firstGroupBucket);
-					break;
-				case OFDPA_MPLS_L2_FLOOD:
-				case OFDPA_MPLS_L2_MULTICAST:
-				case OFDPA_MPLS_L2_LOCAL_FLOOD:
-				case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-				case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-				case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-				case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-				case OFDPA_MPLS_ECMP:
-					rc = _dpGroupBucketRefEntryFirstGet(groupId, firstGroupBucket);
-					break;
-				default:
-					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-												 "Invalid MPLS Group Subtype!\r\n", 0);
-					rc = OFDPA_E_PARAM;
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	return rc;
-}
-
-static
-OFDPA_ERROR_t _dpGroupBucketRefEntryNextGet(uint32_t groupId, uint32_t bucketIndex,
-																 ofdpaGroupBucketEntry_t *nextGroupBucket)
-{
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	ofdbGroupBucketRefTable_node_t *dataPtr;
-	ofdbGroupBucketRefTable_node_t bucketNode;
-
-	bucketNode.groupBucket.groupId = groupId;
-	bucketNode.groupBucket.bucketIndex = bucketIndex;
-
-	dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketRefTable_tree, &bucketNode, AVL_NEXT);
-
-	if ((dataPtr != NULL) && (groupId == dataPtr->groupBucket.groupId))
-	{
-		rc = OFDPA_E_NONE;
-
-		nextGroupBucket->groupId = dataPtr->groupBucket.groupId;
-		nextGroupBucket->bucketIndex = dataPtr->groupBucket.bucketIndex;
-		nextGroupBucket->referenceGroupId = dataPtr->groupBucket.referenceGroupId;
-	}
-
-	return rc;
-}
-
-static
-OFDPA_ERROR_t _dpGroupBucketDataEntryNextGet(uint32_t groupId, uint32_t bucketIndex,
-																 ofdpaGroupBucketEntry_t *nextGroupBucket)
-{
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	ofdbGroupBucketDataTable_node_t *dataPtr;
-	ofdbGroupBucketDataTable_node_t bucketNode;
-
-	bucketNode.groupBucket.groupId = groupId;
-	bucketNode.groupBucket.bucketIndex = bucketIndex;
-
-	dataPtr = avlSearch(&grp_pipe_config.ofdbGroupBucketDataTable_tree, &bucketNode, AVL_NEXT);
-
-	if ((dataPtr != NULL) && (groupId == dataPtr->groupBucket.groupId))
-	{
-		rc = OFDPA_E_NONE;
-		memcpy(nextGroupBucket, &dataPtr->groupBucket, sizeof(ofdpaGroupBucketEntry_t));
-	}
 
 	return rc;
 }
@@ -2228,56 +1804,6 @@ OFDPA_ERROR_t dpGroupBucketEntryNextGet(uint32_t groupId, uint32_t bucketIndex,
 																 ofdpaGroupBucketEntry_t *nextGroupBucket)
 {
 	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
-	uint32_t subType;
-
-	switch (OFDB_GROUP_TYPE(groupId))
-	{
-		case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-			rc = _dpGroupBucketRefEntryNextGet(groupId, bucketIndex, nextGroupBucket);
-			break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-			rc = _dpGroupBucketDataEntryNextGet(groupId, bucketIndex, nextGroupBucket);
-			break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-			subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
-
-			switch (subType)
-			{
-				case OFDPA_MPLS_FAST_FAILOVER:
-				case OFDPA_MPLS_L2_TAG:
-					rc = _dpGroupBucketDataEntryNextGet(groupId, bucketIndex, nextGroupBucket);
-					break;
-				case OFDPA_MPLS_L2_FLOOD:
-				case OFDPA_MPLS_L2_MULTICAST:
-				case OFDPA_MPLS_L2_LOCAL_FLOOD:
-				case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-				case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-				case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-				case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-				case OFDPA_MPLS_ECMP:
-					rc = _dpGroupBucketRefEntryNextGet(groupId, bucketIndex, nextGroupBucket);
-					break;
-				default:
-					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-												 "Invalid MPLS Group Subtype!\r\n", 0);
-					rc = OFDPA_E_PARAM;
-			}
-			break;
-
-		default:
-			break;
-	}
 
 	return rc;
 }
@@ -2465,31 +1991,6 @@ OFDPA_ERROR_t group_database_init(void)
 
   OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE, "group_bucket_data_table_size = %d.\r\n",
                      grp_pipe_config.grpBuktStatus->group_bucket_data_database_size);
-
-  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE, "Creating  Group Bucket Ref Table AVL Tree.\r\n", 0);
-  if (avlAllocAndCreateAvlTree(&grp_pipe_config.ofdbGroupBucketRefTable_tree,
-                               grp_pipe_config.grpBuktStatus->group_bucket_ref_database_size,
-                               sizeof(ofdbGroupBucketRefTable_node_t),
-                               0x10,
-                               (avlComparator_t)dpGroupBucketRefTableNodeCompare,
-                               0) != 0)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_ALWAYS, "Failed to create  Group Bucket Ref Table AVL Tree.\r\n", 0);
-    return -1;
-  }
-
-  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE, "Creating  Group Bucket Data Table AVL Tree.\r\n", 0);
-  if (avlAllocAndCreateAvlTree(&grp_pipe_config.ofdbGroupBucketDataTable_tree,
-                               grp_pipe_config.grpBuktStatus->group_bucket_data_database_size,
-                               sizeof(ofdbGroupBucketDataTable_node_t),
-                               0x10,
-                               (avlComparator_t)dpGroupBucketDataTableNodeCompare,
-                               0) != 0)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_ALWAYS, "Failed to create  Group Bucket Data Table AVL Tree.\r\n", 0);
-    return -1;
-  }
-
 
 
 
