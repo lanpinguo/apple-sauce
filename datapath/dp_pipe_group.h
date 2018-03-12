@@ -99,8 +99,6 @@ typedef struct ofdpaGrpPipeNodeConfig_s
 	ofdpaGroupTableStatus_t			*grpStatus;
 	ofdpaGroupBucketTableStatus_t	 *grpBuktStatus;
   avlTree_t 									ofdbGroupTable_tree;
-  avlTree_t 									ofdbGroupBucketRefTable_tree;
-  avlTree_t 									ofdbGroupBucketDataTable_tree;
 
 }ofdpaGrpPipeNodeConfig_t;
 

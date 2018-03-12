@@ -368,6 +368,7 @@ static
 OFDPA_ERROR_t _ofdbGroupBucketDataEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 {
   OFDPA_ERROR_t rc = OFDPA_E_NONE;
+#if 0
   ofdbGroupBucketDataTable_node_t bucket_node;
   ofdbGroupBucketDataTable_node_t *dataPtr;
 
@@ -446,7 +447,7 @@ OFDPA_ERROR_t _ofdbGroupBucketDataEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
         break;
     }
   }
-
+#endif
   return rc;
 }
 
@@ -563,6 +564,7 @@ OFDPA_ERROR_t _ofdbGroupBucketRefEntryDelete(uint32_t groupId, uint32_t bucketIn
 static
 OFDPA_ERROR_t _ofdbGroupBucketDataEntryDelete(uint32_t groupId, uint32_t bucketIndex)
 {
+#if 0
   OFDPA_ERROR_t rc = OFDPA_E_NONE;
   ofdbGroupBucketDataTable_node_t bucketNode;
   ofdbGroupBucketDataTable_node_t *dataPtr;
@@ -649,6 +651,8 @@ OFDPA_ERROR_t _ofdbGroupBucketDataEntryDelete(uint32_t groupId, uint32_t bucketI
   }
 
   return rc;
+#endif
+	return OFDPA_E_NONE;
 }
 
 OFDPA_ERROR_t ofdbGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex)
@@ -1154,6 +1158,7 @@ OFDPA_ERROR_t ofdbGroupBucketEntryNextGet(uint32_t groupId, uint32_t bucketIndex
 
 OFDPA_ERROR_t ofdbGroupBucketValidate(ofdpaGroupBucketEntry_t *groupBucket)
 {
+#if 0
   OFDPA_ERROR_t rc;
   OFDB_ENTRY_FLAG_t flags;
   ofdpaGroupBucketEntry_t nextBucketEntry, tmpBucketEntry, workingGroupBucket;
@@ -2053,7 +2058,7 @@ OFDPA_ERROR_t ofdbGroupBucketValidate(ofdpaGroupBucketEntry_t *groupBucket)
       /* Invalid Group ID */
       return OFDPA_E_PARAM;
   }
-
+#endif
   return OFDPA_E_NONE;
 }
 

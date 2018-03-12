@@ -397,6 +397,8 @@ static OFDPA_ERROR_t ofdbInjectedOamLmepIdMapL2InterfaceGet(uint32_t groupId,
 static OFDPA_ERROR_t ofdbInjectedOamLmepIdMapMplsInterfaceGet(uint32_t groupId,
                                                               ofdbInjectedOamLmepIdDataMappingTable_node_t *mapNode)
 {
+
+#if 0
   OFDPA_ERROR_t                                    rc;
   ofdpaGroupBucketEntry_t                          bucketEntry;
   uint32_t                                         currentGroupId;
@@ -431,6 +433,8 @@ static OFDPA_ERROR_t ofdbInjectedOamLmepIdMapMplsInterfaceGet(uint32_t groupId,
   }
 
   return rc;
+#endif 
+	return OFDPA_E_NONE;
 }
 
 static OFDPA_ERROR_t ofdbInjectedOamLmepIdMapTunnelLabelGet(uint32_t groupId,

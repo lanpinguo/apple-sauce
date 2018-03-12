@@ -107,7 +107,7 @@ void groupTableList(OFDPA_GROUP_ENTRY_TYPE_t groupType, int groupTypeSpecified, 
   ofdpaGroupEntryStats_t groupStats;
   ofdpaGroupBucketEntry_t bucketEntry;
   OFDPA_GROUP_ENTRY_TYPE_t currentEntryType;
-  char buf[400];
+  ofdpaPrettyPrintBuf_t buf;
   int entriesDisplayedCount = 0;
 
   memset(&groupEntry, 0, sizeof(groupEntry));
@@ -137,8 +137,8 @@ void groupTableList(OFDPA_GROUP_ENTRY_TYPE_t groupType, int groupTypeSpecified, 
       }
 
       /* group entry matches criteria, display it */
-      ofdpaGroupDecode(groupEntry.groupId, buf, sizeof(buf));
-      printf("groupId = 0x%08x (%s): ", groupEntry.groupId, buf);
+      ofdpaGroupDecode(groupEntry.groupId, buf.data, sizeof(buf.data));
+      printf("groupId = 0x%08x (%s): ", groupEntry.groupId, buf.data);
 
       rc = ofdpaGroupStatsGet(groupEntry.groupId, &groupStats);
       if (rc != OFDPA_E_NONE)
@@ -157,15 +157,15 @@ void groupTableList(OFDPA_GROUP_ENTRY_TYPE_t groupType, int groupTypeSpecified, 
         do
         {
           printf("\t");
-          rc = ofdpaGroupBucketEntryDecode(&bucketEntry, buf, sizeof(buf));
+          rc = ofdpaGroupBucketEntryPrint(&bucketEntry, &buf);
 
           if (rc == OFDPA_E_NONE)
           {
-            printf("%s", buf);
+            printf("%s", buf.data);
           }
           else if (rc == OFDPA_E_FULL)
           {
-            printf("%s (** TRUNCATED OUTPUT **)", buf);
+            printf("%s (** TRUNCATED OUTPUT **)", buf.data);
           }
           else
           {

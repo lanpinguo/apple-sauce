@@ -1136,6 +1136,7 @@ OFDPA_ERROR_t ofdpaGroupDecodeShort(uint32_t groupId, char *outBuf, int bufSize)
 
 OFDPA_ERROR_t ofdpaGroupBucketEntryDecode(ofdpaGroupBucketEntry_t *bucketEntry, char *outBuf, int bufSize)
 {
+#if 0
   OFDPA_ERROR_t rc;
   OFDPA_GROUP_ENTRY_TYPE_t groupType;
   uint32_t subType;
@@ -1346,8 +1347,9 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryDecode(ofdpaGroupBucketEntry_t *bucketEntry, 
         break;
     }
   }
-
   return(rc);
+#endif
+	return OFDPA_E_FAIL;
 }
 
 const char *ofdpaQosColorDecode(OFDPA_QOS_COLORS_t color)

@@ -481,7 +481,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
       while (rc == OFDPA_E_NONE)
       {
-        rc = ofdbGroupTypeNextGet(groupId, OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE, &nextGroup);
+        rc = dpGroupTypeNextGet(groupId, OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE, &nextGroup);
 
         if (rc == OFDPA_E_NONE)
         {
@@ -578,7 +578,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
     while (rc == OFDPA_E_NONE)
     {
-      rc = ofdbGroupNextGet(groupId, &nextGroup);
+      rc = dpGroupNextGet(groupId, &nextGroup);
       if (rc == OFDPA_E_NONE)
       {
         if ((OFDB_GROUP_TYPE(nextGroup.groupId) == OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD) &&
@@ -634,7 +634,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
         if ((rc = ofdbGroupGet(groupId, &nextGroup)) != OFDPA_E_NONE)
         {
-          rc = ofdbGroupNextGet(groupId, &nextGroup);
+          rc = dpGroupNextGet(groupId, &nextGroup);
         }
         while (rc == OFDPA_E_NONE)
         {
@@ -652,7 +652,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
             }
 
             groupId = nextGroup.groupId;
-            rc = ofdbGroupNextGet(groupId, &nextGroup);
+            rc = dpGroupNextGet(groupId, &nextGroup);
           }
           else
           {
@@ -740,53 +740,8 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Failed to add Software Group entry !\r\n", 0);
-    //OFDB_LOCK_GIVE;
-    return rc;
   }
 
-	
-
-	switch ( OFDB_GROUP_TYPE(group->groupId) )
-	{
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE :
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE 	:
-			case	OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST 	:
-			case	OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE :
-			case	OFDPA_GROUP_ENTRY_TYPE_L3_ECMP			:
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY 	:
-			case	OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL 	:
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE	:
-				rc = indirectGroupAdd(group);
-				break;
-			case	OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING	 :
-				rc = indirectGroupAdd(group);
-				break;
-			case	OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST :
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD 		:
-			case	OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST :
-				break;
-	    default:
-				break;
-	}
-
-  if (rc != OFDPA_E_NONE)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Failed to create datapath Group entry !\r\n", 0);
-    ofdbGroupDelete(group->groupId);
-  }
-
-	rc = dpGroupDataUpdate(group);
-	if (rc != OFDPA_E_NONE)
-	{
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Failed to update software Group entry, rc = %d !\r\n", rc);
-		rc = indirectGroupDelete(group);											 
-		rc |= ofdbGroupDelete(group->groupId);
-	}
-
-
-  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -962,7 +917,7 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
     return OFDPA_E_NOT_FOUND;
   }
 
-	/* for fast instert, save the time in searching group's instance */
+	/* For fast instert, save the time in searching group's instance */
 	groupBucket->ptrGrpInst = groupStats.ptrGrpInst;
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "Add Group bucket to obj (%p) !\r\n", groupBucket->ptrGrpInst);
@@ -1001,81 +956,8 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Failed to add Bucket in software database; rc = %d!\r\n", rc);
-    //OFDB_LOCK_GIVE;
-    return rc;
   }
 
-  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_TOO_VERBOSE,
-                     "Adding Bucket in Datapath\r\n", 0);
-
-  switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-	{
-		case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-			rc = indirectGroupBucketEntryAdd(groupBucket);
-		  break;
-		case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-		  break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-		  break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-		  /* Validate Group Sub-type */
-		  subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-
-		  switch (subType)
-		  {
-		    case OFDPA_MPLS_ECMP:
-		      break;
-		    case OFDPA_MPLS_FAST_FAILOVER:
-		      break;
-		    case OFDPA_MPLS_L2_FLOOD:
-		    case OFDPA_MPLS_L2_MULTICAST:
-		    case OFDPA_MPLS_L2_LOCAL_FLOOD:
-		    case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-		    case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-		    case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-		    case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-		    case OFDPA_MPLS_L2_TAG:
-		      rc = OFDPA_E_NONE;
-		      break;
-
-		    default:
-		      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-		                     "Invalid MPLS Forwarding Group Subtype!\r\n", 0);
-		      rc = OFDPA_E_PARAM;
-		  }
-
-			rc = indirectGroupBucketEntryAdd(groupBucket);
-		  break;
-
-		default:
-		  /* Invalid Group ID */
-		  /* this should never happen since group ID has been validated above */
-		  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_ALWAYS,
-		                     "Unexpected Group ID in driver switch statement\r\n", 0);
-		  rc = OFDPA_E_PARAM;
-	}
-
-  if (OFDPA_E_NONE != rc)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Failed to add Bucket in Hardware; rc = %d!\r\n", rc);
-
-    ofdbGroupBucketEntryDelete(groupBucket->groupId, groupBucket->bucketIndex);
-  }
-
-  //OFDB_LOCK_GIVE;
-
-  
   return rc;
 }
 
@@ -2239,5 +2121,13 @@ OFDPA_ERROR_t ofdpaFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t 
 {
 	return dpFlowEntryPrint(flow,buf);
 }
+
+
+
+OFDPA_ERROR_t ofdpaGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdpaPrettyPrintBuf_t *buf)
+{
+	return dpGroupBucketEntryPrint(bucketEntry, buf);
+}
+
 
 
