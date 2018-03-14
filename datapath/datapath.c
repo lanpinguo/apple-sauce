@@ -912,7 +912,30 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
           switch (subType)
           {
             case OFDPA_MPLS_INTERFACE:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
+              {
+              	int i;
+              	ofdpaAct_t	*pAct;
+								ofdpaActionFuncOpt_t	ops;
+								
+	              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
+	              
+								for(i = 0; i < bucketEntry->bucketData.mplsInterface.act_cnt ; i ++){
+									pAct = &bucketEntry->bucketData.mplsInterface.actions[i];
+									if (count < OFDPA_PRETTY_MAX_LEN) 																														 
+									{ 
+										if(pAct->act){
+											ops.buf = &buf->data[count];
+											ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
+											count += (pAct->act)(&ops,NULL,pAct->arg);
+										}
+									} 																																											 
+									if (count >= OFDPA_PRETTY_MAX_LEN)																														 
+									{ 																																											 
+										buf->data[OFDPA_PRETTY_MAX_LEN - 1] = '\0'; 																												
+										return OFDPA_E_FULL;																																	 
+									} 																																											 
+								}
+
 #if 0
               APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "oamLmTxCountAction = %d ", bucketEntry->bucketData.mplsInterface.oamLmTxCountAction);
               APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.mplsInterface.vlanId, bucketEntry->bucketData.mplsInterface.vlanId & OFDPA_VID_EXACT_MASK);
@@ -933,6 +956,7 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
                                        bucketEntry->bucketData.mplsInterface.dstMac.addr[4],
                                        bucketEntry->bucketData.mplsInterface.dstMac.addr[5]);
 #endif
+							}
               break;
 
             case OFDPA_MPLS_L2_VPN_LABEL:

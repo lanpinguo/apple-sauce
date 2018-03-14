@@ -288,6 +288,14 @@ uint64_t ofdpaActOamLmTxCount(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, "oamLmTxCountAction = %d ", (uint32_t)arg);
+
+	}										 
+
 	return OFDPA_E_NONE;
 }
 
@@ -295,6 +303,18 @@ uint64_t ofdpaActSetDstMac(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+		ofdpaMacAddr_t *pMac;
+		pMac = (ofdpaMacAddr_t *)&arg;
+		return snprintf(pOps->buf, pOps->bufSize, "dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
+										pMac->addr[0],
+										pMac->addr[1],
+										pMac->addr[2],
+										pMac->addr[3],
+										pMac->addr[4],
+										pMac->addr[5]);
+	}										 
 	return OFDPA_E_NONE;
 }
 
@@ -303,6 +323,18 @@ uint64_t ofdpaActSetSrcMac(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+		ofdpaMacAddr_t *pMac;
+		pMac = (ofdpaMacAddr_t *)&arg;
+		return snprintf(pOps->buf, pOps->bufSize, "srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
+										pMac->addr[0],
+										pMac->addr[1],
+										pMac->addr[2],
+										pMac->addr[3],
+										pMac->addr[4],
+										pMac->addr[5]);
+	}										 
 	return OFDPA_E_NONE;
 }
 
@@ -311,6 +343,12 @@ uint64_t ofdpaActSetLmepId(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, "lmepIdAction = %d ", (uint32_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 

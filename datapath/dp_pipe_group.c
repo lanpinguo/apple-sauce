@@ -1779,14 +1779,86 @@ OFDPA_ERROR_t dpGroupTypeNextGet(uint32_t groupId,
 
 
  
- OFDPA_ERROR_t dpGroupBucketEntryGet(uint32_t groupId, uint32_t bucketIndex,
-															ofdpaGroupBucketEntry_t *groupBucket)
- {
-	 OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+OFDPA_ERROR_t dpGroupBucketEntryGet(uint32_t groupId, uint32_t bucketIndex,
+														ofdpaGroupBucketEntry_t *groupBucket)
+{
+	OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+  uint32_t subType;
+	ofdbGroupTable_node_t grpNode;
+	ofdpaGrpPipeNode_t * pGrpPipeNode;
+	ofdpaGrpPipeNode_t * pRefGrpPipeNode;
+	ofdpaActBucket_t		*pBucket;
+	int	i,supported = 0;
 	
- 
-	 return rc;
- }
+
+	if(groupBucket == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "NULL pointer!\r\n",0);
+		return OFDPA_E_PARAM;
+	}
+
+
+
+	rc = dpGroupGet(groupId, &grpNode);
+	if(rc != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Group not found, rc = %d!\r\n",rc);
+		return rc;
+	}
+
+
+
+	
+	groupBucket->groupId 		= grpNode.group.groupId;
+	groupBucket->ptrGrpInst = grpNode.group.ptrGrpInst;
+
+	pGrpPipeNode = grpNode.group.ptrGrpInst;
+
+	if(bucketIndex >= pGrpPipeNode->numActBukt){
+		return OFDPA_E_PARAM;
+	}
+
+	pBucket = pGrpPipeNode->actBukts[bucketIndex];
+
+
+  switch (OFDB_GROUP_TYPE(groupId))
+	{
+		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
+			subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
+			switch ( subType )
+			{
+			    case OFDPA_MPLS_INTERFACE :
+						for(i = 0 ; i < pBucket->numAct; i++){
+							groupBucket->bucketData.mplsInterface.actions[i] = pBucket->act[i];
+							groupBucket->bucketData.mplsInterface.act_cnt++;
+						}
+						supported = 1;
+		        break;
+			    case OFDPA_MPLS_L2_VPN_LABEL :
+					case OFDPA_MPLS_L3_VPN_LABEL :
+					case OFDPA_MPLS_TUNNEL_LABEL1:
+					case OFDPA_MPLS_TUNNEL_LABEL2:
+					case OFDPA_MPLS_SWAP_LABEL:
+					  break;
+			    default:
+			      break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	if(supported){
+		pRefGrpPipeNode = pBucket->ptrRefGrpInst;
+		if(pRefGrpPipeNode){
+			groupBucket->referenceGroupId = pRefGrpPipeNode->grpId;
+		}
+		else{
+			groupBucket->referenceGroupId = 0;
+		}
+	}
+ return rc;
+}
 
 
 
@@ -1794,7 +1866,77 @@ OFDPA_ERROR_t dpGroupTypeNextGet(uint32_t groupId,
 OFDPA_ERROR_t dpGroupBucketEntryFirstGet(uint32_t groupId,
 																					 ofdpaGroupBucketEntry_t *firstGroupBucket)
 {
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+	OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+	uint32_t subType;
+	ofdbGroupTable_node_t grpNode;
+	ofdpaGrpPipeNode_t 		*pGrpPipeNode;
+	ofdpaGrpPipeNode_t 		*pRefGrpPipeNode;
+	ofdpaActBucket_t			*pBucket;
+	int i;
+	int supported = 0;
+	
+	
+	if(firstGroupBucket == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "NULL pointer!\r\n",0);
+		return OFDPA_E_PARAM;
+	}
+	
+	
+	
+	rc = dpGroupGet(groupId, &grpNode);
+	if(rc != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											 "Group not found, rc = %d!\r\n",rc);
+		return rc;
+	}
+	
+	
+	firstGroupBucket->groupId		= grpNode.group.groupId;
+	firstGroupBucket->ptrGrpInst = grpNode.group.ptrGrpInst;
+	
+	pGrpPipeNode = grpNode.group.ptrGrpInst;
+	
+	
+	pBucket = pGrpPipeNode->actBukts[0];
+	
+	
+	switch (OFDB_GROUP_TYPE(groupId))
+	{
+		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
+			subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
+			switch ( subType )
+			{
+					case OFDPA_MPLS_INTERFACE :
+						for(i = 0 ; i < pBucket->numAct; i++){
+							firstGroupBucket->bucketData.mplsInterface.actions[i] = pBucket->act[i];
+							firstGroupBucket->bucketData.mplsInterface.act_cnt++;
+						}
+						supported = 1;
+						break;
+					case OFDPA_MPLS_L2_VPN_LABEL :
+					case OFDPA_MPLS_L3_VPN_LABEL :
+					case OFDPA_MPLS_TUNNEL_LABEL1:
+					case OFDPA_MPLS_TUNNEL_LABEL2:
+					case OFDPA_MPLS_SWAP_LABEL:
+						break;
+					default:
+						break;
+			}
+			break;
+		default:
+			break;
+	}
+	
+	if(supported){
+		pRefGrpPipeNode = pBucket->ptrRefGrpInst;
+		if(pRefGrpPipeNode){
+			firstGroupBucket->referenceGroupId = pRefGrpPipeNode->grpId;
+		}
+		else{
+			firstGroupBucket->referenceGroupId = 0;
+		}
+	}
 
 	return rc;
 }
@@ -1803,10 +1945,84 @@ OFDPA_ERROR_t dpGroupBucketEntryFirstGet(uint32_t groupId,
 OFDPA_ERROR_t dpGroupBucketEntryNextGet(uint32_t groupId, uint32_t bucketIndex,
 																 ofdpaGroupBucketEntry_t *nextGroupBucket)
 {
-	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
+	OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+	uint32_t subType;
+	ofdbGroupTable_node_t grpNode;
+	ofdpaGrpPipeNode_t * pGrpPipeNode;
+	ofdpaGrpPipeNode_t * pRefGrpPipeNode;
+	ofdpaActBucket_t 	 *pBucket;
+	int i,supported = 0;
 
+
+	if(nextGroupBucket == NULL){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											"NULL pointer!\r\n",0);
+		return OFDPA_E_PARAM;
+	}
+
+
+
+	rc = dpGroupGet(groupId, &grpNode);
+	if(rc != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+											"Group not found, rc = %d!\r\n",rc);
+		return rc;
+	}
+
+
+
+
+	nextGroupBucket->groupId 	 = grpNode.group.groupId;
+	nextGroupBucket->ptrGrpInst = grpNode.group.ptrGrpInst;
+
+	pGrpPipeNode = grpNode.group.ptrGrpInst;
+
+	if((bucketIndex + 1) >= pGrpPipeNode->numActBukt){
+		return OFDPA_E_PARAM;
+	}
+
+	pBucket = pGrpPipeNode->actBukts[bucketIndex + 1];
+
+
+	switch (OFDB_GROUP_TYPE(groupId))
+	{
+		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
+		 subType = OFDB_GROUP_MPLS_SUBTYPE(groupId);
+		 switch ( subType )
+		 {
+				 case OFDPA_MPLS_INTERFACE :
+					 for(i = 0 ; i < pBucket->numAct; i++){
+						 nextGroupBucket->bucketData.mplsInterface.actions[i] = pBucket->act[i];
+						 nextGroupBucket->bucketData.mplsInterface.act_cnt++;
+					 }
+					 supported = 1;
+					 break;
+				 case OFDPA_MPLS_L2_VPN_LABEL :
+				 case OFDPA_MPLS_L3_VPN_LABEL :
+				 case OFDPA_MPLS_TUNNEL_LABEL1:
+				 case OFDPA_MPLS_TUNNEL_LABEL2:
+				 case OFDPA_MPLS_SWAP_LABEL:
+					 break;
+				 default:
+					 break;
+		 }
+		 break;
+		default:
+		 break;
+	}
+
+	if(supported){
+		pRefGrpPipeNode = pBucket->ptrRefGrpInst;
+		if(pRefGrpPipeNode){
+			nextGroupBucket->referenceGroupId = pRefGrpPipeNode->grpId;
+		}
+		else{
+			nextGroupBucket->referenceGroupId = 0;
+		}
+	}
 	return rc;
 }
+
 
 
  
