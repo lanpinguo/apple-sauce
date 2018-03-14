@@ -34,6 +34,20 @@
 #include "ind_ofdpa_util.h"
 #include "ind_ofdpa_log.h"
 
+#define IND_OFDPA_BUKT_ACT_APPEND(pBukt,actFn,actArg) \
+do { \
+	int i; \
+	i = pBukt->act_cnt; \
+	if((i + 1) >= IND_OFDPA_GRP_BUKT_ACT_MAX){ \
+		return INDIGO_ERROR_PARAM; \
+	} \
+	pBukt->actions[i].act = actFn; \
+	pBukt->actions[i].arg = actArg;\
+	pBukt->act_cnt++;\
+}while(0) 
+
+
+
 static indigo_error_t
 ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                                   ind_ofdpa_group_bucket_t *group_bucket,
@@ -61,7 +75,8 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                     LOG_ERROR("unsupported output port 0x%x", port_no);
                     return INDIGO_ERROR_COMPAT;
                 default:
-                    group_bucket->outputPort = port_no;
+                    //group_bucket->outputPort = port_no;
+                    IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActIdentifyOutPort,port_no);
                     *group_action_bitmap |= IND_OFDPA_OUTPUT;
                   break;
             }
@@ -69,6 +84,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         }
         case OF_ACTION_SET_FIELD: {
             /* FIXUP: loci does not yet support the OXM field in the set-field action */
+            uint64_t tmp;
             of_oxm_header_init(&oxm.header, act.header.version, 0, 1);
             oxm.header.wire_object = act.header.wire_object;
             oxm.header.wire_object.obj_offset += 4; /* skip action header */
@@ -81,22 +97,26 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
             switch (oxm.header.object_id) {
                 case OF_OXM_VLAN_VID:
                     of_oxm_vlan_vid_value_get(&oxm.vlan_vid, &vlanId);
-                    group_bucket->vlanId = vlanId & (OFDPA_VID_PRESENT | OFDPA_VID_EXACT_MASK);
+                    vlanId &= (OFDPA_VID_PRESENT | OFDPA_VID_EXACT_MASK);
+                    IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetVlanId,vlanId);
                     *group_action_sf_bitmap |= IND_OFDPA_VLANID;
                     break;
 
                 case OF_OXM_ETH_SRC:
-                    of_oxm_eth_src_value_get(&oxm.eth_src, &group_bucket->srcMac);
+                    of_oxm_eth_src_value_get(&oxm.eth_src, &tmp);
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetSrcMac,tmp);
                     *group_action_sf_bitmap |= IND_OFDPA_SRCMAC;
                     break;
 
                 case OF_OXM_ETH_DST:
-                    of_oxm_eth_dst_value_get(&oxm.eth_dst, &group_bucket->dstMac);
+                    of_oxm_eth_dst_value_get(&oxm.eth_dst, &tmp);
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetSrcMac,tmp);
                     *group_action_sf_bitmap |= IND_OFDPA_DSTMAC;
                     break;
 
                 case OF_OXM_MPLS_LABEL:
-                    of_oxm_mpls_label_value_get(&oxm.mpls_label, &group_bucket->mplsLabel);
+                    of_oxm_mpls_label_value_get(&oxm.mpls_label, &tmp);
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsLabel,tmp);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_LABEL;
                     break;
 
@@ -104,7 +124,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t pcp;
                     of_oxm_vlan_pcp_value_get(&oxm.vlan_pcp, &pcp);
-                    group_bucket->vlanPcp = pcp;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetVlanPcp,pcp);
                     *group_action_sf_bitmap |= IND_OFDPA_VLAN_PCP;
                     break;
                 }
@@ -112,7 +132,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t dei;
                     of_oxm_ofdpa_dei_value_get(&oxm.ofdpa_dei, &dei);
-                    group_bucket->vlanCfi = dei;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetVlanDei,dei);
                     *group_action_sf_bitmap |= IND_OFDPA_VLAN_DEI;
                     break;
                 }
@@ -120,7 +140,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t dscp;
                     of_oxm_ip_dscp_value_get(&oxm.ip_dscp, &dscp);
-                    group_bucket->dscp = dscp;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetDscp,dscp);
                     *group_action_sf_bitmap |= IND_OFDPA_IP_DSCP;
                     break;
                 }
@@ -128,7 +148,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t bos;
                     of_oxm_mpls_bos_value_get(&oxm.mpls_bos, &bos);
-                    group_bucket->mplsBOS = bos;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsBos,bos);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_BOS;
                     break;
                 }
@@ -136,7 +156,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t tc;
                     of_oxm_mpls_tc_value_get(&oxm.mpls_tc, &tc);
-                    group_bucket->mplsEXP = tc;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsExp,tc);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_TC;
                     break;
                 }
@@ -144,7 +164,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t ttl;
                     of_oxm_ofdpa_mpls_ttl_value_get(&oxm.ofdpa_mpls_ttl, &ttl);
-                    group_bucket->mplsTTL = ttl;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsTtl,ttl);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_TTL;
                     break;
                 }
@@ -152,7 +172,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint8_t allowVlanTranslation;
                     of_oxm_ofdpa_allow_vlan_translation_value_get(&oxm.ofdpa_allow_vlan_translation, &allowVlanTranslation);
-                    group_bucket->allowVlanTranslation = allowVlanTranslation;
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActAllowVlanTrans,allowVlanTranslation);
                     *group_action_sf_bitmap |= IND_OFDPA_ALLOW_VLAN_TRANSLATION;
                     break;
                 }
@@ -172,7 +192,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
             break;
 
         case OF_ACTION_POP_VLAN:
-            group_bucket->popVlanTag = 1;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPopVlan,1);
             *group_action_bitmap |= IND_OFDPA_POP_VLAN;
             break;
         case OF_ACTION_STRIP_VLAN:
@@ -182,8 +202,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t eth_type;
             of_action_push_vlan_ethertype_get(&act.push_vlan, &eth_type);
-            group_bucket->pushVlan = 1;
-            group_bucket->newTpid = eth_type;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushVlan,eth_type);
             *group_action_bitmap |= IND_OFDPA_PUSH_VLAN;
             break;
         }
@@ -191,8 +210,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t ether_type;
             of_action_push_mpls_ethertype_get(&act.push_mpls, &ether_type);
-            group_bucket->pushMplsHdr = 1;
-            group_bucket->mplsEtherType = ether_type;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushMplsHdr,ether_type);
             *group_action_bitmap |= IND_OFDPA_PUSH_MPLS;
             break;
         }
@@ -200,27 +218,27 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint8_t ttl;
             of_action_set_mpls_ttl_mpls_ttl_get(&act.push_mpls, &ttl);
-            group_bucket->mplsTTL = ttl;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsTtl,ttl);
             *group_action_bitmap |= IND_OFDPA_SET_MPLS_TTL;
             break;
         }
         case OF_ACTION_COPY_TTL_OUT:
-            group_bucket->mplsCopyTTLOutwards = 1;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActCpyMplsTtlOutwards,1);
             *group_action_bitmap |= IND_OFDPA_COPY_TTL_OUT;
             break;
 
         case OF_ACTION_OFDPA_PUSH_L2HDR:
-            group_bucket->pushL2Hdr = 1;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushL2Hdr,1);
             *group_action_bitmap |= IND_OFDPA_PUSH_L2_HDR;
             break;
 
         case OF_ACTION_OFDPA_PUSH_CW:
-            group_bucket->pushCW = 1;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushCw,1);
             *group_action_bitmap |= IND_OFDPA_PUSH_CW;
             break;
 
         case OF_ACTION_OFDPA_COPY_TC_OUT:
-            group_bucket->mplsCopyEXPOutwards = 1;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActCpyMplsExpOutwards,1);
             *group_action_bitmap |= IND_OFDPA_COPY_MPLS_TC_OUT;
             break;
 
@@ -229,7 +247,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
             uint16_t qosIndex;
             of_action_ofdpa_set_mpls_tc_from_vpn_table_qos_index_get(&act.ofdpa_set_mpls_tc_from_vpn_table, &qosIndex);
 
-            group_bucket->mplsEXPRemarkTableIndex = qosIndex;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsExpRemarkTable,qosIndex);
             *group_action_bitmap |= IND_OFDPA_MPLS_TC_REMARK_TABLE_INDEX;
             break;
         }
@@ -237,7 +255,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t qosIndex;
             of_action_ofdpa_set_pcpdei_from_table_qos_index_get(&act.ofdpa_set_pcpdei_from_table, &qosIndex);
-            group_bucket->priorityRemarkTableIndex = qosIndex;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetPcpPriRemarkTable,qosIndex);
             *group_action_bitmap |= IND_OFDPA_PCP_REMARK_TABLE_INDEX;
             break;
         }
@@ -249,7 +267,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint32_t lmepId;
             of_action_ofdpa_oam_lm_tx_count_lmep_id_get(&act.ofdpa_oam_lm_tx_count, &lmepId);
-            group_bucket->lmepId = lmepId;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActOamLmTxCount,lmepId);
             *group_action_bitmap |= IND_OFDPA_OAM_LM_TX_COUNT;
             break;
         }
@@ -257,7 +275,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t qosIndex;
             of_action_ofdpa_set_mpls_tc_from_tunnel_table_qos_index_get(&act.ofdpa_set_mpls_tc_from_tunnel_table, &qosIndex);
-            group_bucket->mplsEXPRemarkTableIndex = qosIndex;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsExpRemarkTable,qosIndex);
             *group_action_bitmap |= IND_OFDPA_MPLS_TC_REMARK_TABLE_INDEX;
             break;
         }
@@ -265,7 +283,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t qosIndex;
             of_action_ofdpa_set_mpls_pcpdei_from_tunnel_table_qos_index_get(&act.ofdpa_set_mpls_pcpdei_from_table, &qosIndex);
-            group_bucket->mplsEXPRemarkTableIndex = qosIndex;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsExpRemarkTable,qosIndex);
             *group_action_bitmap |= IND_OFDPA_ACT_SET_MPLS_PCPDEI_FROM_TUNNEL_TABLE;
             break;
         }
@@ -273,11 +291,10 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint32_t index;
             of_action_ofdpa_color_based_count_index_get(&act.ofdpa_color_based_count, &index);
-            group_bucket->colorBasedCounterIndex = index;
+						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActIncColorBasedCount,index);
             *group_action_bitmap |= IND_OFDPA_COLOR_BASED_COUNT;
             break;
         }
-//added by yjg start
         case OF_ACTION_OFDPA_CHECK_DROP_STATUS:
         {
             uint16_t drop_type;
@@ -287,7 +304,6 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
             *group_action_bitmap |= IND_OFDPA_CHECK_DROP_STATUS;
             break;
         }
-//added by yjg end
         default:
             LOG_ERROR("unsupported action %s", of_object_id_str[act.header.object_id]);
             return INDIGO_ERROR_COMPAT;
@@ -318,6 +334,8 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
   OFDPA_ERROR_t ofdpa_rv = OFDPA_E_FAIL;
   int group_added = 0;
   of_port_no_t watch_port;
+	int i;
+	ofdpaGroupBucketData_t	*pData;
 
   OF_LIST_BUCKET_ITER(of_buckets, &of_bucket, rv)
   {
@@ -351,15 +369,10 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
     switch (group_type)
     {
       case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-        group_bucket_entry.bucketData.l2Interface.outputPort = group_bucket.outputPort;
-        group_bucket_entry.bucketData.l2Interface.popVlanTag = group_bucket.popVlanTag;
-        group_bucket_entry.bucketData.l2Interface.allowVlanTranslation = group_bucket.allowVlanTranslation;
 
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-        group_bucket_entry.bucketData.l2UnfilteredInterface.outputPort = group_bucket.outputPort;
-        group_bucket_entry.bucketData.l2UnfilteredInterface.allowVlanTranslation = group_bucket.allowVlanTranslation;
 
         break;
 
@@ -375,15 +388,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
           break;
         }
 
-        group_bucket_entry.bucketData.l2Rewrite.vlanId = group_bucket.vlanId;
-
-        memcpy(&group_bucket_entry.bucketData.l2Rewrite.srcMac,
-               &group_bucket.srcMac, sizeof(group_bucket_entry.bucketData.l2Rewrite.srcMac));
-
-        memcpy(&group_bucket_entry.bucketData.l2Rewrite.dstMac,
-               &group_bucket.dstMac, sizeof(group_bucket_entry.bucketData.l2Rewrite.dstMac));
-
-        group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
 
         break;
 
@@ -399,15 +403,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
           break;
         }
 
-        group_bucket_entry.bucketData.l3Unicast.vlanId = group_bucket.vlanId;
-
-        memcpy(&group_bucket_entry.bucketData.l3Unicast.srcMac,
-               &group_bucket.srcMac, sizeof(group_bucket_entry.bucketData.l3Unicast.srcMac));
-
-        memcpy(&group_bucket_entry.bucketData.l3Unicast.dstMac,
-               &group_bucket.dstMac, sizeof(group_bucket_entry.bucketData.l3Unicast.dstMac));
-
-        group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
 
         break;
 
@@ -423,12 +418,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
           break;
         }
 
-        group_bucket_entry.bucketData.l3Interface.vlanId = group_bucket.vlanId;
-
-        memcpy(&group_bucket_entry.bucketData.l3Interface.srcMac,
-               &group_bucket.srcMac, sizeof(group_bucket_entry.bucketData.l3Interface.srcMac));
-
-        group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
 
         break;
 
@@ -452,7 +441,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
           break;
         }
 
-        group_bucket_entry.bucketData.l2Overlay.outputPort = group_bucket.outputPort;
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
@@ -467,56 +455,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
               break;
             }
 
-						if(group_bucket_entry.bucketData.mplsInterface.act_cnt >= OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX){
-              err = INDIGO_ERROR_PARAM;
-              break;
-						}
-						
-						i = group_bucket_entry.bucketData.mplsInterface.act_cnt;
-						group_bucket_entry.bucketData.mplsInterface.actions[i].act = ofdpaActSetSrcMac;
-            memcpy(&group_bucket_entry.bucketData.mplsInterface.actions[i].arg,
-                   &group_bucket.srcMac, sizeof(group_bucket.srcMac));
-						group_bucket_entry.bucketData.mplsInterface.act_cnt++;
-
-
-						if(group_bucket_entry.bucketData.mplsInterface.act_cnt >= OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX){
-              err = INDIGO_ERROR_PARAM;
-              break;
-						}
-						
-						i = group_bucket_entry.bucketData.mplsInterface.act_cnt;
-						group_bucket_entry.bucketData.mplsInterface.actions[i].act = ofdpaActSetDstMac;
-            memcpy(&group_bucket_entry.bucketData.mplsInterface.actions[i].arg,
-                   &group_bucket.dstMac, sizeof(group_bucket.dstMac));
-						group_bucket_entry.bucketData.mplsInterface.act_cnt++;
-						
-
-						if(group_bucket_entry.bucketData.mplsInterface.act_cnt >= OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX){
-              err = INDIGO_ERROR_PARAM;
-              break;
-						}
-						
-						i = group_bucket_entry.bucketData.mplsInterface.act_cnt;
-						group_bucket_entry.bucketData.mplsInterface.actions[i].act = ofdpaActSetVlanId;
-            group_bucket_entry.bucketData.mplsInterface.actions[i].arg = group_bucket.vlanId;
-						group_bucket_entry.bucketData.mplsInterface.act_cnt++;
-
-
-            if (group_action_bitmap & IND_OFDPA_OAM_LM_TX_COUNT)
-            {
-							if(group_bucket_entry.bucketData.mplsInterface.act_cnt >= OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX){
-								err = INDIGO_ERROR_PARAM;
-								break;
-							}
-							
-							i = group_bucket_entry.bucketData.mplsInterface.act_cnt;
-							group_bucket_entry.bucketData.mplsInterface.actions[i].act = ofdpaActOamLmTxCount;
-							group_bucket_entry.bucketData.mplsInterface.actions[i].arg = group_bucket.lmepId;
-							group_bucket_entry.bucketData.mplsInterface.act_cnt++;
-							
-            }
-
-            group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
             break;
 
           case OFDPA_MPLS_L2_VPN_LABEL:
@@ -537,69 +475,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
               break;
             }
 
-            group_bucket_entry.bucketData.mplsLabel.pushL2Hdr = group_bucket.pushL2Hdr;
-
-            if (group_action_bitmap & IND_OFDPA_PUSH_VLAN)
-            {
-              group_bucket_entry.bucketData.mplsLabel.pushVlan = 1;
-              group_bucket_entry.bucketData.mplsLabel.newTpid = group_bucket.newTpid;
-            }
-
-            if (group_action_bitmap & IND_OFDPA_PUSH_MPLS)
-            {
-              group_bucket_entry.bucketData.mplsLabel.pushMplsHdr = 1;
-              group_bucket_entry.bucketData.mplsLabel.mplsEtherType = group_bucket.mplsEtherType;
-            }
-
-            group_bucket_entry.bucketData.mplsLabel.pushCW = group_bucket.pushCW;
-
-            group_bucket_entry.bucketData.mplsLabel.mplsLabel = group_bucket.mplsLabel;
-
-            group_bucket_entry.bucketData.mplsLabel.mplsBOS = group_bucket.mplsBOS;
-
-            group_bucket_entry.bucketData.mplsLabel.mplsCopyEXPOutwards = group_bucket.mplsCopyEXPOutwards;
-            if (group_action_sf_bitmap & IND_OFDPA_MPLS_TC)
-            {
-              group_bucket_entry.bucketData.mplsLabel.mplsEXPAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.mplsEXP = group_bucket.mplsEXP;
-            }
-            if (group_action_bitmap & IND_OFDPA_MPLS_TC_REMARK_TABLE_INDEX)
-            {
-              group_bucket_entry.bucketData.mplsLabel.remarkTableIndexAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.remarkTableIndex = group_bucket.mplsEXPRemarkTableIndex;
-            }
-
-            group_bucket_entry.bucketData.mplsLabel.mplsCopyTTLOutwards = group_bucket.mplsCopyTTLOutwards;
-            if (group_action_bitmap & IND_OFDPA_SET_MPLS_TTL)
-            {
-              group_bucket_entry.bucketData.mplsLabel.mplsTTLAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.mplsTTL = group_bucket.mplsTTL;
-            }
-            if (group_action_sf_bitmap & IND_OFDPA_MPLS_TTL)
-            {
-              group_bucket_entry.bucketData.mplsLabel.mplsTTLAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.mplsTTL = group_bucket.mplsTTL;
-            }
-
-            if (group_action_bitmap & IND_OFDPA_PCP_REMARK_TABLE_INDEX)
-            {
-              group_bucket_entry.bucketData.mplsLabel.remarkTableIndexAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.remarkTableIndex = group_bucket.priorityRemarkTableIndex;
-            }
-
-            if (group_action_bitmap & IND_OFDPA_OAM_LM_TX_COUNT)
-            {
-              group_bucket_entry.bucketData.mplsLabel.oamLmTxCountAction = 1;
-              group_bucket_entry.bucketData.mplsLabel.lmepId = group_bucket.lmepId;
-            }
-
-            if (group_action_bitmap & IND_OFDPA_COLOR_BASED_COUNT)
-            {
-                group_bucket_entry.bucketData.mplsLabel.colorBasedCountAction = 1;
-                group_bucket_entry.bucketData.mplsLabel.colorBasedCountId = group_bucket.colorBasedCounterIndex;
-            }
-
-            group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
             break;
 
           default:
@@ -619,8 +494,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
               break;
             }
 
-            group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
-            group_bucket_entry.bucketData.mplsFastFailOver.watchPort = watch_port;
             break;
 
           case OFDPA_MPLS_L2_TAG:
@@ -634,19 +507,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
               err = INDIGO_ERROR_COMPAT;
               break;
             }
-
-            if (group_action_bitmap & IND_OFDPA_POP_VLAN)
-            {
-              group_bucket_entry.bucketData.mplsL2Tag.popVlan = 1;
-            }
-            if (group_action_bitmap & IND_OFDPA_PUSH_VLAN)
-            {
-              group_bucket_entry.bucketData.mplsL2Tag.pushVlan = 1;
-              group_bucket_entry.bucketData.mplsL2Tag.newTpid = group_bucket.newTpid;
-            }
-            group_bucket_entry.bucketData.mplsL2Tag.vlanId = group_bucket.vlanId;
-
-            group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
 
             break;
 
@@ -664,8 +524,6 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
               break;
             }
 
-            group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
-
             break;
 
           default:
@@ -679,6 +537,8 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
         LOG_ERROR("Invalid GROUP_TYPE %d", group_type);
         break;
     }
+
+
 
     if (err != INDIGO_ERROR_NONE)
     {
@@ -694,6 +554,14 @@ ind_ofdpa_translate_group_buckets(uint32_t group_id,
       return err;
     }
 
+
+		pData = &group_bucket_entry.bucketData;
+    for(i = 0 ; i < group_bucket.act_cnt ; i++){
+			pData->actions[i] = group_bucket.actions[i];
+			pData->act_cnt++;
+		}
+		group_bucket_entry.referenceGroupId = group_bucket.referenceGroupId;
+		
     if (command == OF_GROUP_ADD)
     {
       if (bucket_index == 0)

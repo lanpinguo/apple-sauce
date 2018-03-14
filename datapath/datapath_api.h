@@ -44,6 +44,7 @@ OFDPA_ERROR_t dpGroupBucketEntryFirstGet(uint32_t groupId,
 uint32_t dpGroupTableMaxCountGet(OFDPA_GROUP_ENTRY_TYPE_t groupType);
 uint32_t dpGroupTableEntryCountGet(OFDPA_GROUP_ENTRY_TYPE_t groupType);
 uint32_t dpGroupBucketTableMaxCountGet(uint32_t groupId);
+OFDPA_ERROR_t dpGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex);
 
 uint32_t dpFlowTableSupported(OFDPA_FLOW_TABLE_ID_t tableId);
 uint32_t dpFlowTableEntryCountGet(OFDPA_FLOW_TABLE_ID_t tableId);

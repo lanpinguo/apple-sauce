@@ -390,7 +390,7 @@ uint64_t ofdpaActSetEtherType(void *this,void *pcb, uint64_t arg)
 }
 
 
-uint64_t ofdpaActPushMplsCw(void *this,void *pcb, uint64_t arg)
+uint64_t ofdpaActPushCw(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%s!\r\n", __FUNCTION__);
@@ -449,6 +449,44 @@ uint64_t ofdpaActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg)
 										 "%s!\r\n", __FUNCTION__);
 	return OFDPA_E_NONE;
 }
+
+uint64_t ofdpaActSetVlanPcp(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActSetVlanDei(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+uint64_t ofdpaActSetDscp(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActSetMplsExpRemarkTable(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+uint64_t ofdpaActSetPcpPriRemarkTable(void *this,void *pcb, uint64_t arg)
+{
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+										 "%s!\r\n", __FUNCTION__);
+	return OFDPA_E_NONE;
+}
+
+
+
+
 
 /*
 ***************************************** end of file *************************************************

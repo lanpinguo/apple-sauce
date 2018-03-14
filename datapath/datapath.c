@@ -809,11 +809,15 @@ OFDPA_ERROR_t dpFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *bu
 
 OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdpaPrettyPrintBuf_t *buf)
 {
-#if 1
   OFDPA_ERROR_t rc;
   OFDPA_GROUP_ENTRY_TYPE_t groupType;
   uint32_t subType;
   uint32_t count = 0;
+	int i;
+	ofdpaGroupBucketData_t	*pData = NULL;
+	ofdpaActionFuncOpt_t	ops;
+	ofdpaAct_t *pAct;
+	
 
   rc = ofdpaGroupTypeGet(bucketEntry->groupId, &groupType);
   if (rc != OFDPA_E_NONE)
@@ -823,82 +827,32 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
   else
   {
     APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "bucketIndex = %d: ", bucketEntry->bucketIndex);
+		APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
 
     switch (groupType)
     {
       case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "outputPort = ");
-        ofdpaPortDecode(buf->data, OFDPA_PRETTY_MAX_LEN, &count, bucketEntry->bucketData.l2Interface.outputPort);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "popVlanTag = %d ", bucketEntry->bucketData.l2Interface.popVlanTag);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "allowVlanTranslation = %d ", bucketEntry->bucketData.l2Interface.allowVlanTranslation);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "outputPort = ");
-        ofdpaPortDecode(buf->data, OFDPA_PRETTY_MAX_LEN, &count, bucketEntry->bucketData.l2UnfilteredInterface.outputPort);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "allowVlanTranslation = %d ", bucketEntry->bucketData.l2UnfilteredInterface.allowVlanTranslation);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.l3Interface.vlanId, bucketEntry->bucketData.l3Interface.vlanId & OFDPA_VID_EXACT_MASK);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[0],
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[1],
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[2],
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[3],
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[4],
-                                 bucketEntry->bucketData.l3Interface.srcMac.addr[5]);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.l3Unicast.vlanId, bucketEntry->bucketData.l3Unicast.vlanId & OFDPA_VID_EXACT_MASK);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[0],
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[1],
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[2],
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[3],
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[4],
-                                 bucketEntry->bucketData.l3Unicast.srcMac.addr[5]);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[0],
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[1],
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[2],
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[3],
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[4],
-                                 bucketEntry->bucketData.l3Unicast.dstMac.addr[5]);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.l2Rewrite.vlanId, bucketEntry->bucketData.l2Rewrite.vlanId & OFDPA_VID_EXACT_MASK);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[0],
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[1],
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[2],
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[3],
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[4],
-                                 bucketEntry->bucketData.l2Rewrite.srcMac.addr[5]);
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[0],
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[1],
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[2],
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[3],
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[4],
-                                 bucketEntry->bucketData.l2Rewrite.dstMac.addr[5]);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "outputPort = ");
-        ofdpaPortDecode(buf->data, OFDPA_PRETTY_MAX_LEN, &count, bucketEntry->bucketData.l2Overlay.outputPort);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
       case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
       case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
       case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-        APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
@@ -912,51 +866,7 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
           switch (subType)
           {
             case OFDPA_MPLS_INTERFACE:
-              {
-              	int i;
-              	ofdpaAct_t	*pAct;
-								ofdpaActionFuncOpt_t	ops;
-								
-	              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-	              
-								for(i = 0; i < bucketEntry->bucketData.mplsInterface.act_cnt ; i ++){
-									pAct = &bucketEntry->bucketData.mplsInterface.actions[i];
-									if (count < OFDPA_PRETTY_MAX_LEN) 																														 
-									{ 
-										if(pAct->act){
-											ops.buf = &buf->data[count];
-											ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
-											count += (pAct->act)(&ops,NULL,pAct->arg);
-										}
-									} 																																											 
-									if (count >= OFDPA_PRETTY_MAX_LEN)																														 
-									{ 																																											 
-										buf->data[OFDPA_PRETTY_MAX_LEN - 1] = '\0'; 																												
-										return OFDPA_E_FULL;																																	 
-									} 																																											 
-								}
-
-#if 0
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "oamLmTxCountAction = %d ", bucketEntry->bucketData.mplsInterface.oamLmTxCountAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.mplsInterface.vlanId, bucketEntry->bucketData.mplsInterface.vlanId & OFDPA_VID_EXACT_MASK);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "lmepIdAction = %d ", bucketEntry->bucketData.mplsInterface.lmepIdAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "lmepId = %d ", bucketEntry->bucketData.mplsInterface.lmepId);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[0],
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[1],
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[2],
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[3],
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[4],
-                                       bucketEntry->bucketData.mplsInterface.srcMac.addr[5]);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ",
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[0],
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[1],
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[2],
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[3],
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[4],
-                                       bucketEntry->bucketData.mplsInterface.dstMac.addr[5]);
-#endif
-							}
+            	pData = &bucketEntry->bucketData.mplsInterface;
               break;
 
             case OFDPA_MPLS_L2_VPN_LABEL:
@@ -964,31 +874,10 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
             case OFDPA_MPLS_TUNNEL_LABEL1:
             case OFDPA_MPLS_TUNNEL_LABEL2:
             case OFDPA_MPLS_SWAP_LABEL:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "pushL2Hdr = %d ", bucketEntry->bucketData.mplsLabel.pushL2Hdr);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "pushVlan = %d ", bucketEntry->bucketData.mplsLabel.pushVlan);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "newTpid = 0x%04x ", bucketEntry->bucketData.mplsLabel.newTpid);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "pushMplsHdr = %d ", bucketEntry->bucketData.mplsLabel.pushMplsHdr);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "pushCW = %d ", bucketEntry->bucketData.mplsLabel.pushCW);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsLabel = 0x%x ", bucketEntry->bucketData.mplsLabel.mplsLabel);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsBOS = %d ", bucketEntry->bucketData.mplsLabel.mplsBOS);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsEXPAction = %d ", bucketEntry->bucketData.mplsLabel.mplsEXPAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsEXP = %d ", bucketEntry->bucketData.mplsLabel.mplsEXP);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsCopyEXPOutwards = %d ", bucketEntry->bucketData.mplsLabel.mplsCopyEXPOutwards);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "remarkTableIndexAction = %d ", bucketEntry->bucketData.mplsLabel.remarkTableIndexAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "RemarkTableIndex = %d ", bucketEntry->bucketData.mplsLabel.remarkTableIndex);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsTTLAction = %d ", bucketEntry->bucketData.mplsLabel.mplsTTLAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsTTL = %d ", bucketEntry->bucketData.mplsLabel.mplsTTL);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "mplsCopyTTLOutwards = %d ", bucketEntry->bucketData.mplsLabel.mplsCopyTTLOutwards);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "lmepIdAction = %d ", bucketEntry->bucketData.mplsLabel.lmepIdAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "lmepId = %d ", bucketEntry->bucketData.mplsLabel.lmepId);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "oamLmTxCountAction = %d ", bucketEntry->bucketData.mplsLabel.oamLmTxCountAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "colorBasedCountAction = %d ", bucketEntry->bucketData.mplsLabel.colorBasedCountAction);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "colorBasedCountId = %d ", bucketEntry->bucketData.mplsLabel.colorBasedCountId);
               break;
 
             default:
-              count += printf("Unknown group sub-type (0x%x)", subType);
+              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "Unknown group sub-type (0x%x)", subType);
               break;
           }
         }
@@ -1009,29 +898,18 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
             case OFDPA_MPLS_L2_MULTICAST:
             case OFDPA_MPLS_L2_LOCAL_FLOOD:
             case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
               break;
 
             case OFDPA_MPLS_FAST_FAILOVER:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "watchPort = ");
-              ofdpaPortDecode(buf->data, OFDPA_PRETTY_MAX_LEN, &count, bucketEntry->bucketData.mplsFastFailOver.watchPort);
               break;
 
             case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
               break;
 
             case OFDPA_MPLS_ECMP:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
               break;
 
             case OFDPA_MPLS_L2_TAG:
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "referenceGroupId = 0x%08x ", bucketEntry->referenceGroupId);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "pushVlan = %d ", bucketEntry->bucketData.mplsL2Tag.pushVlan);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "newTpid = 0x%04x ", bucketEntry->bucketData.mplsL2Tag.newTpid);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "popVlan = %d ", bucketEntry->bucketData.mplsL2Tag.popVlan);
-              APPEND_BUFFER_CHECK_SIZE(buf->data, OFDPA_PRETTY_MAX_LEN, count, "vlanId = 0x%04x (VLAN %d) ", bucketEntry->bucketData.mplsL2Tag.vlanId, bucketEntry->bucketData.mplsL2Tag.vlanId & OFDPA_VID_EXACT_MASK);
               break;
 
             default:
@@ -1046,9 +924,28 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
         break;
     }
   }
-  return(rc);
-#endif
-	return OFDPA_E_FAIL;
+
+	if(pData){
+
+		for(i = 0; i < pData->act_cnt ; i ++){
+			pAct = &pData->actions[i];
+			if (count < OFDPA_PRETTY_MAX_LEN) 																														 
+			{ 
+				if(pAct->act){
+					ops.buf = &buf->data[count];
+					ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
+					count += (pAct->act)(&ops,NULL,pAct->arg);
+				}
+			} 																																											 
+			if (count >= OFDPA_PRETTY_MAX_LEN)																														 
+			{ 																																											 
+				buf->data[OFDPA_PRETTY_MAX_LEN - 1] = '\0'; 																												
+				return OFDPA_E_FULL;																																	 
+			} 																																											 
+		}
+		return OFDPA_E_NONE;
+	}
+	return OFDPA_E_NOT_FOUND;
 }
 
 

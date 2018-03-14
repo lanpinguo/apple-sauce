@@ -188,14 +188,14 @@ OFDPA_ERROR_t dpaGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex)
   uint32_t subType;
 
   /* Check if there are no references to the Group */
-  rc = ofdbGroupStatsGet(groupId, &groupStats);
+  rc = dpGroupStatsGet(groupId, &groupStats);
 
   if (rc == OFDPA_E_NONE)
   {
     if ((groupStats.refCount == 0) || (groupStats.bucketCount > 1))
     {
       memset(&groupBucket, 0, sizeof(groupBucket));
-      rc = ofdbGroupBucketEntryGet(groupId, bucketIndex, &groupBucket);
+      rc = dpGroupBucketEntryGet(groupId, bucketIndex, &groupBucket);
       if (OFDPA_E_NONE != rc)
       {
         OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
@@ -293,7 +293,7 @@ OFDPA_ERROR_t dpaGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex)
                            "Failed to delete Bucket from Hardware; driverRc = %d!\r\n", driverRc);
       }
 
-      rc = ofdbGroupBucketEntryDelete(groupId, bucketIndex);
+      rc = dpGroupBucketEntryDelete(groupId, bucketIndex);
 
       if (OFDPA_E_NONE != rc)
       {
@@ -335,7 +335,7 @@ OFDPA_ERROR_t dpaGroupBucketsDeleteAll(uint32_t groupId)
   /* Delete all buckets from the corresponding Group Bucket Table */
 
   memset(&nextBucketEntry, 0, sizeof(nextBucketEntry));
-  rc = ofdbGroupBucketEntryFirstGet(groupId, &nextBucketEntry);
+  rc = dpGroupBucketEntryFirstGet(groupId, &nextBucketEntry);
 
   while (rc == OFDPA_E_NONE)
   {
@@ -353,7 +353,7 @@ OFDPA_ERROR_t dpaGroupBucketsDeleteAll(uint32_t groupId)
 
     tempBucketIndex = nextBucketEntry.bucketIndex;
 
-    rc = ofdbGroupBucketEntryNextGet(groupId, tempBucketIndex,
+    rc = dpGroupBucketEntryNextGet(groupId, tempBucketIndex,
                                          &nextBucketEntry);
   }
 
@@ -392,12 +392,12 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
   //OFDB_WRITE_LOCK_TAKE;
 
   /* check if there is room for another entry in this groupId */
-  if (ofdbGroupTableEntryCountGet(groupType) >= ofdbGroupTableMaxCountGet(groupType))
+  if (dpGroupTableEntryCountGet(groupType) >= dpGroupTableMaxCountGet(groupType))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Group 0x%x max count (%d) is not larger than entry count (%d).\r\n",
-                       group->groupId, ofdbGroupTableEntryCountGet(groupType),
-                       ofdbGroupTableMaxCountGet(groupType));
+                       group->groupId, dpGroupTableEntryCountGet(groupType),
+                       dpGroupTableMaxCountGet(groupType));
     //OFDB_LOCK_GIVE;
     return OFDPA_E_FULL;
   }
@@ -457,7 +457,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
 
       while (rc == OFDPA_E_NONE)
       {
-        rc = ofdbGroupTypeNextGet(groupId, OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE, &nextGroup);
+        rc = dpGroupTypeNextGet(groupId, OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE, &nextGroup);
 
         if (rc == OFDPA_E_NONE)
         {
@@ -632,7 +632,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
         groupId = OFDB_GROUP_TYPE_SET(groupId, OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY);
         groupId = OFDB_GROUP_TUNNELID_SET(groupId, tunnelId);
 
-        if ((rc = ofdbGroupGet(groupId, &nextGroup)) != OFDPA_E_NONE)
+        if ((rc = dpGroupGet(groupId, &nextGroup)) != OFDPA_E_NONE)
         {
           rc = dpGroupNextGet(groupId, &nextGroup);
         }
@@ -756,7 +756,7 @@ OFDPA_ERROR_t ofdpaGroupDelete(uint32_t groupId)
                      groupId);
   /* Check if there are no references to the Group */
   OFDB_WRITE_LOCK_TAKE;
-  rc = ofdbGroupStatsGet(groupId, &groupStats);
+  rc = dpGroupStatsGet(groupId, &groupStats);
 
   if (rc == OFDPA_E_NONE)
   {
@@ -777,7 +777,7 @@ OFDPA_ERROR_t ofdpaGroupDelete(uint32_t groupId)
       }
       else
       {
-        rc = ofdbGroupDelete(groupId);
+        rc = dpGroupDelete(groupId);
 
         driverRc = OFDPA_E_NONE;
 
@@ -927,12 +927,12 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
                      "Group Bucket count = %d\r\n", groupStats.bucketCount);
 
   /* check if there is room for another bucket entry in this Group */
-  if (groupStats.bucketCount >= ofdbGroupBucketTableMaxCountGet(groupBucket->groupId))
+  if (groupStats.bucketCount >= dpGroupBucketTableMaxCountGet(groupBucket->groupId))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Group 0x%x max count (%d) is not larger than entry count (%d).\r\n",
                        groupBucket->groupId, groupStats.bucketCount,
-                       ofdbGroupBucketTableMaxCountGet(groupBucket->groupId));
+                       dpGroupBucketTableMaxCountGet(groupBucket->groupId));
     //OFDB_LOCK_GIVE;
     return OFDPA_E_FULL;
   }
@@ -988,185 +988,7 @@ OFDPA_ERROR_t ofdpaGroupBucketsDeleteAll(uint32_t groupId)
 
 OFDPA_ERROR_t ofdpaGroupBucketEntryModify(ofdpaGroupBucketEntry_t *groupBucket)
 {
-  OFDPA_ERROR_t rc;
-  ofdpaGroupBucketEntry_t groupBucketEntry;
-  uint32_t  subType;
-
-  if (groupBucket == NULL)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Null Group Bucket passed!\r\n", 0);
-    return OFDPA_E_PARAM;
-  }
-
-  OFDB_WRITE_LOCK_TAKE;
-  memset(&groupBucketEntry, 0, sizeof(groupBucketEntry));
-  if (OFDPA_E_NONE != ofdbGroupBucketEntryGet(groupBucket->groupId, groupBucket->bucketIndex,
-                                              &groupBucketEntry))
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Group Bucket not found!\r\n", 0);
-    OFDB_LOCK_GIVE;
-    return OFDPA_E_NOT_FOUND;
-  }
-
-  switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-  {
-  case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-    if (groupBucket->bucketData.l2Interface.popVlanTag ==
-          groupBucketEntry.bucketData.l2Interface.popVlanTag)
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
-                         "New and old Bucket parameters are the same!\r\n", 0);
-      OFDB_LOCK_GIVE;
-      return OFDPA_E_PARAM;
-    }
-
-
-    rc = ofdbGroupBucketValidate(groupBucket);
-    if (OFDPA_E_NONE != rc)
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                         "Bucket validation failed; rc = %d!\r\n", rc);
-      OFDB_LOCK_GIVE;
-      return rc;
-    }
-
-
-
-    break;
-
-  case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-    if ((!memcmp(&groupBucket->bucketData.l3Unicast.srcMac,
-                 &groupBucketEntry.bucketData.l3Unicast.srcMac,
-                 sizeof(groupBucket->bucketData.l3Unicast.srcMac))) &&
-          (!memcmp(&groupBucket->bucketData.l3Unicast.dstMac,
-                 &groupBucketEntry.bucketData.l3Unicast.dstMac,
-                 sizeof(groupBucket->bucketData.l3Unicast.dstMac))) &&
-          (groupBucket->bucketData.l3Unicast.vlanId == groupBucketEntry.bucketData.l3Unicast.vlanId) &&
-          (groupBucket->referenceGroupId == groupBucketEntry.referenceGroupId))
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
-                         "New and old Bucket parameters are the same!\r\n", 0);
-      OFDB_LOCK_GIVE;
-      return OFDPA_E_PARAM;
-    }
-
-    rc = ofdbGroupBucketValidate(groupBucket);
-    if (OFDPA_E_NONE != rc)
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                         "Bucket validation failed; rc = %d!\r\n", rc);
-      OFDB_LOCK_GIVE;
-      return rc;
-    }
-
-
-    break;
-
-  case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-#ifdef NOT_SUPPORTED
-    if ((!memcmp(&groupBucket->bucketData.l3Interface.srcMac,
-                 &groupBucketEntry.bucketData.l3Interface.srcMac,
-                 sizeof(groupBucket->bucketData.l3Interface.srcMac))) &&
-        (groupBucket->bucketData.l3Interface.vlanId == groupBucketEntry.bucketData.l3Interface.vlanId) &&
-        (groupBucket->referenceGroupId == groupBucketEntry.referenceGroupId))
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
-                         "New and old Bucket parameters are the same!\r\n", 0);
-      OFDB_LOCK_GIVE;
-      return OFDPA_E_FAIL;
-    }
-
-    rc = ofdbGroupBucketValidate(groupBucket);
-    if (OFDPA_E_NONE != rc)
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                         "Bucket validation failed; rc = %d!\r\n", rc);
-      OFDB_LOCK_GIVE;
-      return rc;
-    }
-
-    nextGroupId = 0;
-    /* Find groups referring this Group. Will be of type L3 Multicast. */
-    result = ofdbRefGroupNextGet(groupBucket->groupId, &nextGroupId,
-                                 OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST);
-
-    while (result == OFDPA_E_NONE)
-    {
-      result = ofdbRefGroupNextGet(groupBucket->groupId, &nextGroupId,
-                                   OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST);
-    }
-
-
-    nextGroupId = 0;
-    result = ofdbRefGroupNextGet(groupBucket->groupId, &nextGroupId,
-                                 OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST);
-
-    while (result == OFDPA_E_NONE)
-    {
-      result = ofdbRefGroupNextGet(groupBucket->groupId, &nextGroupId,
-                                   OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST);
-    }
-
-#endif /* NOT_SUPPORTED */
-  case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-    
-    subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-    
-    switch (subType)
-    {
-      case OFDPA_MPLS_FAST_FAILOVER:
-        rc = ofdbGroupBucketValidate(groupBucket);
-        if (OFDPA_E_NONE != rc)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                             "Bucket validation failed; rc = %d!\r\n", rc);
-          OFDB_LOCK_GIVE;
-          return rc;
-        }
-
-        /* Check whether the bucket is needed update*/
-        if(ofdbGroupBucketDataEntryIsNeedUpdated(groupBucket) == OFDPA_FALSE)
-        {
-          OFDB_LOCK_GIVE;
-          return OFDPA_E_NONE;
-        }
-
-        
-        rc = ofdbOamLogicalLivenessPortCreate(
-          groupBucket->bucketData.mplsFastFailOver.watchPort, groupBucket->groupId);
-        if (rc != OFDPA_E_NONE)
-        {
-          rc = OFDPA_E_FAIL;
-        }
-        break;
-      default:
-        break;
-    }
-    break;
-  case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-  case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-  case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-  case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-  case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-  case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-  case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-  case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Group Modify not supported; \r\n", 0);
-    /* fall through to default case */
-
-  default:
-    /* Invalid Group ID */
-    OFDB_LOCK_GIVE;
-    return OFDPA_E_PARAM;
-  }
-
-  rc = ofdbGroupBucketEntryModify(groupBucket);
-  OFDB_LOCK_GIVE;
-
-  return rc;
+	return OFDPA_E_FAIL;
 }
 
 OFDPA_ERROR_t ofdpaGroupBucketEntryGet(uint32_t groupId, uint32_t bucketIndex,

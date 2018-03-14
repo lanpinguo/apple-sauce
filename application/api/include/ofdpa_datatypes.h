@@ -2224,20 +2224,10 @@ typedef struct ofdpaGroupEntryStats_s
 typedef struct ofdpaL2InterfaceGroupBucketData_s
 {
   /** bucket action set */
-  /** controller responsible for assuring data in outputPort
-      and the port identifier data encoded in the groupId are equal */
-
-  uint32_t       outputPort;
-
-  /** controller responsible for assuring vlan is identified in groupId */
-  /** flag indicating if outer VLAN tag should be stripped
-  (0 - do not strip VLAN tag, 1 - strip VLAN tag) */
-
-  uint32_t       popVlanTag;
-
-  /** Allow Egress VLAN Translation to change outermost VLAN.
-   *  Must be 0 for L2 Interface Group. */
-  uint32_t       allowVlanTranslation;
+#define OFDPA_GRP_L2_INTF_BUKT_ACT_MAX		3
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L2_INTF_BUKT_ACT_MAX];
 
 
 } ofdpaL2InterfaceGroupBucketData_t;
@@ -2246,10 +2236,10 @@ typedef struct ofdpaL2InterfaceGroupBucketData_s
 typedef struct ofdpaL3InterfaceGroupBucketData_s
 {
   /** bucket action set */
-  /** data for Set-Field action; vlanId data must match
-      the VLAN ID encoded in the groupId */
-  uint32_t    vlanId;
-  ofdpaMacAddr_t     srcMac;
+#define OFDPA_GRP_L3_INTF_BUKT_ACT_MAX		2
+		
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L3_INTF_BUKT_ACT_MAX];
 
 } ofdpaL3InterfaceGroupBucketData_t;
 
@@ -2258,10 +2248,10 @@ typedef struct ofdpaL3UnicastGroupBucketData_s
 {
   /** bucket action set */
 
-  /** data for Set-Field action */
-  ofdpaMacAddr_t     srcMac;
-  ofdpaMacAddr_t     dstMac;
-  uint32_t    vlanId;
+#define OFDPA_GRP_L3_UNICAST_BUKT_ACT_MAX		3
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L3_UNICAST_BUKT_ACT_MAX];
 
 } ofdpaL3UnicastGroupBucketData_t;
 
@@ -2269,9 +2259,10 @@ typedef struct ofdpaL3UnicastGroupBucketData_s
 typedef struct ofdpaL2OverlayGroupBucketData_s
 {
   /** bucket action set */
-  uint32_t       outputPort;  /* controller responsible for assuring data in outputPort
-                                 and the port identifier data encoded in the groupId are equal */
-                              /* only Access and Tunnel Endpoint Logical ports are accepted */
+#define OFDPA_GRP_L2_OVERLAY_BUKT_ACT_MAX		1
+			
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L2_OVERLAY_BUKT_ACT_MAX];
 } ofdpaL2OverlayGroupBucketData_t;
 
 
@@ -2280,10 +2271,10 @@ typedef struct ofdpaL2RewriteGroupBucketData_s
 {
   /** bucket action set */
 
-  /** data for Set-Field action */
-  ofdpaMacAddr_t     srcMac;
-  ofdpaMacAddr_t     dstMac;
-  uint32_t           vlanId;
+#define OFDPA_GRP_L2_REWRITE_BUKT_ACT_MAX		3
+		
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L2_REWRITE_BUKT_ACT_MAX];
 
 } ofdpaL2RewriteGroupBucketData_t;
 
@@ -2303,64 +2294,54 @@ typedef struct ofdpaMPLSInterfaceGroupBucketData_s
 typedef struct ofdpaMPLSLabelGroupBucketData_s
 {
   /** bucket action set */
-  uint32_t           pushL2Hdr;
-  uint32_t           pushVlan;
-  uint16_t           newTpid;
-  uint32_t           pushMplsHdr;
-  uint16_t           mplsEtherType;
-  uint32_t           pushCW;
-
-  /** data for Set-Field action */
-  uint32_t           mplsLabel;
-  uint32_t           mplsBOS;
-  uint32_t           mplsEXPAction;
-  uint32_t           mplsEXP;
-  uint32_t           mplsCopyEXPOutwards;
-  uint32_t           remarkTableIndexAction;
-  uint32_t           remarkTableIndex;
-  uint32_t           mplsTTLAction;
-  uint32_t           mplsTTL;
-  uint32_t           mplsCopyTTLOutwards;
-  uint32_t           lmepIdAction;         /**< Non-zero value indicates Set-field LMEP ID */
-  uint32_t           lmepId;               /**< LMEP ID value used in Set-field action */
-  uint32_t           oamLmTxCountAction;   /**< Indicates MEP or MIP for which LM counters are to be incremented. */
-  uint32_t           colorBasedCountAction;    /**< Non-zero value indicates increment the specified Color Based Counter table */
-  uint32_t           colorBasedCountId;        /**< Identifier of Color Based Counter table entry to be incremented. The counter entry
-                                                    must be present when the bucket entry is added. */
-
+		/** bucket action set */
+	
+#define OFDPA_GRP_MPLS_LABEL_BUKT_ACT_MAX		16
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_MPLS_LABEL_BUKT_ACT_MAX];
 } ofdpaMPLSLabelGroupBucketData_t;
 
 /** MPLS Fast Failover Group Bucket */
 typedef struct ofdpaMPLSFastFailOverGroupBucketData_s
 {
   /** bucket action set */
-  uint32_t       watchPort;
+#define OFDPA_GRP_MPLS_FAST_FAILOVER_BUKT_ACT_MAX		1
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_MPLS_FAST_FAILOVER_BUKT_ACT_MAX];
+	
 } ofdpaMPLSFastFailOverGroupBucketData_t;
 
 /** MPLS L2 Tag Group Bucket */
 typedef struct ofdpaMPLSL2TagGroupBucketData_s
 {
   /** bucket action set */
-  uint32_t       pushVlan;
-  uint16_t       newTpid;
-  uint32_t       popVlan;
-  uint32_t       vlanId;
+#define OFDPA_GRP_MPLS_L2_TAG_BUKT_ACT_MAX		4
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_MPLS_L2_TAG_BUKT_ACT_MAX];
 } ofdpaMPLSL2TagGroupBucketData_t;
 
 /** L2 Unfiltered Interface Group Bucket */
 typedef struct ofdpaL2UnfilteredInterfaceGroupBucketData_s
 {
   /** bucket action set */
-  /** controller responsible for assuring data in outputPort
-      and the port identifier data encoded in the groupId are equal */
-
-  uint32_t       outputPort;
-
-  /** Allow Egress VLAN Translation to change outermost VLAN.
-   *  Must be 1 for L2 Unfiltered Interface Group. */
-  uint32_t       allowVlanTranslation;
+#define OFDPA_GRP_L2_UNFILTERED_INTF_BUKT_ACT_MAX		2
+	
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[OFDPA_GRP_L2_UNFILTERED_INTF_BUKT_ACT_MAX];
 
 } ofdpaL2UnfilteredInterfaceGroupBucketData_t;
+
+
+typedef struct ofdpaGroupBucketData_s
+{
+  /** bucket action set */
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[0];
+} ofdpaGroupBucketData_t;
+
 
 /** Group Bucket Table Entry */
 typedef struct ofdpaGroupBucketEntry_s
