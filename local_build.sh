@@ -55,26 +55,31 @@ export OUTPATH=$DELIVERABLES_DIR
 
 make_app()
 {
-
+    cd $OUTPATH
+    echo "[Compiling app].........."
     
-    cd $APP_BASE_DIR
-    
-    make $1    
-    
+#    make ofagentapp
+    make ofagentapp    
     if [ $? -eq 0 ];then 
-        #chmod +x $ROOTFS_DIR/rsp/ritpapp
         echo -en ${SUCCESS}
-        if [ "$1" != "clean" ];then 
-            cp $OUTPATH/application/husky $BUILD_DIR/../orangepi
-        fi
-        echo "make app $1 success"
+		cp $OUTPATH/husky $BUILD_DIR/../orangepi
+        echo "make app success"
         echo -en ${NORMAL}
     else
         echo -en ${FAILURE}
-        echo "make app $1 failed"
+        echo "make app failed"
         echo -en ${NORMAL}
         exit 1
     fi
+
+}
+
+clean_app()
+{
+    cd $OUTPATH
+    echo "[clean app ].........."
+    
+	rm -f $OUTPATH/husky
 
 
 }
@@ -111,6 +116,54 @@ make_oflib()
         exit 1
     fi
 
+	make datapath
+    if [ $? -eq 0 ];then 
+        echo -en ${SUCCESS}
+        echo "make oflib datapath success"
+        echo -en ${NORMAL}
+    else
+        echo -en ${FAILURE}
+        echo "make oflib datapath failed"
+        echo -en ${NORMAL}
+        exit 1
+    fi
+
+	make adpl
+    if [ $? -eq 0 ];then 
+        echo -en ${SUCCESS}
+        echo "make oflib adpl success"
+        echo -en ${NORMAL}
+    else
+        echo -en ${FAILURE}
+        echo "make oflib adpl failed"
+        echo -en ${NORMAL}
+        exit 1
+    fi
+
+	make ofagent_driver
+    if [ $? -eq 0 ];then 
+        echo -en ${SUCCESS}
+        echo "make ofagent driver success"
+        echo -en ${NORMAL}
+    else
+        echo -en ${FAILURE}
+        echo "make ofagent driver failed"
+        echo -en ${NORMAL}
+        exit 1
+    fi
+
+	make app_lib
+    if [ $? -eq 0 ];then 
+        echo -en ${SUCCESS}
+        echo "make app lib success"
+        echo -en ${NORMAL}
+    else
+        echo -en ${FAILURE}
+        echo "make app lib failed"
+        echo -en ${NORMAL}
+        exit 1
+    fi
+	
 }
 
 
@@ -124,6 +177,7 @@ make_cli()
         echo -en ${SUCCESS}
         echo "make oflib cli success"
         cp $OUTPATH/flowtable_dump $BUILD_DIR/../orangepi
+        cp $OUTPATH/grouptable_dump $BUILD_DIR/../orangepi
         cp $OUTPATH/controller $BUILD_DIR/../orangepi
         cp -a $OUTPATH/librpc_client.so $BUILD_DIR/../orangepi
         cp $OUTPATH/librpc_client.so.1 $BUILD_DIR/../orangepi
@@ -183,7 +237,7 @@ else
         if [ "$2" == "clean" ]; then
             echo "clean all"
             clean_oflib
-            make_app clean
+            clean_app
         else
             echo "Make All"
 
@@ -201,31 +255,24 @@ else
 
     app)
         if [ "$2" == "clean" ]; then
-            echo "clean app"
-            make_app $2
+            clean_app
             
         else
-            echo "make oflib..."
             make_oflib 
-            echo "make app..."
-            make_app $2
+            make_app 
         fi
         ;;
     oflib)
         if [ "$2" == "clean" ]; then
-            echo "clean oflib"
             clean_oflib
         else
-            echo "make oflib..."
             make_oflib 
         fi
         ;;
     cli)
         if [ "$2" == "clean" ]; then
-            echo "clean oflib"
             clean_oflib
         else
-            echo "make oflib..."
             make_cli 
         fi
         ;;
