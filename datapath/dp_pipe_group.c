@@ -130,30 +130,20 @@ OFDPA_ERROR_t dpGrpL2IntfBuktBuild(ofdpaL2InterfaceGroupBucketData_t       * pDa
 {
   OFDPA_ERROR_t rv;
 	ofdpaAct_t				action;
+	int i;
 
 
 
-	*ppBucket = dpGrpBucketMalloc(3);
+	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_L2_INTF_BUKT_ACT_MAX);
 	if(*ppBucket == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Bucket Malloc failed!\r\n", 0);
 		return OFDPA_E_PARAM;
 	}
-	action.act = ofdpaActIdentifyOutPort;
-	action.arg = pData->outputPort;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	
-	if(pData->popVlanTag){
-		action.act = ofdpaActPopVlan;
-		action.arg = 0;
+	for(i = 0; i < pData->act_cnt; i++){
+		action = pData->actions[i];
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-	
-	if(pData->allowVlanTranslation){
-		action.act = ofdpaActAllowVlanTrans;
-		action.arg = 0;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	
 	}
 
 	return OFDPA_E_NONE;
@@ -166,7 +156,7 @@ OFDPA_ERROR_t dpGrpMplsIntfBuktBuild(ofdpaMPLSInterfaceGroupBucketData_t       *
 	int i;
 
 
-	*ppBucket = dpGrpBucketMalloc(6);
+	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX);
 	if(*ppBucket == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Bucket Malloc failed!\r\n", 0);
@@ -188,97 +178,19 @@ OFDPA_ERROR_t dpGrpMplsLabelBuktBuild(ofdpaMPLSLabelGroupBucketData_t       * pD
 {
   OFDPA_ERROR_t rv;
 	ofdpaAct_t				action;
+	int i;
 
 
 
-	*ppBucket = dpGrpBucketMalloc(16);
+	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_MPLS_LABEL_BUKT_ACT_MAX);
 	if(*ppBucket == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Bucket Malloc failed!\r\n", 0);
 		return OFDPA_E_PARAM;
 	}
 	
-	action.act = ofdpaActPushL2Hdr;
-	action.arg = 0;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-
-	action.act = ofdpaActPushVlan;
-	action.arg = 0;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-
-	action.act = ofdpaActSetTpid;
-	action.arg = pData->newTpid;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	action.act = ofdpaActPushMplsHdr;
-	action.arg = pData->newTpid;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	action.act = ofdpaActSetEtherType;
-	action.arg = pData->mplsEtherType;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	
-	action.act = ofdpaActPushMplsCw;
-	action.arg = 0;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	action.act = ofdpaActSetMplsLabel;
-	action.arg = pData->mplsLabel;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	action.act = ofdpaActSetMplsBos;
-	action.arg = pData->mplsBOS;
-	DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-
-	
-	if(pData->mplsEXPAction){
-		action.act = ofdpaActSetMplsExp;
-		action.arg = pData->mplsEXP;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->mplsCopyEXPOutwards){
-		action.act = ofdpaActCpyMplsExpOutwards;
-		action.arg = pData->mplsCopyEXPOutwards;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	
-	if(pData->remarkTableIndexAction){
-		action.act = ofdpaActSetRemarkTableId;
-		action.arg = pData->remarkTableIndex;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->mplsTTLAction){
-		action.act = ofdpaActSetMplsTtl;
-		action.arg = pData->mplsTTL;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->mplsCopyTTLOutwards){
-		action.act = ofdpaActCpyMplsTtlOutwards;
-		action.arg = pData->mplsCopyTTLOutwards;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->lmepIdAction){
-		action.act = ofdpaActSetLmepId;
-		action.arg = pData->lmepId;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->oamLmTxCountAction){
-		action.act = ofdpaActOamLmTxCount;
-		action.arg = 0;
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	if(pData->colorBasedCountAction){
-		action.act = ofdpaActIncColorBasedCount;
-		action.arg = pData->colorBasedCountId;
+	for(i = 0; i < pData->act_cnt; i++){
+		action = pData->actions[i];
 		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
 	}
 
@@ -601,6 +513,33 @@ int dpGroupBucketDataTableNodeCompare(void *a, void *b, size_t l)
 }
 
 
+OFDPA_ERROR_t dpGroupDelete(uint32_t groupId)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NONE;
+  ofdbGroupTable_node_t group_node;
+  ofdbGroupTable_node_t *dataPtr;
+
+  memset(&group_node, 0, sizeof(group_node));
+  group_node.group.groupId = groupId;
+
+  dataPtr = avlDeleteEntry(&grp_pipe_config.ofdbGroupTable_tree, &group_node);
+
+  if (dataPtr == NULL)
+  {
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
+                      "Group Table entry not found!\r\n", 0);
+    rc = OFDPA_E_NOT_FOUND;
+  }
+  else
+  {
+    grp_pipe_config.grpStatus->num_groups_in_database--;
+    grp_pipe_config.grpStatus->groupTableEntryCount[OFDB_GROUP_TYPE(groupId)]--;
+
+  }
+
+  return rc;
+}
+
 OFDPA_ERROR_t dpGroupAdd(ofdpaGroupEntry_t *group)
 {
   OFDPA_ERROR_t rc = OFDPA_E_NONE;
@@ -735,6 +674,15 @@ OFDPA_ERROR_t dpGroupBucketCountUpdate(uint32_t groupId, uint32_t increment)
 
   return rc;
 }
+
+
+OFDPA_ERROR_t dpGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+
+  return rc;
+}
+
 
 OFDPA_ERROR_t dpGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 {
@@ -904,821 +852,7 @@ OFDPA_ERROR_t dpRefGroupValidate(uint32_t referredGroupId)
 
 OFDPA_ERROR_t dpGroupBucketValidate(ofdpaGroupBucketEntry_t *groupBucket)
 {
-  OFDPA_ERROR_t rc;
-  OFDB_ENTRY_FLAG_t flags;
-  ofdpaGroupBucketEntry_t nextBucketEntry, tmpBucketEntry, workingGroupBucket;
-  ofdpaFlowEntry_t aclFlow;
-  int bucketIndex;
-  uint32_t tmpVlanId;
-  uint32_t tunnelId;
-  ofdbPortInfo_t portInfo;
-  uint32_t subType;
-
-  if (groupBucket == NULL)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Null Group Bucket passed!\r\n", 0);
-    return OFDPA_E_PARAM;
-  }
-
-  if (OFDB_GROUP_TYPE(groupBucket->groupId) >= OFDPA_GROUP_ENTRY_TYPE_LAST)
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                      "Referenced group ID not valid.\r\n", 0);
-    return OFDPA_E_PARAM;
-  }
-
-  if ((OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE)    ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST)    ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST)  ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD)      ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE)  ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST)  ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_L3_ECMP)       ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL)  ||
-      (OFDB_GROUP_TYPE(groupBucket->groupId) == OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING))
-  {
-    /* Validate referenced Group Entry. Also check that the referenced group entry
-       should have at least one bucket */
-
-    rc = dpRefGroupValidate(groupBucket->referenceGroupId);
-
-    if (OFDPA_E_NONE != rc)
-    {
-      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                        "Referenced Group not valid!\r\n", 0);
-      return OFDPA_E_NOT_FOUND;
-    }
-  }
-
-  switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-  {
-    case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-      /* The port id component of the groupId entry must match the
-         Set Field value for output port id. */
-      if (groupBucket->bucketData.l2Interface.outputPort != OFDB_GROUP_PORTID(groupBucket->groupId))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Port in Group Id does not match set field Port!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      if (groupBucket->bucketData.l2Interface.allowVlanTranslation != 0)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "L2 Interface Group bucket must set allowVlanTranslation "
-                          "to 0. (allowVlanTranslation == %d)\r\n",
-                           groupBucket->bucketData.l2Interface.allowVlanTranslation);
-        return OFDPA_E_PARAM;
-      }
-
-      /* Validate pop VLAN */
-      if ((groupBucket->bucketData.l2Interface.popVlanTag != 0) &&
-          (groupBucket->bucketData.l2Interface.popVlanTag != 1))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Pop VLAN Tag should be 0 or 1!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-      /* validate source MAC: groupBucket->bucketData.l2Rewrite.dstMac ?? */
-
-      /* validate source MAC: groupBucket->bucketData.l2Rewrite.srcMac */
-      if (groupBucket->bucketData.l2Rewrite.srcMac.addr[0] & 0x01)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Source MAC not Unicast!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* Referenced Group Entry should be of type L2 Interface */
-      if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Referenced Group Id not of type L2 Interface!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      if (groupBucket->bucketData.l2Rewrite.vlanId != 0)
-      {
-        /* Set Field value for VLAN Id should have OFDPA_VID_PRESENT. */
-        if ((groupBucket->bucketData.l2Rewrite.vlanId & OFDPA_VID_PRESENT) != OFDPA_VID_PRESENT)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "Set field VLAN does not have OFDPA_VID_PRESENT set.\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-        /* The VLAN Id component of the referenced group entry must match the
-           Set Field value for VLAN Id. */
-        if ((groupBucket->bucketData.l2Rewrite.vlanId & OFDPA_VID_EXACT_MASK) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "VLAN in Referenced Group Id does not match set field VLAN.\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-      }
-      else
-      {
-        /*
-         * VLAN ID is not rewritten, ensure that any Policy ACL flows that refer to this
-         * group have a VLAN ID match that is the same as the L2 Interface VLAN ID.
-         */
-        tmpVlanId = OFDB_GROUP_VLANID(groupBucket->referenceGroupId);
-
-        ofdpaFlowEntryInit(OFDPA_FLOW_TABLE_ID_ACL_POLICY, &aclFlow);
-
-        while (OFDPA_E_NONE == ofdbFlowNextGet(&aclFlow, &aclFlow, NULL, NULL))
-        {
-          if ((groupBucket->groupId == aclFlow.flowData.policyAclFlowEntry.groupID) &&
-              (aclFlow.flowData.policyAclFlowEntry.match_criteria.vlanIdMask != OFDPA_VID_FIELD_MASK) &&
-              ((aclFlow.flowData.policyAclFlowEntry.match_criteria.vlanId & OFDPA_VID_EXACT_MASK) != tmpVlanId))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "VLAN in Referenced L2 Interface Group does not match Policy ACL VLAN.\r\n", 0);
-            return OFDPA_E_PARAM;
-          }
-        }
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-      /* validate source MAC: groupBucket->bucketData.l3Interface.srcMac ?? */
-
-      if (groupBucket->bucketData.l3Interface.srcMac.addr[0] & 0x01)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Source MAC not Unicast!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* Referenced Group Entry should be of type L2 Interface */
-      if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Referenced Group Id not of type L2 Interface!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* Set Field value for VLAN Id should have OFDPA_VID_PRESENT. */
-      if ((groupBucket->bucketData.l3Interface.vlanId & OFDPA_VID_PRESENT) != OFDPA_VID_PRESENT)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Set field VLAN does not have OFDPA_VID_PRESENT set.\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-      /* The VLAN Id component of the referenced group entry must match the
-         Set Field value for VLAN Id. */
-      if ((groupBucket->bucketData.l3Interface.vlanId & OFDPA_VID_EXACT_MASK) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "VLAN in Referenced Group Id does not match set field VLAN!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-
-      /* Referenced Group Entry should be of type L2 Interface or L2 Unfiltered Interface */
-      if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE) &&
-          (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                           "Referenced Group Id not of type L2 Interface or L2 Unfiltered Interface!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* Set Field value for VLAN Id should have OFDPA_VID_PRESENT. */
-      if ((groupBucket->bucketData.l3Unicast.vlanId & OFDPA_VID_PRESENT) != OFDPA_VID_PRESENT)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                           "Set field VLAN does not have OFDPA_VID_PRESENT set.\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-      /*
-       * The VLAN Id component of the referenced group entry must match the Set Field
-       * value for VLAN Id if, and only if, the referenced group is of type L2 Interface.
-       */
-      if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) == OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE) &&
-          ((groupBucket->bucketData.l3Unicast.vlanId & OFDPA_VID_EXACT_MASK) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId)))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "VLAN in Referenced Group Id does not match set field VLAN!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* validate destination MAC: groupBucket->bucketData.l3Unicast.dstMac */
-      if (groupBucket->bucketData.l3Unicast.dstMac.addr[0] & 0x01)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Destination MAC not Unicast!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* validate source MAC: groupBucket->bucketData.l3Unicast.srcMac */
-      if (groupBucket->bucketData.l3Unicast.srcMac.addr[0] & 0x01)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Source MAC not Unicast!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-
-      /* Referenced Group Entry should be of type L2 Interface */
-      if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Referenced Group Id not of type L2 Interface!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* The VLAN id component of the referenced group entry must match the
-         VLAN id of the Bucket entry. */
-      if (OFDB_GROUP_VLANID(groupBucket->groupId) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "VLAN in Referenced Group Id does not match VLAN in Group Id!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-      /* Validate referenced Group Entry */
-
-      /* Referenced Group Entry should be of type L2 Interface */
-      if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Referenced Group Id not of type L2 Interface!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      /* The VLAN id component of the referenced group entry must match the
-         VLAN id of the Bucket entry. */
-      if (OFDB_GROUP_VLANID(groupBucket->groupId) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "VLAN in Referenced Group Id does not match VLAN in Group Id!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-
-      /* Referenced Group Entry should be of type L2/L3 Interface or MPLS L3 VPN */
-      if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) == OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-      {
-        /* The VLAN id component of the referenced group entry must match the
-           VLAN id of the Bucket entry. */
-        if (OFDB_GROUP_VLANID(groupBucket->groupId) != OFDB_GROUP_VLANID(groupBucket->referenceGroupId))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "VLAN in Referenced L2 Group Id does not match VLAN in Group Id!\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-      }
-      else if (OFDB_GROUP_TYPE(groupBucket->referenceGroupId) == OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE)
-      {
-        /* The VLAN id component of the referenced group entry must be different from
-           the VLAN id of the Bucket entry. */
-
-        /* Get the bucket entry from the bucket table of the reference l3 interface group */
-        memset(&tmpBucketEntry, 0, sizeof(tmpBucketEntry));
-        (void)ofdbGroupBucketEntryGet(groupBucket->referenceGroupId, 0, &tmpBucketEntry);
-
-        /* set field vlan of l3 interface group */
-        tmpVlanId = (tmpBucketEntry.bucketData.l3Interface.vlanId & OFDPA_VID_EXACT_MASK);
-
-        if (OFDB_GROUP_VLANID(groupBucket->groupId) == tmpVlanId)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "VLAN in Referenced L3 Group Id should not match VLAN in Group Id!\r\n", 0);
-          return OFDPA_E_PARAM;
-        }
-        else
-        {
-          rc = OFDPA_E_NONE;
-          bucketIndex = 0;
-
-          memset(&nextBucketEntry, 0, sizeof(nextBucketEntry));
-
-          rc = ofdbGroupBucketEntryFirstGet(groupBucket->groupId, &nextBucketEntry);
-
-          while (rc == OFDPA_E_NONE)
-          {
-            /* The VLAN id component of the referenced group entry must be different from
-               the VLAN id of the referenced group entry of all the other Bucket entries. */
-            if (OFDB_GROUP_TYPE(nextBucketEntry.referenceGroupId) == OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE)
-            {
-              if (tmpVlanId == OFDB_GROUP_VLANID(nextBucketEntry.referenceGroupId))
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                  "The VLAN Id component of the referenced group entry must be "
-                                  "different from the VLAN id of the referenced group entry of "
-                                  "all the other Bucket entries!\r\n", 0);
-                return OFDPA_E_PARAM;
-              }
-            }
-            else /* OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE */
-            {
-              /* Get the bucket entry from the bucket table of the reference group */
-              memset(&tmpBucketEntry, 0, sizeof(tmpBucketEntry));
-              (void)ofdbGroupBucketEntryGet(nextBucketEntry.referenceGroupId, 0, &tmpBucketEntry);
-
-              if (tmpVlanId == (tmpBucketEntry.bucketData.l3Interface.vlanId & OFDPA_VID_EXACT_MASK))
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                  "The VLAN Id component of the referenced group entry must be "
-                                  "different from the VLAN id of the referenced group entry of "
-                                  "all the other Bucket entries!\r\n", 0);
-                return OFDPA_E_PARAM;
-              }
-            }
-            bucketIndex = nextBucketEntry.bucketIndex;
-
-            rc = ofdbGroupBucketEntryNextGet(groupBucket->groupId, bucketIndex,
-                                              &nextBucketEntry);
-          }
-        }
-      }
-      else if (!OFDB_GROUP_IS_MPLS_L3_VPN_LABEL(groupBucket->referenceGroupId))
-      {
-        return OFDPA_E_PARAM;
-      }
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-
-      /* Referenced Group Entry should be of type L3 Unicast */
-      if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST) &&
-          (!OFDB_GROUP_IS_MPLS_L3_VPN_LABEL(groupBucket->referenceGroupId)) &&
-          (!OFDB_GROUP_IS_MPLS_FAST_FAILOVER(groupBucket->referenceGroupId)))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Referenced Group Id not valid!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-      break;
-
-     case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-
-        return OFDPA_E_UNAVAIL;
-      break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-    /* Validate Group Sub-type */
-    subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-
-      if (OFDPA_MPLS_INTERFACE == subType)
-      {
-
-      }
-      else
-      {
-        /* Validation common to all label groups */
-
-        /* Note -- need to check for actions specified that are not allowed for a label type. */
-
-        /* MPLS label field limited to 20 bits */
-        if (groupBucket->bucketData.mplsLabel.mplsLabel & 0xfff00000ul)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                             "MPLS label value invalid. mplsLabel = 0x%x\r\n",
-                             groupBucket->bucketData.mplsLabel.mplsLabel);
-          return OFDPA_E_PARAM;
-        }
-
-        if (OFDPA_MPLS_SWAP_LABEL != subType)
-        {
-          if (0 == groupBucket->bucketData.mplsLabel.pushMplsHdr)
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Push MPLS Header missing.\r\n", 0);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validate EXP. Limited to 3 bits */
-        if ((groupBucket->bucketData.mplsLabel.mplsEXPAction != 0) &&
-            (groupBucket->bucketData.mplsLabel.mplsEXP & 0xfffffff8ul))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                             "MPLS EXP invalid. EXP = 0x%x\r\n",
-                             groupBucket->bucketData.mplsLabel.mplsEXP);
-          return OFDPA_E_PARAM;
-        }
-
-        /* Validate TTL. Limited to 8 bits */
-        if ((groupBucket->bucketData.mplsLabel.mplsTTLAction != 0) &&
-            (groupBucket->bucketData.mplsLabel.mplsTTL & 0xffffff00ul))
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                             "MPLS TTL invalid. TTL = 0x%x\r\n",
-                             groupBucket->bucketData.mplsLabel.mplsTTL);
-          return OFDPA_E_PARAM;
-        }
-
-        /* Validate MPLS Tunnel Label Remark table index */
-        if (groupBucket->bucketData.mplsLabel.remarkTableIndexAction != 0)
-        {
-          if (groupBucket->bucketData.mplsLabel.mplsEXPAction != 0)
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_MAPPING, OFDPA_DEBUG_VERBOSE,
-                               "%d:set tc from field and remarktable action"
-                               " can not be used simultaneously.\r\n", __LINE__);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validate lmepId */
-        if (groupBucket->bucketData.mplsLabel.lmepIdAction != 0)
-        {
-          if (OFDPA_E_NONE != ofdbOamMepGet(groupBucket->bucketData.mplsLabel.lmepId, NULL, NULL))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Invalid lmepId = 0x%x\r\n",
-                               groupBucket->bucketData.mplsLabel.lmepId);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validation for OAM_LM_TX_Count Action type with arguments LMEP_ID and Traffic
-           Class to be done after adding support for OAM Data Plane Counter Table. */
-
-        /* if colorBasedCountAction set, counter must exist in counter table */
-        if (groupBucket->bucketData.mplsLabel.colorBasedCountAction != 0)
-        {
-          if (ofdbColorBasedCounterRefCountGet(groupBucket->bucketData.mplsLabel.colorBasedCountId, NULL) != OFDPA_E_NONE)
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_VERBOSE,
-                               "Entry specifies colorBasedCountAction but counter not found in table. "
-                               "colorBasedCountAction = %d, colorBasedCountId = 0x%x\r\n",
-                               groupBucket->bucketData.mplsLabel.colorBasedCountAction,
-                               groupBucket->bucketData.mplsLabel.colorBasedCountId);
-            return(0);
-          }
-        }
-
-        switch (subType)
-        {
-          case OFDPA_MPLS_L2_VPN_LABEL:
-          case OFDPA_MPLS_L3_VPN_LABEL:
-            /* Referenced Group Entry should be of sub-type MPLS Interface or MPLS Label1 or MPLS Fast Failover */
-            if ((!OFDB_GROUP_IS_MPLS_TUNNEL_LABEL1(groupBucket->referenceGroupId)) &&
-                (!OFDB_GROUP_IS_MPLS_INTERFACE(groupBucket->referenceGroupId)) &&
-                (!OFDB_GROUP_IS_MPLS_FAST_FAILOVER(groupBucket->referenceGroupId)))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of type MPLS Interface or MPLS Tunnel Label1"
-                                 " or MPLS Fast Failover! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-
-            if (OFDPA_MPLS_L2_VPN_LABEL == subType)
-            {
-              if (0 == groupBucket->bucketData.mplsLabel.pushL2Hdr)
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                   "Push L2 Header action missing.\r\n", 0);
-                return OFDPA_E_PARAM;
-              }
-
-              if (0 == groupBucket->bucketData.mplsLabel.pushCW)
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                   "Push Control Word action missing.\r\n", 0);
-                return OFDPA_E_PARAM;
-              }
-
-              if ((0 != groupBucket->bucketData.mplsLabel.pushVlan) &&
-                  (0x8100 != groupBucket->bucketData.mplsLabel.newTpid))
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                   "Invalid TPID for push VLAN action. TPID = 0x%04x\r\n",
-                                   groupBucket->bucketData.mplsLabel.newTpid);
-                return OFDPA_E_PARAM;
-              }
-            }
-
-            if (0 == groupBucket->bucketData.mplsLabel.mplsBOS)
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "VPN Label must be BOS.\r\n", 0);
-              return OFDPA_E_PARAM;
-            }
-
-            break;
-
-          case OFDPA_MPLS_TUNNEL_LABEL1:
-          case OFDPA_MPLS_TUNNEL_LABEL2:
-            if (subType == OFDPA_MPLS_TUNNEL_LABEL1)
-            {
-              /* Referenced Group Entry should be of type MPLS Interface or MPLS Label2*/
-              if ((!OFDB_GROUP_IS_MPLS_TUNNEL_LABEL2(groupBucket->referenceGroupId)) &&
-                  (!OFDB_GROUP_IS_MPLS_INTERFACE(groupBucket->referenceGroupId)))
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                   "Referenced Group Id not of type MPLS Interface or MPLS Tunnel Label2! Referenced Group = 0x%x\r\n",
-                                   groupBucket->referenceGroupId);
-                return OFDPA_E_PARAM;
-              }
-            }
-            else if (subType == OFDPA_MPLS_TUNNEL_LABEL2)
-            {
-              /* Referenced Group Entry should be of type MPLS Interface */
-              if (!OFDB_GROUP_IS_MPLS_INTERFACE(groupBucket->referenceGroupId))
-              {
-                OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                   "Referenced Group Id not of type MPLS Interface! Referenced Group = 0x%x\r\n",
-                                   groupBucket->referenceGroupId);
-                return OFDPA_E_PARAM;
-              }
-            }
-
-            break;
-
-          case OFDPA_MPLS_SWAP_LABEL:
-            /* Referenced Group Entry should be of sub-type MPLS Interface or MPLS Label1 or MPLS Fast Failover */
-            if ((!OFDB_GROUP_IS_MPLS_TUNNEL_LABEL1(groupBucket->referenceGroupId)) &&
-                (!OFDB_GROUP_IS_MPLS_INTERFACE(groupBucket->referenceGroupId)) &&
-                (!OFDB_GROUP_IS_MPLS_FAST_FAILOVER(groupBucket->referenceGroupId)))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of type MPLS Interface or MPLS Tunnel Label1"
-                                 " or MPLS Fast Failover! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-
-            break;
-
-          default:
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Invalid MPLS Label Group Subtype! Subtype = %d\r\n", subType);
-            return OFDPA_E_PARAM;
-        }
-      }
-
-    break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-    /* Validate Group Sub-type */
-    subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-
-    switch (subType)
-    {
-      case OFDPA_MPLS_L2_FLOOD:
-      case OFDPA_MPLS_L2_MULTICAST:
-        /* Validate Referenced Group Id*/
-        switch (OFDB_GROUP_TYPE(groupBucket->referenceGroupId))
-        {
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-            if ((OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L2_VPN_LABEL) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_SWAP_LABEL))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of subtype MPLS L2 VPN Label or Swap Label! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-            if ((OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_FAST_FAILOVER) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_1_1_HEAD_END_PROTECT))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of subtype MPLS Fast Failover or 1:1 Head End Protect! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          default:
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Referenced Group Id not of type MPLS! Referenced Group = 0x%x\r\n",
-                               groupBucket->referenceGroupId);
-            return OFDPA_E_PARAM;
-            break;
-        }
-
-        break;
-
-      case OFDPA_MPLS_L2_LOCAL_FLOOD:
-      case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-        /* Validate Referenced Group Id*/
-        switch (OFDB_GROUP_TYPE(groupBucket->referenceGroupId))
-        {
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-            if (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L2_TAG)
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of subtype MPLS L2 Tag! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-            break;
-
-          default:
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Referenced Group Id invalid! Referenced Group = 0x%x\r\n",
-                               groupBucket->referenceGroupId);
-            return OFDPA_E_PARAM;
-            break;
-        }
-
-        break;
-      case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-      case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-        /* Validate Referenced Group Entry */
-        break;
-
-      case OFDPA_MPLS_FAST_FAILOVER:
-        /* Validate Referenced Group Id*/
-        switch (OFDB_GROUP_TYPE(groupBucket->referenceGroupId))
-        {
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-            if ((OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L2_VPN_LABEL) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L3_VPN_LABEL) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_SWAP_LABEL)   &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_TUNNEL_LABEL1) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_TUNNEL_LABEL2))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id is not of valid type. Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          default:
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of type MPLS Label! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-              break;
-          }
-
-        /* Verify that group type of working and protection buckets is same. */
-        memset(&workingGroupBucket, 0, sizeof(ofdpaGroupBucketEntry_t));
-        if (OFDPA_E_NONE == ofdbGroupBucketEntryFirstGet(groupBucket->groupId, &workingGroupBucket))
-        {
-          if ((OFDB_GROUP_TYPE(groupBucket->referenceGroupId) != OFDB_GROUP_TYPE(workingGroupBucket.referenceGroupId)) ||
-              (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDB_GROUP_MPLS_SUBTYPE(workingGroupBucket.referenceGroupId)))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "%d MPLS Fast Failover protection bucket's reference group type is"
-                               " not same as working bucket's reference group type.\r\n",
-                                __LINE__);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        /* Validate Watch Port - bucket should refer to logical port only */
-        if (OFDB_PORT_TYPE(groupBucket->bucketData.mplsFastFailOver.watchPort) != OFDPA_PORT_TYPE_OAM_PROTECTION_LIVENESS_LOGICAL_PORT)
-        {
-          OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                            "MPLS Fast Failover Bucket Data: incorrect watch port type. (%x)\r\n",
-                             groupBucket->bucketData.mplsFastFailOver.watchPort);
-          return OFDPA_E_PARAM;
-        }
-        break;
-
-      case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-        /* Validate Referenced Group Id*/
-        switch (OFDB_GROUP_TYPE(groupBucket->referenceGroupId))
-        {
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-            if ((OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L2_VPN_LABEL) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_L3_VPN_LABEL) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_SWAP_LABEL)   &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_TUNNEL_LABEL1))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id is not of valid type ! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-            if ((OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_1_1_HEAD_END_PROTECT) &&
-                (OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId) != OFDPA_MPLS_FAST_FAILOVER))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "Referenced Group Id not of subtype MPLS 1:1 Head End Protect or Fast Failover! Referenced Group = 0x%x\r\n",
-                                 groupBucket->referenceGroupId);
-              return OFDPA_E_PARAM;
-            }
-            break;
-
-          default:
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Referenced Group Id not of type MPLS! Referenced Group = 0x%x\r\n",
-                               groupBucket->referenceGroupId);
-            return OFDPA_E_PARAM;
-            break;
-        }
-        break;
-
-        case OFDPA_MPLS_ECMP:
-          if ((!OFDB_GROUP_IS_MPLS_SWAP_LABEL(groupBucket->referenceGroupId)) &&
-              (!OFDB_GROUP_IS_MPLS_FAST_FAILOVER(groupBucket->referenceGroupId)))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Referenced Group Id not of valid type! Referenced Group = 0x%x\r\n",
-                               groupBucket->referenceGroupId);
-            return OFDPA_E_PARAM;
-          }
-
-          rc = OFDPA_E_NONE;
-          bucketIndex = 0;
-
-        memset(&nextBucketEntry, 0, sizeof(nextBucketEntry));
-
-        rc = ofdbGroupBucketEntryFirstGet(groupBucket->groupId, &nextBucketEntry);
-
-          while (rc == OFDPA_E_NONE)
-          {
-            /* The type of the referenced group entry must be the same as other referenced group entries. */
-            if ((OFDB_GROUP_TYPE(nextBucketEntry.referenceGroupId)         != OFDB_GROUP_TYPE(groupBucket->referenceGroupId)) ||
-                (OFDB_GROUP_MPLS_SUBTYPE(nextBucketEntry.referenceGroupId) != OFDB_GROUP_MPLS_SUBTYPE(groupBucket->referenceGroupId)))
-            {
-              OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                                 "The type of the referenced group entry must be the same "
-                                 "as other referenced group entries!\r\n", 0);
-              return OFDPA_E_PARAM;
-            }
-            bucketIndex = nextBucketEntry.bucketIndex;
-
-          rc = ofdbGroupBucketEntryNextGet(groupBucket->groupId, bucketIndex,
-                                            &nextBucketEntry);
-        }
-        break;
-
-      case OFDPA_MPLS_L2_TAG:
-        if (groupBucket->bucketData.mplsL2Tag.pushVlan != 0)
-        {
-          /* Validate VLANID */
-
-          /* Set Field value for VLAN Id should have OFDPA_VID_PRESENT. */
-          if ((groupBucket->bucketData.mplsL2Tag.vlanId & OFDPA_VID_PRESENT) != OFDPA_VID_PRESENT)
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                              "Set field VLAN does not have OFDPA_VID_PRESENT set.\r\n", 0);
-            return OFDPA_E_PARAM;
-          }
-
-          tmpVlanId = groupBucket->bucketData.mplsL2Tag.vlanId & OFDPA_VID_EXACT_MASK;
-
-          if (!dpaVlanIsValid(tmpVlanId))
-          {
-            OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                               "Invalid VLAN %d!\r\n", tmpVlanId);
-            return OFDPA_E_PARAM;
-          }
-        }
-
-        break;
-
-      default:
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                       "Invalid MPLS Forwarding Group Subtype! Subtype = %d\r\n", subType);
-      return OFDPA_E_PARAM;
-    }
-
-    break;
-
-    case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-      /* The port id component of the groupId entry must match the
-         Set Field value for output port id. */
-      if (groupBucket->bucketData.l2UnfilteredInterface.outputPort != OFDB_GROUP_PORTID(groupBucket->groupId))
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_BASIC,
-                          "Port in Group Id does not match set field Port!\r\n", 0);
-        return OFDPA_E_PARAM;
-      }
-      break;
-
-    default:
-      /* Invalid Group ID */
-      return OFDPA_E_PARAM;
-  }
-
-  return OFDPA_E_NONE;
+	return OFDPA_E_NONE;
 }
 
 

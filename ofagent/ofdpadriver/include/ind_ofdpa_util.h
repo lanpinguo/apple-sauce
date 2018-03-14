@@ -61,35 +61,10 @@ indigo_error_t indigoConvertOfdpaRv(OFDPA_ERROR_t result);
 
 typedef struct ind_ofdpa_group_bucket_s
 {
-  uint32_t        outputPort;
   uint32_t        referenceGroupId;
-  uint32_t        popVlanTag;
-  uint32_t        pushL2Hdr;
-  uint32_t        pushVlan;
-  uint16_t        newTpid;
-  uint32_t        pushMplsHdr;
-  uint16_t        mplsEtherType;
-  uint32_t        pushCW;
-  uint32_t        mplsCopyTTLOutwards;
-  uint32_t        mplsCopyEXPOutwards;
-  uint32_t        mplsEXPRemarkTableIndex;
-  uint32_t        priorityRemarkTableIndex;
-  uint32_t        dscpRemarkTableIndex;
-  uint32_t        lmepId;
-  uint32_t        colorBasedCounterIndex;
-
-  /** data for Set-Field action */
-  uint32_t        vlanId;
-  uint32_t        vlanPcp;
-  uint32_t        vlanCfi;
-  uint32_t        dscp;
-  of_mac_addr_t   srcMac;
-  of_mac_addr_t   dstMac;
-  uint32_t        mplsLabel;
-  uint32_t        mplsBOS;
-  uint32_t        mplsEXP;
-  uint32_t        mplsTTL;
-  uint32_t        allowVlanTranslation;
+#define IND_OFDPA_GRP_BUKT_ACT_MAX	26
+	uint32_t							act_cnt;				/** Indicate the last action count in apy_actions list*/
+	ofdpaAct_t						actions[IND_OFDPA_GRP_BUKT_ACT_MAX];
 } ind_ofdpa_group_bucket_t;
 
 typedef unsigned long long ind_ofdpa_fields_t;

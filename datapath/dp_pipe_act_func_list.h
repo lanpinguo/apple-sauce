@@ -68,7 +68,7 @@ extern "C"{
  uint64_t ofdpaActOamLmTxCount(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActPopVlan(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActPushL2Hdr(void *this,void *pcb, uint64_t arg);
- uint64_t ofdpaActPushMplsCw(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActPushCw(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActPushMplsHdr(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActPushVlan(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActPushVlan2(void *this,void *pcb, uint64_t arg);
@@ -91,6 +91,11 @@ extern "C"{
  uint64_t ofdpaActSetTpid(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActSetVlanId(void *this,void *pcb, uint64_t arg);
  uint64_t ofdpaActSetVlanId2(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetVlanPcp(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetVlanDei(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetDscp(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetMplsExpRemarkTable(void *this,void *pcb, uint64_t arg);
+ uint64_t ofdpaActSetPcpPriRemarkTable(void *this,void *pcb, uint64_t arg);
 
 #ifdef __cplusplus
 #if __cplusplus
