@@ -510,7 +510,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     {
       portNum = 0;
       portNum = OFDB_PORT_TYPE_SET(portNum, OFDPA_PORT_TYPE_LOGICAL_TUNNEL);
-      while ((ofdbPortNextGet(portNum, &portNum) == OFDPA_E_NONE) &&
+      while ((dpPortNextGet(portNum, &portNum) == OFDPA_E_NONE) &&
              (OFDB_PORT_TYPE(portNum) == OFDPA_PORT_TYPE_LOGICAL_TUNNEL))
       {
         if (ofdbPortGet(portNum, &portInfo, &portFlags) == OFDPA_E_NONE)
@@ -1102,12 +1102,12 @@ OFDPA_ERROR_t ofdpaPortNextGet(uint32_t portNum, uint32_t *nextPortNum)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
+  //OFDB_READ_LOCK_TAKE;
 
   /*GETNEXT时如果是LIVENESSPORT或管理端口，则继续取下一个*/
   do
   {
-      if ((rc = ofdbPortNextGet(portNum, nextPortNum)) == OFDPA_E_NONE)
+      if ((rc = dpPortNextGet(portNum, nextPortNum)) == OFDPA_E_NONE)
       {
           portNum = *nextPortNum;
       }
@@ -1116,7 +1116,7 @@ OFDPA_ERROR_t ofdpaPortNextGet(uint32_t portNum, uint32_t *nextPortNum)
      OFDPA_PORT_TYPE_OUTBAND_PORT == OFDB_PORT_TYPE(*nextPortNum) ||
       OFDPA_PORT_TYPE_INBAND_PORT == OFDB_PORT_TYPE(*nextPortNum)));
   
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1137,9 +1137,9 @@ OFDPA_ERROR_t ofdpaPortMacGet(uint32_t portNum, ofdpaMacAddr_t *mac)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbPortMacGet(portNum, mac);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpPortMacGet(portNum, mac);
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1160,9 +1160,9 @@ OFDPA_ERROR_t ofdpaPortNameGet(uint32_t portNum, ofdpa_buffdesc *name)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbPortNameGet(portNum, name);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpPortNameGet(portNum, name);
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1183,9 +1183,9 @@ OFDPA_ERROR_t ofdpaPortStateGet(uint32_t portNum, uint32_t *state)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbPortStateGet(portNum, state);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpPortStateGet(portNum, state);
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1199,13 +1199,13 @@ OFDPA_ERROR_t ofdpaPortConfigSet(uint32_t portNum, OFDPA_PORT_CONFIG_t config)
 {
   OFDPA_ERROR_t rc;
 
-  OFDB_WRITE_LOCK_TAKE;
+  //OFDB_WRITE_LOCK_TAKE;
   if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
                        portNum);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_NOT_FOUND;
   }
 
@@ -1222,9 +1222,9 @@ OFDPA_ERROR_t ofdpaPortConfigSet(uint32_t portNum, OFDPA_PORT_CONFIG_t config)
 //    }
   }
 
-  rc = ofdbPortConfigSet(portNum, config);
+  rc = dpPortConfigSet(portNum, config);
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1245,9 +1245,9 @@ OFDPA_ERROR_t ofdpaPortConfigGet(uint32_t portNum, uint32_t *config)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbPortConfigGet(portNum, config);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpPortConfigGet(portNum, config);
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1268,9 +1268,9 @@ OFDPA_ERROR_t ofdpaPortMaxSpeedGet(uint32_t portNum, uint32_t *maxSpeed)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
-  rc = ofdbPortMaxSpeedGet(portNum, maxSpeed);
-  OFDB_LOCK_GIVE;
+  //OFDB_READ_LOCK_TAKE;
+  rc = dpPortMaxSpeedGet(portNum, maxSpeed);
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1326,9 +1326,9 @@ OFDPA_ERROR_t ofdpaPortFeatureGet(uint32_t portNum, ofdpaPortFeature_t *feature)
     return OFDPA_E_PARAM;
   }
 
-  OFDB_READ_LOCK_TAKE;
+  //OFDB_READ_LOCK_TAKE;
 
-  if ((ofdbPortGet(portNum, &portInfo, &flags) != OFDPA_E_NONE) ||
+  if ((dpPortGet(portNum, &portInfo, &flags) != OFDPA_E_NONE) ||
       (flags & OFDB_PORT_DELETED))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
@@ -1375,13 +1375,13 @@ OFDPA_ERROR_t ofdpaPortAdvertiseFeatureSet(uint32_t portNum, OFDPA_PORT_FEATURE_
     return OFDPA_E_PARAM;
   }
 
-  OFDB_WRITE_LOCK_TAKE;
+  //OFDB_WRITE_LOCK_TAKE;
   if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
                        portNum);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_NOT_FOUND;
   }
 //  rc = driverPortCapabilityAdvertSet(portNum, advertise);
@@ -1394,9 +1394,9 @@ OFDPA_ERROR_t ofdpaPortAdvertiseFeatureSet(uint32_t portNum, OFDPA_PORT_FEATURE_
 //    return rc;
 //  }
 
-  rc = ofdbPortAdvertiseFeatureSet(portNum, advertise);
+  rc = dpPortAdvertiseFeatureSet(portNum, advertise);
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1415,19 +1415,19 @@ OFDPA_ERROR_t ofdpaPortStatsClear(uint32_t portNum)
     return OFDPA_E_UNAVAIL;
   }
 
-  OFDB_WRITE_LOCK_TAKE;
+  //OFDB_WRITE_LOCK_TAKE;
   if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
                        portNum);
-    OFDB_LOCK_GIVE;
+    //OFDB_LOCK_GIVE;
     return OFDPA_E_NOT_FOUND;
   }
 
   //rc = driverPortStatsClear(portNum);
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   if (OFDPA_E_NONE != rc)
   {
@@ -1457,9 +1457,9 @@ OFDPA_ERROR_t ofdpaPortStatsGet(uint32_t portNum, ofdpaPortStats_t *stats)
 
   memset(stats, 0, sizeof(ofdpaPortStats_t));
 
-  OFDB_READ_LOCK_TAKE;
+  //OFDB_READ_LOCK_TAKE;
 
-  if ((rc = ofdbPortDurationGet(portNum, &stats->duration_seconds)) != OFDPA_E_NONE)
+  if ((rc = dpPortDurationGet(portNum, &stats->duration_seconds)) != OFDPA_E_NONE)
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
@@ -1478,7 +1478,7 @@ OFDPA_ERROR_t ofdpaPortStatsGet(uint32_t portNum, ofdpaPortStats_t *stats)
     }
   }
 
-  OFDB_LOCK_GIVE;
+  //OFDB_LOCK_GIVE;
 
   return rc;
 }
@@ -1493,9 +1493,9 @@ OFDPA_ERROR_t ofdpaPortEventNextGet(ofdpaPortEvent_t *eventData)
   }
 
   /* retrieving an event will update status in the port table, so take the WRITE lock */
-  OFDB_WRITE_LOCK_TAKE;
-  rc = ofdbPortEventNextGet(eventData);
-  OFDB_LOCK_GIVE;
+  //OFDB_WRITE_LOCK_TAKE;
+  rc = dpPortEventNextGet(eventData);
+  //OFDB_LOCK_GIVE;
 
   return(rc);
 }
@@ -1510,9 +1510,9 @@ OFDPA_ERROR_t ofdpaPortEventGet(ofdpaPortEvent_t *eventData)
   }
 
   /* retrieving an event will update status in the port table, so take the WRITE lock */
-  OFDB_WRITE_LOCK_TAKE;
-  rc = ofdbPortEventGet(eventData);
-  OFDB_LOCK_GIVE;
+  //OFDB_WRITE_LOCK_TAKE;
+  rc = dpPortEventGet(eventData);
+  //OFDB_LOCK_GIVE;
 
   return(rc);
 }
