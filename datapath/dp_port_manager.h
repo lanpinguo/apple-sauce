@@ -63,6 +63,34 @@ typedef enum
 #define DP_ENTRY_FLAG_SET(__storage__, __flag__)   (__storage__ |= __flag__)
 #define DP_ENTRY_FLAG_UNSET(__storage__, __flag__) (__storage__ &= ~__flag__)
 
+#define DEFAULT_PORT_Q_WEIGHT           1
+#define OFDB_COS_COUNT_MAX              8
+
+
+/* For qos*/
+typedef enum
+{
+  DP_QOS_QUEUE_SCHED_MODE_NONE                  =     0x00,       /* Pass through. */
+  DP_QOS_QUEUE_SCHED_MODE_SP                    =     0x01,       /* Weights are ignored. */
+  DP_QOS_QUEUE_SCHED_MODE_RR                    =     0x02,       /* Weights are ignored. */
+  DP_QOS_QUEUE_SCHED_MODE_WRR                   =     0x04,       
+  DP_QOS_QUEUE_SCHED_MODE_WFQ                   =     0x08,       
+  DP_QOS_QUEUE_SCHED_MODE_WDRR                  =     0x10,       
+} DP_QOS_QUEUE_SCHED_MODE_t;
+
+typedef enum
+{
+  DP_PORT_DISCARD_MODE_TD                       =     1,
+  DP_PORT_DISCARD_MODE_WRED                     =     2,
+}DP_PORT_DISCARD_MODE_t;
+
+typedef enum
+{
+  DP_COSQ_DISCARD_COLOR_GREEN  = 1,
+  DP_COSQ_DISCARD_COLOR_YELLOW  = 2,
+  DP_COSQ_DISCARD_COLOR_RED    = 3
+}DP_COSQ_DISCARD_COLOR_enum;
+
 
 /* Port Queue information
 */

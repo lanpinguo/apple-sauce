@@ -308,6 +308,33 @@ int dpPortIsValid(uint32_t portNum)
     return 0;
 }
 
+
+OFDPA_ERROR_t dpPortGet(uint32_t portNum, ofdpaPortInfo_t *portInfo, DP_ENTRY_FLAG_t *flags)
+{
+  OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+  ofdpaPortTable_node_t *dataPtr;
+
+  dataPtr = avlSearch(&portMng.ofdbPortTable_tree, &portNum, AVL_EXACT);
+
+  /* see if we found an entry */
+  if (dataPtr != NULL)
+  {
+    if (portInfo != NULL)
+    {
+      memcpy(portInfo, &dataPtr->portInfo, sizeof(ofdpaPortInfo_t));
+    }
+    if (flags != NULL)
+    {
+      *flags = dataPtr->flags;
+    }
+
+    rc = OFDPA_E_NONE;
+  }
+
+  return rc;
+}
+
+
 OFDPA_ERROR_t dpPortAdd(uint32_t port, ofdpaPortInfo_t *portInfo)
 {
   OFDPA_ERROR_t rc = OFDPA_E_NONE;
@@ -992,6 +1019,101 @@ OFDPA_ERROR_t dpPortEventGet(ofdpaPortEvent_t *eventData)
   return(rc);
 }
 
+
+
+
+/*****************************************************************************
+ Prototype    : ofdbPortQueueSchedSet
+ Description  : This routine set the schedule policy of COS queue on a port.
+                
+ Input        : uint32_t port       
+                uint32_t mode       
+                int32_t *weights  
+ Output       : None
+ Return Value : 
+ Calls        : 
+ Called By    : 
+ 
+  History        :
+  1.Date         : 2017/3/22
+    Author       : HuShouqiang
+    Modification : Created function
+
+*****************************************************************************/
+OFDPA_ERROR_t  dpPortQueueSchedSet(uint32_t port, int32_t mode,int32_t *weights)
+{ 
+  OFDPA_ERROR_t rc = OFDPA_E_NOT_FOUND;
+  ofdpaPortTable_node_t *dataPtr;
+  int i ;
+  uint32_t numQueues;
+
+
+
+  dataPtr = avlSearch(&portMng.ofdbPortTable_tree, &port, AVL_EXACT);
+
+  if ((dataPtr != NULL) &&
+      !(dataPtr->flags & DP_PORT_DELETED))
+  {
+    rc = OFDPA_E_NONE;
+    if(mode != -1)
+    {
+      dataPtr->portInfo.schedMode = mode;
+    }
+
+  
+    if((dataPtr->portInfo.schedMode & 
+      (DP_QOS_QUEUE_SCHED_MODE_WRR | DP_QOS_QUEUE_SCHED_MODE_WDRR | DP_QOS_QUEUE_SCHED_MODE_WFQ)) != 0 )
+    {
+      
+      rc = dpaCosQueuesMaxGet(&numQueues);
+      if (rc != OFDPA_E_NONE)
+      {
+        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_MAPPING, OFDPA_DEBUG_ALWAYS,
+                           "Could not get max queues!!!\r\n", 0);
+        return rc;
+      }
+
+      
+      for(i = 0 ; i < numQueues ; i ++ )
+      {
+        if(weights != NULL)  
+        {
+          if(weights[i] == 0)
+          {
+            if((dataPtr->portInfo.schedMode & DP_QOS_QUEUE_SCHED_MODE_SP) == 0 )
+            {
+              /* NOT "sp + wxx" mode use the default value*/
+              weights[i] = DEFAULT_PORT_Q_WEIGHT;
+            }
+          }
+          /* record in database*/
+          dataPtr->portInfo.portQueueInfo[i].weight = weights[i];
+        }
+        else
+        {
+          /* when switch scheduler mode, then set weight to default value */
+          
+          if((dataPtr->portInfo.schedMode & DP_QOS_QUEUE_SCHED_MODE_SP) == 0 )
+          {
+            /* NOT "sp + wxx" mode use the default value*/
+            
+            dataPtr->portInfo.portQueueInfo[i].weight = DEFAULT_PORT_Q_WEIGHT;
+          }
+          else
+          {
+            dataPtr->portInfo.portQueueInfo[i].weight = 0;
+          }
+        }        
+      }
+
+    }
+
+    rc = OFDPA_E_NONE;
+  }
+
+  return rc;
+
+}
 
 int port_manager_init(int argc, char *argv[])
 {
