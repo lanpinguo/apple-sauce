@@ -110,7 +110,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
 
                 case OF_OXM_ETH_DST:
                     of_oxm_eth_dst_value_get(&oxm.eth_dst, &tmp);
-										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetSrcMac,tmp);
+										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetDstMac,tmp);
                     *group_action_sf_bitmap |= IND_OFDPA_DSTMAC;
                     break;
 

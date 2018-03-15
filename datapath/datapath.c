@@ -29,7 +29,6 @@
 #include "ofdb_api.h"
 #include "datapath.h"
 #include <net/ethernet.h>
-#include "port_manager.h"
 
 
 int eventSocketFd = 0;
@@ -977,6 +976,8 @@ int datapathInit(void)
   printf("starting datapathInit ...\r\n");
 
 	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
+
+
 	
 	(void)dpPipeNodeSocketsAddrCreate();
 	(void)port_manager_init(0, NULL);
@@ -986,6 +987,13 @@ int datapathInit(void)
 	(void)mplsPcpTrust_pipe_init(0, NULL);
 	(void)ingActExecutor_pipe_init(0, NULL);
 	(void)group_pipe_init(0, NULL);
+	
+  /* Initialize Port Table */
+  if (dpaPlatformPhysicalPortTableInit() != 0)
+  {
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_ALWAYS, "Failed to initialize port table\r\n", 0);
+    return -1;
+  }
 
   return 0;
 }

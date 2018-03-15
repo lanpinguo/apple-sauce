@@ -477,7 +477,7 @@ OFDPA_ERROR_t dpaPlatformPhysicalPortTableInit(void)
 
 		portInfo.last_chg = time(NULL);/*use first up time to initialise last chang time */
 
-    rc = ofdbPortAdd(nextPort, &portInfo);
+    rc = dpPortAdd(nextPort, &portInfo);
 
     if (OFDPA_E_NONE != rc)
     {
