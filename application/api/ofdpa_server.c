@@ -441,7 +441,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     /* Validate PortID */
     portId = OFDB_GROUP_PORTID(group->groupId);
 
-    if (!ofdbPortIsValid(portId))
+    if (!dpPortIsValid(portId))
     {
       OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                          "Invalid port %d!\r\n", portId);
@@ -1200,7 +1200,7 @@ OFDPA_ERROR_t ofdpaPortConfigSet(uint32_t portNum, OFDPA_PORT_CONFIG_t config)
   OFDPA_ERROR_t rc;
 
   OFDB_WRITE_LOCK_TAKE;
-  if (!ofdbPortIsValid(portNum))
+  if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
@@ -1376,7 +1376,7 @@ OFDPA_ERROR_t ofdpaPortAdvertiseFeatureSet(uint32_t portNum, OFDPA_PORT_FEATURE_
   }
 
   OFDB_WRITE_LOCK_TAKE;
-  if (!ofdbPortIsValid(portNum))
+  if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
@@ -1416,7 +1416,7 @@ OFDPA_ERROR_t ofdpaPortStatsClear(uint32_t portNum)
   }
 
   OFDB_WRITE_LOCK_TAKE;
-  if (!ofdbPortIsValid(portNum))
+  if (!dpPortIsValid(portNum))
   {
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
                        "Invalid port. (inPort:%d)\r\n",
@@ -1712,7 +1712,7 @@ OFDPA_ERROR_t  ofdpaPortDiscardConfigGet(uint32_t port, uint32_t cosq,uint32_t c
 	
 		OFDB_READ_LOCK_TAKE;
 	
-		if (!ofdbPortIsValid(portNum))
+		if (!dpPortIsValid(portNum))
 		{
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 												 "Invalid input port %u.\r\n",
@@ -1741,7 +1741,7 @@ OFDPA_ERROR_t  ofdpaPortDiscardConfigGet(uint32_t port, uint32_t cosq,uint32_t c
 	
 		OFDB_READ_LOCK_TAKE;
 	
-		if (!ofdbPortIsValid(portNum))
+		if (!dpPortIsValid(portNum))
 		{
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 												 "Invalid input port %u.\r\n",
@@ -1790,7 +1790,7 @@ OFDPA_ERROR_t  ofdpaPortDiscardConfigGet(uint32_t port, uint32_t cosq,uint32_t c
 	
 		OFDB_WRITE_LOCK_TAKE;
 	
-		if (!ofdbPortIsValid(portNum))
+		if (!dpPortIsValid(portNum))
 		{
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 												 "Invalid input port %u.\r\n",
@@ -1828,7 +1828,7 @@ OFDPA_ERROR_t ofdpaQueueRateSet(uint32_t portNum, uint32_t queueId, uint32_t min
 
 	OFDB_WRITE_LOCK_TAKE;
 
-	if (!ofdbPortIsValid(portNum))
+	if (!dpPortIsValid(portNum))
 	{
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Invalid input port %u.\r\n",
@@ -1905,7 +1905,7 @@ OFDPA_ERROR_t ofdpaQueueRateGet(uint32_t portNum, uint32_t queueId, uint32_t *mi
 
 	OFDB_READ_LOCK_TAKE;
 
-	if (!ofdbPortIsValid(portNum))
+	if (!dpPortIsValid(portNum))
 	{
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "Invalid input port %u.\r\n",

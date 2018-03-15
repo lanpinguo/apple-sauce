@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 	level2DebugInfoEnable();
 
 
-	ofdbInit();
+	//ofdbInit();
 
   
   rpc_server_start();
