@@ -138,7 +138,7 @@ void groupTableList(OFDPA_GROUP_ENTRY_TYPE_t groupType, int groupTypeSpecified, 
 
       /* group entry matches criteria, display it */
       ofdpaGroupDecode(groupEntry.groupId, buf.data, sizeof(buf.data));
-      printf("groupId = 0x%08x (%s): ", groupEntry.groupId, buf.data);
+      printf("\r\ngroupId = 0x%08x (%s): ", groupEntry.groupId, buf.data);
 
       rc = ofdpaGroupStatsGet(groupEntry.groupId, &groupStats);
       if (rc != OFDPA_E_NONE)

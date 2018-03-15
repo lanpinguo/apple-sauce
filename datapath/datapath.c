@@ -831,6 +831,7 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
     switch (groupType)
     {
       case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
+				pData = &bucketEntry->bucketData.l2Interface;
         break;
 
       case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
@@ -873,6 +874,7 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
             case OFDPA_MPLS_TUNNEL_LABEL1:
             case OFDPA_MPLS_TUNNEL_LABEL2:
             case OFDPA_MPLS_SWAP_LABEL:
+            	pData = &bucketEntry->bucketData.mplsLabel;
               break;
 
             default:
@@ -900,6 +902,8 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
               break;
 
             case OFDPA_MPLS_FAST_FAILOVER:
+            
+							pData = &bucketEntry->bucketData.mplsFastFailOver;
               break;
 
             case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
