@@ -1359,7 +1359,7 @@ OFDPA_ERROR_t ofdpaPortFeatureGet(uint32_t portNum, ofdpaPortFeature_t *feature)
     }
   }
 
-  OFDB_LOCK_GIVE;
+//  OFDB_LOCK_GIVE;
   return rc;
 }
 

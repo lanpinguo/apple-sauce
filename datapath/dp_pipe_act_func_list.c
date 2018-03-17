@@ -71,7 +71,7 @@
 #include "datapath.h"
 
 
-
+#define ACT_PRINT_FMT_SPLIT_LINE	"| "
 
 
 
@@ -92,6 +92,12 @@ uint64_t ofdpaActSetGrpId(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", pcb);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"groupID = 0x%08x", (uint32_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 
@@ -100,6 +106,12 @@ uint64_t ofdpaActSetQosIndex(void *this,void *pcb, uint64_t arg)
 {
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", pcb);
+	if((pcb == NULL) && (this != NULL)){
+		ofdpaActionFuncOpt_t *pOps = this;
+
+	return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"QosIndex = %d", (uint32_t)arg);
+
+	}										 
 	return OFDPA_E_NONE;
 }
 
@@ -111,7 +123,7 @@ uint64_t ofdpaActSetVlanId(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| newVlanId = 0x%04x (VLAN %d)", (uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"newVlanId = 0x%04x (VLAN %d)", (uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -124,7 +136,7 @@ uint64_t ofdpaActSetVlanId2(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize,"| newVlanId2 = 0x%04x (VLAN %d)",(uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
+		return snprintf(pOps->buf, pOps->bufSize,ACT_PRINT_FMT_SPLIT_LINE"newVlanId2 = 0x%04x (VLAN %d)",(uint16_t)arg, arg	& OFDPA_VID_EXACT_MASK);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -137,7 +149,7 @@ uint64_t ofdpaActPushVlan(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| newTpid = 0x%x", (uint16_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"newTpid = 0x%x", (uint16_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -150,7 +162,7 @@ uint64_t ofdpaActPushVlan2(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| newTpid2 = 0x%x", (uint16_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"newTpid2 = 0x%x", (uint16_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -163,7 +175,7 @@ uint64_t ofdpaActSetMetaDataOvid(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| ovid = %d", (uint16_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"ovid = %d", (uint16_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -179,7 +191,7 @@ uint64_t ofdpaActSetMetaDataTunId(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| tunnelId = 0x%x", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"tunnelId = 0x%x", (uint32_t)arg);
 
 	}										 
 
@@ -197,7 +209,7 @@ uint64_t ofdpaActSetMetaDataVrf(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| vrf = %d", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"vrf = %d", (uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -213,7 +225,7 @@ uint64_t ofdpaActSetMetaDataMplsL2Port(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize,  "| mplsL2Port = 0x%x", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize,  ACT_PRINT_FMT_SPLIT_LINE"mplsL2Port = 0x%x", (uint32_t)arg);
 
 	}										 
 
@@ -237,7 +249,7 @@ uint64_t ofdpaActSetMetaDataMplsType(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsType = %d (%s)", (uint32_t)arg, mplsTypeSubTypeName[(uint32_t)arg] );
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsType = %d (%s)", (uint32_t)arg, mplsTypeSubTypeName[(uint32_t)arg] );
 
 	}										 
 
@@ -254,7 +266,7 @@ uint64_t ofdpaActIncClassBasedCounter(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| classBasedCountId = %d", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"classBasedCountId = %d", (uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -267,7 +279,7 @@ uint64_t ofdpaActIdentifyOutPort(void *this,void *pcb, uint64_t arg)
 										 "%p!\r\n", pcb);
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
-		return snprintf(pOps->buf, pOps->bufSize, "| outputPort = ", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"outputPort = %d", (uint32_t)arg);
 	}										 
 	return OFDPA_E_NONE;
 }
@@ -279,7 +291,7 @@ uint64_t ofdpaActPopVlan(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| popVlanAction");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"popVlanAction");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -292,7 +304,7 @@ uint64_t ofdpaActAllowVlanTrans(void *this,void *pcb, uint64_t arg)
 										 "%p!\r\n", pcb);
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
-		return snprintf(pOps->buf, pOps->bufSize, "| allowVlanTranslation ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"allowVlanTranslation ");
 	}										 
 	return OFDPA_E_NONE;
 }
@@ -306,7 +318,7 @@ uint64_t ofdpaActOamLmTxCount(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| oamLmTxCountAction = %d ", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"oamLmTxCountAction = %d ", (uint32_t)arg);
 
 	}										 
 
@@ -321,7 +333,7 @@ uint64_t ofdpaActSetDstMac(void *this,void *pcb, uint64_t arg)
 		ofdpaActionFuncOpt_t *pOps = this;
 		ofdpaMacAddr_t *pMac;
 		pMac = (ofdpaMacAddr_t *)&arg;
-		return snprintf(pOps->buf, pOps->bufSize, "| dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"dstMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
 										pMac->addr[0],
 										pMac->addr[1],
 										pMac->addr[2],
@@ -341,7 +353,7 @@ uint64_t ofdpaActSetSrcMac(void *this,void *pcb, uint64_t arg)
 		ofdpaActionFuncOpt_t *pOps = this;
 		ofdpaMacAddr_t *pMac;
 		pMac = (ofdpaMacAddr_t *)&arg;
-		return snprintf(pOps->buf, pOps->bufSize, "| srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"srcMac: %2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X ", 
 										pMac->addr[0],
 										pMac->addr[1],
 										pMac->addr[2],
@@ -360,7 +372,7 @@ uint64_t ofdpaActSetLmepId(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| lmepIdAction = %d ", (uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"lmepIdAction = %d ", (uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -380,7 +392,7 @@ uint64_t ofdpaActPushL2Hdr(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| pushL2Hdr ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushL2Hdr ");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -401,7 +413,7 @@ uint64_t ofdpaActPushMplsHdr(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| pushMplsHdr ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushMplsHdr ");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -423,7 +435,7 @@ uint64_t ofdpaActPushCw(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| pushCW ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushCW ");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -437,7 +449,7 @@ uint64_t ofdpaActSetMplsLabel(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsLabel = 0x%x ",(uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsLabel = %d(0x%x) ",(uint32_t)arg,(uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -450,7 +462,7 @@ uint64_t ofdpaActSetMplsBos(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsBOS = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsBOS = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -464,7 +476,7 @@ uint64_t ofdpaActSetMplsTtl(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsTTL = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsTTL = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -478,7 +490,7 @@ uint64_t ofdpaActSetMplsExp(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsEXP = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsEXP = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -492,7 +504,7 @@ uint64_t ofdpaActCpyMplsExpOutwards(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| CopyMplsExpOutwards ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"CopyMplsExpOutwards ");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -505,7 +517,7 @@ uint64_t ofdpaActSetRemarkTableId(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| RemarkTableId = %d ",(uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"RemarkTableId = %d ",(uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -518,7 +530,7 @@ uint64_t ofdpaActCpyMplsTtlOutwards(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| CopyMplsTtlOutwards ");
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"CopyMplsTtlOutwards ");
 
 	}										 
 	return OFDPA_E_NONE;
@@ -531,7 +543,7 @@ uint64_t ofdpaActSetVlanPcp(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| vlanPCP = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"vlanPCP = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -544,7 +556,7 @@ uint64_t ofdpaActSetVlanDei(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| vlanDEI = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"vlanDEI = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -556,7 +568,7 @@ uint64_t ofdpaActSetDscp(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| ipDSCP = %d ",(uint8_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"ipDSCP = %d ",(uint8_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -569,7 +581,7 @@ uint64_t ofdpaActSetMplsExpRemarkTable(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| mplsExpRemarkTable = %d ",(uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsExpRemarkTable = %d ",(uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;
@@ -582,7 +594,7 @@ uint64_t ofdpaActSetPcpPriRemarkTable(void *this,void *pcb, uint64_t arg)
 	if((pcb == NULL) && (this != NULL)){
 		ofdpaActionFuncOpt_t *pOps = this;
 
-		return snprintf(pOps->buf, pOps->bufSize, "| vlanPcpPriRemarkTable = %d ",(uint32_t)arg);
+		return snprintf(pOps->buf, pOps->bufSize, ACT_PRINT_FMT_SPLIT_LINE"vlanPcpPriRemarkTable = %d ",(uint32_t)arg);
 
 	}										 
 	return OFDPA_E_NONE;

@@ -37,22 +37,30 @@ int getIngActExecutorSockFd(void)
 OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 {	
 	int i;
-	OFDPA_ERROR_t rv;
+	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
 	ofdpaActSetHolder_t	*pActSetHolder;
+	ofdpaAct_t	*pAct = NULL;
 
 	
 
 	/* write-action */
 
-#if 1	
-
 	for(;;){
 		if(!ofdpa_list_empty(&pcb->action_set)){
 			pActSetHolder = ofdpa_list_first_entry(&pcb->action_set,ofdpaActSetHolder_t,head);
 			if(pActSetHolder != NULL){
-				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-								 "get action %d \r\n",pActSetHolder->actHolder.numAct);
+				/*OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+								 "get action %d \r\n",pActSetHolder->actHolder.numAct);*/
+				for(i = 0; i < pActSetHolder->actHolder.numAct ; i++){
+					pAct = &pActSetHolder->actHolder.act[i];
+					rc = pAct->act(&ing_act_executor_pipe_config,pcb,pAct->arg);
+					if(rc != OFDPA_E_NONE){
+						OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+										 "Execute action failed,rc = %d \r\n",rc);
+					}
+				}				 
 				ofdpa_list_del_init(&pActSetHolder->head);
+				free(pActSetHolder);
 			}
 			else{
 				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
@@ -66,25 +74,8 @@ OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 
 	}
 
-#else	
-	ofdpa_list_for_each_entry(pActSetHolder,&pcb->action_set,ofdpaActSetHolder_t,head){
-
-		if(pActSetHolder != NULL){
-			printf("\r\n head = %p, head->prev = %p , head->next = %p \r\n",
-				&pcb->action_set,pcb->action_set.prev,pcb->action_set.next);
-			printf("\r\n cur = %p , cur->prev = %p, cur->next = %p \r\n",
-				&pActSetHolder->head,pActSetHolder->head.prev,pActSetHolder->head.next);
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-							 "get action %d \r\n",pActSetHolder->actHolder.numAct);
-			ofdpa_list_del(&pActSetHolder->head);
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-							 "delete action %p \r\n",pActSetHolder);
-		}
-
-	}
-#endif
 	
-	return OFDPA_E_NONE;
+	return rc;
 
 }
 
@@ -92,23 +83,26 @@ OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 
 static OFDPA_ERROR_t ingActExecutorPktProcess( ofdpaPktCb_t *pcb)
 {
-	OFDPA_ERROR_t rv;
+	OFDPA_ERROR_t rc;
 	ofdpaPcbMsg_t msg;
 
 
-	executeIngActSetOnPkt(pcb);
+	rc = executeIngActSetOnPkt(pcb);
 
-#if 0
-	msg.dstObjectId = OFDPA_INVALID_KEY;
-	msg.pcb = pcb;
-	rv = datapathPipeMsgSend(ing_act_executor_pipe_config.nodeSock ,&msg);
-	if(rv != OFDPA_E_NONE){
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-						 "Failed to send msg, rv = %d\r\n",rv);
-	
-		return OFDPA_E_PARAM;
+	if(rc == OFDPA_E_NONE){
+		msg.dstObjectId = OFDPA_INDIRECT_GRP;
+		msg.pcb = pcb;
+		rc = datapathPipeMsgSend(ing_act_executor_pipe_config.nodeSock ,&msg);
+		if(rc != OFDPA_E_NONE){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+							 "Failed to send msg, rv = %d\r\n",rc);
+		
+			return OFDPA_E_PARAM;
+		}
 	}
-#endif
+	else{
+
+	}
   return OFDPA_E_NONE;
 }
 

@@ -106,10 +106,6 @@ OFDPA_ERROR_t indirectGroupAdd(ofdpaGroupEntry_t *group)
 		pNew->grpId = group->groupId;
 		group->ptrGrpInst = pNew;
 		
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Add new node to list!\r\n", 0);
-		ofdpa_list_add(&pNew->list,&grp_pipe_config.entrys);
-		
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
 											 "New group 0x%08x node added!\r\n", group->groupId);
 		return OFDPA_E_NONE;
@@ -453,7 +449,6 @@ static void grp_pipe_thread_core(void * arg)
 		return;
 	}
 	
-	OFDPA_INIT_LIST_HEAD(&grp_pipe_config.entrys);
 
 	while(1){
 	

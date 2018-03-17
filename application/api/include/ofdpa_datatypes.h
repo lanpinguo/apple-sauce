@@ -77,6 +77,12 @@ typedef enum
   OFDPA_E_REQUEST_DENIED       = -32,
   /** Not implemented. */
   OFDPA_NOT_IMPLEMENTED_YET    = -33,
+
+	/* Pkt need be dropped */
+	OFDPA_E_DROP 	 							 = -34,
+
+	/* Pkt unsupported format */
+	OFDPA_E_FORMAT							 = -35,
 } OFDPA_ERROR_t;
 
 typedef enum

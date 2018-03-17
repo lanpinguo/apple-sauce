@@ -49,12 +49,17 @@
 
 
 
-uint8_t ifname[64] = "netmap:eth1";
+//uint8_t ifname[64] = "netmap:eth1";
+uint8_t ifname[64] = "netmap:ens39";
 
 
 ofdpaPortMngConfig_t		portMng;
 
 
+int getPortMngSockFd(void)
+{
+	return	portMng.nodeSock;
+}
 
 
 /* Check the payload of the packet for errors (use it for debug).
@@ -116,17 +121,92 @@ void *getFeildVlan1(ofdpaPktCb_t *pcb)
 }
 
 
-static int
-receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes)
+OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 {
-	u_int cur, rx, n;
-	uint64_t b = 0;
-	ofdpaPktCb_t *pcb;
+	OFDPA_ERROR_t	rc = OFDPA_E_NONE;
 	struct OFDPA_VLAN *vlan;
 	struct OFDPA_L3_TYPE *l3_type;
 	uint16_t l3_type_offset = RESERVED_BLOCK_SIZE + 12;
-	uint64_t	drop = DROP_NONE;
 	uint64_t	*port = 0;
+
+
+	/* pkt pre-parse */
+	pcb->this = pcb;
+	port			= (uint64_t *)pcb;
+	/*port that the pkt comes from*/
+	*port = (1<<2);
+	
+	OFDPA_INIT_LIST_HEAD(&pcb->action_set);
+	
+	
+	vlan = (struct OFDPA_VLAN *)getFeildVlan0(pcb);
+	
+	if(vlan){
+		//printf("\r\ntype : %04x\r\n",vlan->type);
+		if((vlan->type == VLAN_TYPE)){
+			l3_type_offset = RESERVED_BLOCK_SIZE + 16;
+			SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,RESERVED_BLOCK_SIZE + 12);
+			vlan = (struct OFDPA_VLAN *)getFeildVlan1(pcb);
+			SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,\
+				(vlan->type ^ VLAN_TYPE) ? 0 : (l3_type_offset = RESERVED_BLOCK_SIZE + 20, RESERVED_BLOCK_SIZE + 16));
+		}
+	}
+	SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,l3_type_offset);
+	
+	l3_type = getFeild(pcb, FEILD_L3_TYPE);
+	
+	
+	//printf("\r\n eth_type: %04x\r\n",l3_type->type);
+	
+	//printf("\r\n mpls mask: %08x\r\n",REORDER32_L2B(1<<8));
+	
+	if(l3_type->type == IP_TYPE) {
+	
+	}
+	else if(l3_type->type == MPLS_TYPE){
+		struct OFDPA_MPLS *mpls;
+	
+		SET_FEILD_OFFSET(pcb, FEILD_MPLS_0, l3_type_offset + 2);
+		mpls = getFeild(pcb, FEILD_MPLS_0);
+		//printf("\r\n mpls0: %08x\r\n",*(uint32_t*)mpls);
+		if(IS_MPLS_BOS(mpls)){
+			SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 6);
+		}
+		else{
+			SET_FEILD_OFFSET(pcb, FEILD_MPLS_1, l3_type_offset + 6);
+			mpls = getFeild(pcb, FEILD_MPLS_1);
+			//printf("\r\n mpls1: %08x\r\n",*(uint32_t*)mpls);
+			if(IS_MPLS_BOS(mpls)){
+				SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 10);
+			}
+			else {
+				SET_FEILD_OFFSET(pcb, FEILD_MPLS_2, l3_type_offset + 10);
+				mpls = getFeild(pcb, FEILD_MPLS_2);
+				//printf("\r\n mpls2: %08x",*(uint32_t*)mpls);
+				SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 14);
+				if(!IS_MPLS_BOS(mpls)){
+					rc = OFDPA_E_FORMAT;
+				}
+			}
+		}
+	
+	}
+	else{
+		rc = OFDPA_NOT_IMPLEMENTED_YET;
+	}
+
+	return rc;
+
+}
+
+
+static int
+receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes)
+{
+	OFDPA_ERROR_t rc;
+	u_int cur, rx, n;
+	uint64_t b = 0;
+	ofdpaPktCb_t *pcb;
 	ofdpaPcbMsg_t msg;
 
 	
@@ -142,81 +222,18 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 		char *p = NETMAP_BUF(ring, slot->buf_idx);
 
 		*bytes += slot->len;
-		
-		/* pkt pre-parse */
-		pcb 			= (ofdpaPktCb_t *)p;
-		pcb->this = pcb;
-		pcb->len 	= slot->len;
-		pcb->pkt_len 	= slot->len - RESERVED_BLOCK_SIZE;
-		port 			= (uint64_t *)p;
-		/*port that the pkt comes from*/
-		*port = (1<<2);
 
-		OFDPA_INIT_LIST_HEAD(&pcb->action_set);
-		
-		
-		vlan = (struct OFDPA_VLAN *)getFeildVlan0(pcb);
-
-		if(vlan){
-			//printf("\r\ntype : %04x\r\n",vlan->type);
-			if((vlan->type == VLAN_TYPE)){
-				l3_type_offset = RESERVED_BLOCK_SIZE + 16;
-				SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,RESERVED_BLOCK_SIZE + 12);
-				vlan = (struct OFDPA_VLAN *)getFeildVlan1(pcb);
-				SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,\
-					(vlan->type ^ VLAN_TYPE) ? 0 : (l3_type_offset = RESERVED_BLOCK_SIZE + 20, RESERVED_BLOCK_SIZE + 16));
-			}
-		}
-		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,l3_type_offset);
-
-		l3_type = getFeild(pcb, FEILD_L3_TYPE);
-
-
-		//printf("\r\n eth_type: %04x\r\n",l3_type->type);
-		
-		//printf("\r\n mpls mask: %08x\r\n",REORDER32_L2B(1<<8));
-
-		if(l3_type->type == IP_TYPE) {
-
-		}
-		else if(l3_type->type == MPLS_TYPE){
-			struct OFDPA_MPLS *mpls;
-
-			SET_FEILD_OFFSET(pcb, FEILD_MPLS_0, l3_type_offset + 2);
-			mpls = getFeild(pcb, FEILD_MPLS_0);
-			//printf("\r\n mpls0: %08x\r\n",*(uint32_t*)mpls);
-			if(IS_MPLS_BOS(mpls)){
-				SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 6);
-			}
-			else{
-				SET_FEILD_OFFSET(pcb, FEILD_MPLS_1, l3_type_offset + 6);
-				mpls = getFeild(pcb, FEILD_MPLS_1);
-				//printf("\r\n mpls1: %08x\r\n",*(uint32_t*)mpls);
-				if(IS_MPLS_BOS(mpls)){
-					SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 10);
-				}
-				else {
-					SET_FEILD_OFFSET(pcb, FEILD_MPLS_2, l3_type_offset + 10);
-					mpls = getFeild(pcb, FEILD_MPLS_2);
-					//printf("\r\n mpls2: %08x",*(uint32_t*)mpls);
-					SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 14);
-					if(!IS_MPLS_BOS(mpls)){
-						drop = DROP_ERROR_FORMAT;
-					}
-				}
-			}
-
-		}
-		else{
-			drop = DROP_UNSUPPORTED;
-		}
+		pcb = (ofdpaPktCb_t *)p;
+		pcb->len	= slot->len;
+		pcb->pkt_len	= slot->len - RESERVED_BLOCK_SIZE;
+		rc = dpPktPreParse(pcb);
 		
 		if (dump)
 			dump_payload(p, slot->len, ring, cur);
 
 		//printf("\r\nl3_type_offset : %d\r\n",l3_type_offset);
 
-		if(drop == DROP_NONE){
+		if(rc == OFDPA_E_NONE){
 			//dump_pcb(pcb);
 			msg.dstObjectId = OFDPA_FLOW_TABLE_ID_INGRESS_PORT;
 			msg.pcb = pcb;
@@ -1114,6 +1131,72 @@ OFDPA_ERROR_t  dpPortQueueSchedSet(uint32_t port, int32_t mode,int32_t *weights)
   return rc;
 
 }
+
+
+
+
+OFDPA_ERROR_t dpPortMngPktRecv(ofdpaPcbMsg_t *msg, struct timeval *timeout)
+{
+  int pipeInPktSockFd;
+  ssize_t recvBytes;
+  int rv;
+  int flags = 0;
+
+  pipeInPktSockFd = portMng.nodeSock;
+  if (pipeInPktSockFd < 0)
+  {
+    return OFDPA_E_FAIL;
+  }
+
+  if (timeout)
+  {
+    if ((timeout->tv_sec == 0) && (timeout->tv_usec == 0))
+    {
+      /* set socket to non-blocking for this read */
+      flags |= MSG_DONTWAIT;
+    }
+    else
+    {
+      /* blocking socket with a timeout */
+      rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, (char *)timeout,
+                      sizeof(struct timeval));
+      if (rv < 0)
+      {
+        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                          "Failed to set packet receive timeout. Error %d.\r\n", rv);
+        return OFDPA_E_FAIL;
+      }
+    }
+  }
+  else
+  {
+    /* blocking socket with no timeout. Make sure there is no timeout configured
+     * on the socket from previous call. */
+    rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, NULL, 0);
+  }
+
+  recvBytes = recvfrom(pipeInPktSockFd, msg, sizeof(*msg), flags, 0, 0);
+
+  if (recvBytes < 0)
+  {
+    if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
+    {
+      /* Normal if no packets waiting to be received and caller didn't block. */
+      return OFDPA_E_TIMEOUT;
+    }
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                      "Failed to receive packet. recvfrom() returned %d. errno %s.\r\n",
+                      recvBytes, strerror(errno));
+    return OFDPA_E_FAIL;
+  }
+
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+										"port manager rec %d\r\n",recvBytes);
+
+  return OFDPA_E_NONE;
+}
+
+
 
 int port_manager_init(int argc, char *argv[])
 {
