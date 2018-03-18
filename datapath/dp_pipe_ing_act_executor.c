@@ -40,7 +40,7 @@ OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 	OFDPA_ERROR_t rc = OFDPA_E_FAIL;
 	ofdpaActSetHolder_t	*pActSetHolder;
 	ofdpaAct_t	*pAct = NULL;
-
+	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
 	
 
 	/* write-action */
@@ -53,7 +53,8 @@ OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 								 "get action %d \r\n",pActSetHolder->actHolder.numAct);*/
 				for(i = 0; i < pActSetHolder->actHolder.numAct ; i++){
 					pAct = &pActSetHolder->actHolder.act[i];
-					rc = pAct->act(&ing_act_executor_pipe_config,pcb,pAct->arg);
+					arg.data = pcb;
+					rc = pAct->act(pAct,&arg);
 					if(rc != OFDPA_E_NONE){
 						OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
 										 "Execute action failed,rc = %d \r\n",rc);

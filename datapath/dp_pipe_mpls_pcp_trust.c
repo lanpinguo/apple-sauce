@@ -178,15 +178,19 @@ OFDPA_ERROR_t  executeMplsPcpTrustActionOnPkt(ofdpaMplsPcpTrustPipeNode_t *pNode
 	OFDPA_ERROR_t rv;
 	ofdpaActSetHolder_t	*pActSetHolder;
 	ofdpaActHolder_t			*pHolder; 
-
+	ofdpaAct_t 	*pAct;
+	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
+	
 	/* apply-action */
 	pHolder = pNode->instructions.apply_action;
 	if(pHolder){
 		for(i = 0; i < pHolder->numAct ; i++){
-			if(pHolder->act[i].act == NULL){
+			pAct = &pHolder->act[i];
+			if(pAct->act == NULL){
 				break;
 			}
-			rv = pHolder->act[i].act(pNode, pcb, pHolder->act[i].arg);
+			arg.data = pcb;
+			rv = pAct->act(pAct,&arg);
 			if(rv != OFDPA_E_NONE){
 				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
 													 "execute action faild, index=%d,rv=%d",i,rv);

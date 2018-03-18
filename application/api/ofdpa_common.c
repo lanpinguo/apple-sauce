@@ -1583,8 +1583,6 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
       {
         ofdpaVlanFlowEntry_t *flowData;
         ofdpaVlanFlowMatch_t *match;
-				int i;
-				ofdpaActionFuncOpt_t	ops;
 				
         flowData = &flow->flowData.vlanFlowEntry;
         match = &flowData->match_criteria;
@@ -1596,34 +1594,6 @@ OFDPA_ERROR_t ofdpaFlowEntryDecode(ofdpaFlowEntry_t *flow, char *outBuf, int buf
         /* instructions */
         APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " |");
         APPEND_BUFFER_CHECK_SIZE(outBuf, bufSize, count, " GoTo = %d (%s)", flowData->gotoTableId, gotoFlowTableNameGet(flowData->gotoTableId));
-
-				for(i = 0; i < flowData->apply_cnt ; i ++){
-					if (count < bufSize) 																															 
-					{ 																																											 
-						ops.buf = &outBuf[count];
-						ops.bufSize = bufSize - count;
-						count += (flowData->apply_actions[i].act)(&ops,NULL,flowData->apply_actions[i].arg);
-					} 																																											 
-					if (count >= bufSize)																															 
-					{ 																																											 
-						outBuf[bufSize - 1] = '\0';																													
-						return OFDPA_E_FULL;																																	 
-					} 																																											 
-				}
-				
-				for(i = 0; i < flowData->write_cnt ; i ++){
-					if (count < bufSize) 																															 
-					{ 																																											 
-						ops.buf = &outBuf[count];
-						ops.bufSize = bufSize - count;
-						count += (flowData->write_actions[i].act)(&ops,NULL,flowData->write_actions[i].arg);
-					} 																																											 
-					if (count >= bufSize)																															 
-					{ 																																											 
-						outBuf[bufSize - 1] = '\0';																													
-						return OFDPA_E_FULL;																																	 
-					} 																																											 
-	      }
 			}
       break;
 

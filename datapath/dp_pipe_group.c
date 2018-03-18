@@ -342,6 +342,8 @@ OFDPA_ERROR_t indirectGroupBucketEntryModify(ofdpaGroupBucketEntry_t *groupBucke
 static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 {
 	ofdpaGrpPipeNode_t * pGrp;
+	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
+	ofdpaAct_t *pAct = NULL;
 	int i;
 
 	
@@ -361,10 +363,12 @@ static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 	}
 
 	for(i = 0 ; i < pGrp->actBukts[0]->numAct; i++){
-		if(pGrp->actBukts[0]->act[i].act == NULL){
+		pAct = &pGrp->actBukts[0]->act[i];
+		if(pAct->act == NULL){
 			break;
 		}
-		pGrp->actBukts[0]->act[i].act(pGrp, msg->pcb, pGrp->actBukts[0]->act[i].arg);
+		arg.data = msg->pcb;
+		pAct->act(pAct, &arg);
 	}
 
 	

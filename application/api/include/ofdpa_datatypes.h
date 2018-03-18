@@ -451,7 +451,23 @@ typedef enum
 } OFDPA_FLOW_TABLE_ID_t;
 
 
-typedef  uint64_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
+typedef struct ofdpaActPrintBuf_s
+{
+	uint8_t										*buf;
+	uint32_t									bufSize;
+}ofdpaActPrintBuf_t;
+
+
+typedef struct ofdpaActArg_s
+{
+#define ACT_OP_TYPE_PRETTY_PRINT			1
+#define ACT_OP_TYPE_EXECUTE						2
+	uint32_t 									type;
+	void											*data;
+}ofdpaActArg_t;
+
+
+typedef  uint64_t (*ofdpaAct_f)(void *this,ofdpaActArg_t *arg);
 
 typedef struct ofdpaAct_s 
 {
@@ -3697,15 +3713,6 @@ typedef enum {
 
 }ofdpaGrpType_e;
 
-
-
-typedef struct ofdpaActionFuncOps_s
-{
-#define OP_PRETTY_PRINT			1
-	uint32_t 									ops;
-	void											*buf;
-	uint32_t									bufSize;
-}ofdpaActionFuncOpt_t;
 
 
 typedef struct ofdpaActBucket_s 
