@@ -3781,6 +3781,7 @@ typedef struct ofdpa_MetaData_s
   uint32_t    mplsL2Port;               /**< For MPLS L2 VPN classification. */
   uint32_t    tunnelId;                 /**< For MPLS L2 VPN classification. */
   uint32_t    mplsType;               /**< MPLS Type value used in Set-field action */
+	void				*pGrpInst;
 }ofdpa_MetaData_t;
 
 
@@ -3808,9 +3809,8 @@ typedef struct ofdpaPkt_s
 
 typedef struct ofdpaPcbMsg_s
 {
-	uint64_t						dstObjectId;
-	ofdpaPktCb_t *pcb;
-	void								*pGroupInst;
+	uint64_t				dstObjectId;
+	ofdpaPktCb_t 		*pcb;
 } ofdpaPcbMsg_t;
 
 OFDPA_ASSERT(sizeof(ofdpaPktCb_t) < (RESERVED_BLOCK_SIZE - 64));

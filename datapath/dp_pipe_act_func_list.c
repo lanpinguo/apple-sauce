@@ -91,6 +91,9 @@ static char *mplsTypeSubTypeName[] =
 uint64_t ofdpaActSetGrpId(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
+	OFDPA_ERROR_t rc = OFDPA_E_NONE;
+
+
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
@@ -99,7 +102,25 @@ uint64_t ofdpaActSetGrpId(void *this,ofdpaActArg_t *arg)
 		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"groupID = 0x%08x", (uint32_t)pObj->arg);
 
 	}										 
-	return OFDPA_E_NONE;
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaGroupEntry_t group;
+		
+		rc = dpGroupGet((uint32_t)pObj->arg, &group);
+		if(rc != OFDPA_E_NONE){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+												 "group %d not found!\r\n", (uint32_t)pObj->arg);
+			pPkt->meta_data.pGrpInst = NULL;
+			return rc;
+		}
+
+		pPkt->meta_data.pGrpInst = group.ptrGrpInst;
+
+	}	
+
+
+	return rc;
 }
 
 

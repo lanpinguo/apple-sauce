@@ -90,7 +90,7 @@ static OFDPA_ERROR_t ingActExecutorPktProcess( ofdpaPktCb_t *pcb)
 
 	rc = executeIngActSetOnPkt(pcb);
 
-	if(rc == OFDPA_E_NONE){
+	if((rc == OFDPA_E_NONE)&& (pcb->meta_data.pGrpInst != NULL)){
 		msg.dstObjectId = OFDPA_INDIRECT_GRP;
 		msg.pcb = pcb;
 		rc = datapathPipeMsgSend(ing_act_executor_pipe_config.nodeSock ,&msg);

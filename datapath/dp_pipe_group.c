@@ -345,14 +345,19 @@ static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
 	ofdpaAct_t *pAct = NULL;
 	int i;
+	ofdpaPktCb_t *pPkt = msg->pcb;
+	
+
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
+										"Receive packet %p.\r\n",msg->pcb);
 
 	
 	/* Check whether dst group instance is right */
-	if(msg->pGroupInst == NULL){
+	if(pPkt->meta_data.pGrpInst == NULL){
 		return OFDPA_E_UNAVAIL;
 	}
 
-	pGrp = msg->pGroupInst;
+	pGrp = pPkt->meta_data.pGrpInst;
 	if(pGrp->this != pGrp){
 		return OFDPA_E_PARAM;
 	}
@@ -435,7 +440,13 @@ static OFDPA_ERROR_t indirectGrpPipeInPktRecv(struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	indirectGrpPktProcess(&msg);
+	rv = indirectGrpPktProcess(&msg);
+	if (rv != OFDPA_E_NONE)
+	{
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+											"Failed to process packet. Error %d.\r\n", rv);
+		return OFDPA_E_FAIL;
+	}
 
   return OFDPA_E_NONE;
 }
