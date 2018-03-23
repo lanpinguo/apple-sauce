@@ -26,10 +26,11 @@ dot1ag_files := $(notdir $(wildcard $(OFDPA_BASE)/application/oam/dot1ag/*.c))
 g8131_files := $(notdir $(wildcard $(OFDPA_BASE)/application/oam/g8131/*.c))
 sal_files := $(notdir $(wildcard $(OFDPA_BASE)/util/sal/linux/*.c))
 util_files := $(notdir $(wildcard $(OFDPA_BASE)/util/*.c))
+tpool_files := $(notdir $(wildcard $(OFDPA_BASE)/util/LFTPool/*.c))
 
-core_files := $(api_files) $(ofdb_files) $(avl_files) $(msgq_files) $(dot1ag_files) $(g8131_files) $(sal_files) $(util_files)
+core_files := $(api_files) $(ofdb_files) $(avl_files) $(msgq_files) $(dot1ag_files) $(g8131_files) $(sal_files) $(util_files) $(tpool_files)
 
-searchdirs := $(realpath $(OUTPATH)/rpc)$(shell find $(realpath $(OFDPA_BASE)/application) -mindepth 1 -type d -printf ":%p"):$(realpath $(OFDPA_BASE)/datapath):$(realpath $(OFDPA_BASE)/util/avl):$(realpath $(OFDPA_BASE)/util/rpc/rpcsrv/include):$(realpath $(OFDPA_BASE)/util/msgq):$(realpath $(OFDPA_BASE)/application/oam/dot1ag/include):$(realpath $(OFDPA_BASE)/application/oam/include):$(realpath $(OFDPA_BASE)/application/oam/g8131/include:$(realpath $(OFDPA_BASE)/application/oam/redundancy/include)):$(realpath $(OFDPA_BASE)/util/sal/linux):$(realpath $(OFDPA_BASE)/adpl/inc):$(realpath $(OFDPA_BASE)/util):$(realpath $(OFDPA_BASE)/util/netmap/usr/include)
+searchdirs := $(realpath $(OUTPATH)/rpc)$(shell find $(realpath $(OFDPA_BASE)/application) -mindepth 1 -type d -printf ":%p"):$(realpath $(OFDPA_BASE)/datapath):$(realpath $(OFDPA_BASE)/util/avl):$(realpath $(OFDPA_BASE)/util/rpc/rpcsrv/include):$(realpath $(OFDPA_BASE)/util/msgq):$(realpath $(OFDPA_BASE)/application/oam/dot1ag/include):$(realpath $(OFDPA_BASE)/application/oam/include):$(realpath $(OFDPA_BASE)/application/oam/g8131/include:$(realpath $(OFDPA_BASE)/application/oam/redundancy/include)):$(realpath $(OFDPA_BASE)/util/sal/linux):$(realpath $(OFDPA_BASE)/adpl/inc):$(realpath $(OFDPA_BASE)/util):$(realpath $(OFDPA_BASE)/util/netmap/usr/include):$(realpath $(OFDPA_BASE)/util/LFTPool)
 
 vpath %.c $(searchdirs)
 vpath %.h $(searchdirs)

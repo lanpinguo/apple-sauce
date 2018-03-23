@@ -429,6 +429,8 @@ uint64_t ofdpaActIncColorBasedCount(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
+	OFDPA_ERROR_t rc = OFDPA_E_NONE;
+	
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
@@ -436,8 +438,16 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 
 		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushL2Hdr ");
 
-	}										 
-	return OFDPA_E_NONE;
+	}		
+	
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		
+
+	}	
+
+
+	return rc;
 }
 
 

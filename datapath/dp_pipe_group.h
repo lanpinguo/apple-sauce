@@ -90,7 +90,8 @@ typedef struct ofdpaGroupBucketTableStatus_s
 
 typedef struct ofdpaGrpPipeNodeConfig_s
 {
-	uint32_t										max_entrys;
+	void 												*tpool;
+	uint32_t										max_subThread;
 	int 												nodeSock;
 	pthread_t 									nodeTid ;
 

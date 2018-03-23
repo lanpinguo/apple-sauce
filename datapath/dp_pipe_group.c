@@ -59,7 +59,7 @@
 #include <sys/un.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-
+#include "tpool.h"
 #include "ofdpa_datatypes.h"
 #include "ofdb.h"
 #include "ofdpa_util.h"
@@ -335,7 +335,19 @@ OFDPA_ERROR_t indirectGroupBucketEntryModify(ofdpaGroupBucketEntry_t *groupBucke
 }
 
 
+void grpPipeSubWorkCore(void *arg)
+{
 
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+										"Receive work %p.\r\n",arg);
+
+}
+
+
+pthread_t grpPipeSubThreadCreate(ofdpaPktCb_t *pPkt,void *pFirstGrpInst)
+{
+	return 0;
+}
 
 
 
@@ -346,6 +358,7 @@ static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 	ofdpaAct_t *pAct = NULL;
 	int i;
 	ofdpaPktCb_t *pPkt = msg->pcb;
+	OFDPA_ERROR_t rc;
 	
 
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
@@ -356,6 +369,10 @@ static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 	if(pPkt->meta_data.pGrpInst == NULL){
 		return OFDPA_E_UNAVAIL;
 	}
+
+
+	rc =  tpool_add_work(grp_pipe_config.tpool, grpPipeSubWorkCore, &arg);
+
 
 	pGrp = pPkt->meta_data.pGrpInst;
 	if(pGrp->this != pGrp){
@@ -1250,14 +1267,19 @@ OFDPA_ERROR_t group_database_init(void)
 int group_pipe_init(int argc, char *argv[])
 {
 	OFDPA_ERROR_t rc;
+
+
+
 	
+	grp_pipe_config.max_subThread = 5;
+	grp_pipe_config.tpool = tpool_init(grp_pipe_config.max_subThread);
+
 
 	rc = group_database_init();
 	if(rc != OFDPA_E_NONE){
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_OFDB, OFDPA_DEBUG_ALWAYS, "Failed to initialize  Group Table AVL Tree.\r\n", rc);
 		return rc;
 	}
-	grp_pipe_config.max_entrys = 4094;
 	grp_pipe_config.nodeTid = (pthread_t)dpaThreadCreate("indirectGrpTask", 62, grp_pipe_thread_core, NULL);
 
 

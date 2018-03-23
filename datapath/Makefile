@@ -23,7 +23,7 @@ datapath_files := $(notdir $(wildcard $(OFDPA_BASE)/datapath/*.c))
 
 core_files := $(datapath_files) 
 
-searchdirs := $(realpath $(OUTPATH)/rpc)$(shell find $(realpath $(OFDPA_BASE)/application) -mindepth 1 -type d -printf ":%p"):$(realpath $(OFDPA_BASE)/datapath):$(realpath $(OFDPA_BASE)/util/avl):$(realpath $(OFDPA_BASE)/util/rpc/rpcsrv/include):$(realpath $(OFDPA_BASE)/util/msgq):$(realpath $(OFDPA_BASE)/application/oam/dot1ag/include):$(realpath $(OFDPA_BASE)/application/oam/include):$(realpath $(OFDPA_BASE)/application/oam/g8131/include:$(realpath $(OFDPA_BASE)/application/oam/redundancy/include)):$(realpath $(OFDPA_BASE)/util/sal/linux):$(realpath $(OFDPA_BASE)/adpl/inc):$(realpath $(OFDPA_BASE)/util):$(realpath $(OFDPA_BASE)/util/netmap/usr/include)
+searchdirs := $(realpath $(OUTPATH)/rpc)$(shell find $(realpath $(OFDPA_BASE)/application) -mindepth 1 -type d -printf ":%p"):$(realpath $(OFDPA_BASE)/datapath):$(realpath $(OFDPA_BASE)/util/avl):$(realpath $(OFDPA_BASE)/util/rpc/rpcsrv/include):$(realpath $(OFDPA_BASE)/util/msgq):$(realpath $(OFDPA_BASE)/application/oam/dot1ag/include):$(realpath $(OFDPA_BASE)/application/oam/include):$(realpath $(OFDPA_BASE)/application/oam/g8131/include:$(realpath $(OFDPA_BASE)/application/oam/redundancy/include)):$(realpath $(OFDPA_BASE)/util/sal/linux):$(realpath $(OFDPA_BASE)/adpl/inc):$(realpath $(OFDPA_BASE)/util):$(realpath $(OFDPA_BASE)/util/netmap/usr/include):$(realpath $(OFDPA_BASE)/util/LFTPool)
 
 vpath %.c $(searchdirs)
 vpath %.h $(searchdirs)
