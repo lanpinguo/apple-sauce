@@ -335,43 +335,21 @@ OFDPA_ERROR_t indirectGroupBucketEntryModify(ofdpaGroupBucketEntry_t *groupBucke
 }
 
 
-void grpPipeSubWorkCore(void *arg)
+void grpPipeSubWorkCore(void *work)
 {
-
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
-										"Receive work %p.\r\n",arg);
-
-}
-
-
-pthread_t grpPipeSubThreadCreate(ofdpaPktCb_t *pPkt,void *pFirstGrpInst)
-{
-	return 0;
-}
-
-
-
-static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
-{
+	ofdpaPktCb_t *pPkt = ((ofdpaPcbMsg_t *)work)->pcb;
 	ofdpaGrpPipeNode_t * pGrp;
 	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
 	ofdpaAct_t *pAct = NULL;
 	int i;
-	ofdpaPktCb_t *pPkt = msg->pcb;
-	OFDPA_ERROR_t rc;
-	
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
-										"Receive packet %p.\r\n",msg->pcb);
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+										"Receive work %p.\r\n",pPkt);
 
-	
 	/* Check whether dst group instance is right */
 	if(pPkt->meta_data.pGrpInst == NULL){
 		return OFDPA_E_UNAVAIL;
 	}
-
-
-	rc =  tpool_add_work(grp_pipe_config.tpool, grpPipeSubWorkCore, &arg);
 
 
 	pGrp = pPkt->meta_data.pGrpInst;
@@ -389,12 +367,33 @@ static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
 		if(pAct->act == NULL){
 			break;
 		}
-		arg.data = msg->pcb;
+		arg.data = pPkt;
 		pAct->act(pAct, &arg);
 	}
 
+}
+
+
+OFDPA_ERROR_t grpPipeSubWorDispatch(ofdpaPcbMsg_t *msg)
+{
+	OFDPA_ERROR_t rc;
+	rc =  tpool_add_work(grp_pipe_config.tpool, grpPipeSubWorkCore, msg);
+	return rc;
+}
+
+
+
+static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
+{
+	OFDPA_ERROR_t rc;
 	
-  return OFDPA_E_NONE;
+
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
+										"Receive packet %p.\r\n",msg->pcb);
+
+	rc = grpPipeSubWorDispatch(msg);
+	
+  return rc;
 }
 
 
