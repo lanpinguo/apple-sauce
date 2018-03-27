@@ -66,17 +66,10 @@
 #include "ofdpa_porting.h"
 #include "datapath.h"
 #include "dp_pipe_group.h"
+#include "dp_pipe_indirect_grp.h"
 
 
-#define DP_ADD_ACTION_TO_BUCKET(pBukt,pAct) \
-{ \
-	rv = dpAddAct2Bukt(pBukt,pAct); \
-	if(rv != OFDPA_E_NONE){ \
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC, \
-											 "Add action failed, rv = %d!\r\n", rv); \
-		return rv; \
-	} \
-}while(0)
+
 
 ofdpaGrpPipeNodeConfig_t grp_pipe_config;
 
@@ -87,324 +80,31 @@ int getGrpSockFd(void)
 }
 
 
-OFDPA_ERROR_t indirectGroupAdd(ofdpaGroupEntry_t *group)
+OFDPA_ERROR_t dpGrpSubWorkDispatch(dpGrpWork_t	*work)
 {
-	ofdpaGrpPipeNode_t * pNew;
+	OFDPA_ERROR_t rc = OFDPA_NOT_IMPLEMENTED_YET;
 
-	if(group == NULL){
-	
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Null Group passed!\r\n", 0);
-		return OFDPA_E_PARAM;
-	}
-
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-										 "Add new indirect Group 0x%08x \r\n", group->groupId);
-
-	pNew = dpGrpNodeMalloc(OFDPA_GRP_TYPE_INDIRECT,1);
-	if(pNew){
-		pNew->grpId = group->groupId;
-		group->ptrGrpInst = pNew;
-		
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
-											 "New group 0x%08x node added!\r\n", group->groupId);
-		return OFDPA_E_NONE;
-	}
-
-	return OFDPA_E_FAIL;
-}
-
-OFDPA_ERROR_t indirectGroupDelete(uint32_t groupId)
-{
-	return OFDPA_E_NONE;
-
-}
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+										"Receive work %p.\r\n",work->pPkt);
 
 
-
-OFDPA_ERROR_t dpGrpL2IntfBuktBuild(ofdpaL2InterfaceGroupBucketData_t       * pData,ofdpaActBucket_t	**ppBucket)
-{
-  OFDPA_ERROR_t rv;
-	ofdpaAct_t				action;
-	int i;
-
-
-
-	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_L2_INTF_BUKT_ACT_MAX);
-	if(*ppBucket == NULL){
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Bucket Malloc failed!\r\n", 0);
-		return OFDPA_E_PARAM;
+	if(work->pGrp->grpType == OFDPA_GRP_TYPE_INDIRECT){
+		rc =	tpool_add_work(grp_pipe_config.tpool, indirectGrpPktProcess, work);
 	}
 	
-	for(i = 0; i < pData->act_cnt; i++){
-		action = pData->actions[i];
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t dpGrpMplsIntfBuktBuild(ofdpaMPLSInterfaceGroupBucketData_t       * pData,ofdpaActBucket_t	**ppBucket)
-{
-  OFDPA_ERROR_t rv;
-	ofdpaAct_t				action;
-	int i;
-
-
-	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_MPLS_INTF_BUKT_ACT_MAX);
-	if(*ppBucket == NULL){
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Bucket Malloc failed!\r\n", 0);
-		return OFDPA_E_PARAM;
-	}
-
-
-	for(i = 0; i < pData->act_cnt; i++){
-		action = pData->actions[i];
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-
-	return OFDPA_E_NONE;
-}
-
-
-OFDPA_ERROR_t dpGrpMplsLabelBuktBuild(ofdpaMPLSLabelGroupBucketData_t       * pData, ofdpaActBucket_t	**ppBucket)
-{
-  OFDPA_ERROR_t rv;
-	ofdpaAct_t				action;
-	int i;
-
-
-
-	*ppBucket = dpGrpBucketMalloc(OFDPA_GRP_MPLS_LABEL_BUKT_ACT_MAX);
-	if(*ppBucket == NULL){
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Bucket Malloc failed!\r\n", 0);
-		return OFDPA_E_PARAM;
-	}
-	
-	for(i = 0; i < pData->act_cnt; i++){
-		action = pData->actions[i];
-		DP_ADD_ACTION_TO_BUCKET(*ppBucket,&action);
-	}
-
-	return OFDPA_E_NONE;
-}
-
-
-OFDPA_ERROR_t indirectGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
-{
-  OFDPA_ERROR_t rv;
-  uint32_t subType;
-  ofdpaGroupEntry_t group;
-	ofdpaActBucket_t	*pBukt = NULL;
-
-	if(groupBucket == NULL){
-	
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Null Group bucket passed!\r\n", 0);
-		return OFDPA_E_PARAM;
-	}
-
-	if(groupBucket->ptrGrpInst == NULL){
-	
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Null Group passed!\r\n", 0);
-		return OFDPA_E_PARAM;
-	}
-
-
-
-  switch (OFDB_GROUP_TYPE(groupBucket->groupId))
-	{
-		case OFDPA_GROUP_ENTRY_TYPE_L2_INTERFACE:
-			 rv = dpGrpL2IntfBuktBuild(&groupBucket->bucketData.l2Interface,&pBukt);
-			break;
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_LABEL:
-			subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-			switch ( subType )
-			{
-			    case OFDPA_MPLS_INTERFACE :
-						rv = dpGrpMplsIntfBuktBuild(&groupBucket->bucketData.mplsInterface,&pBukt);
-		        break;
-			    case OFDPA_MPLS_L2_VPN_LABEL :
-					case OFDPA_MPLS_L3_VPN_LABEL :
-					case OFDPA_MPLS_TUNNEL_LABEL1:
-					case OFDPA_MPLS_TUNNEL_LABEL2:
-					case OFDPA_MPLS_SWAP_LABEL:
-						rv = dpGrpMplsLabelBuktBuild(&groupBucket->bucketData.mplsLabel,&pBukt);
-					  break;
-			    default:
-			      break;
-			}
-			break;
-		case OFDPA_GROUP_ENTRY_TYPE_L3_INTERFACE:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_UNICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_OVERLAY:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_UNFILTERED_INTERFACE:
-		  break;
-		case OFDPA_GROUP_ENTRY_TYPE_L2_FLOOD:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L2_MULTICAST:
-		case OFDPA_GROUP_ENTRY_TYPE_L3_ECMP:
-		  break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_L2_REWRITE:
-		  break;
-
-		case OFDPA_GROUP_ENTRY_TYPE_MPLS_FORWARDING:
-		  /* Validate Group Sub-type */
-		  subType = OFDB_GROUP_MPLS_SUBTYPE(groupBucket->groupId);
-
-		  switch (subType)
-		  {
-		    case OFDPA_MPLS_ECMP:
-		      break;
-		    case OFDPA_MPLS_FAST_FAILOVER:
-		      break;
-		    case OFDPA_MPLS_L2_FLOOD:
-		    case OFDPA_MPLS_L2_MULTICAST:
-		    case OFDPA_MPLS_L2_LOCAL_FLOOD:
-		    case OFDPA_MPLS_L2_LOCAL_MULTICAST:
-		    case OFDPA_MPLS_L2_FLOOD_SPLIT_HORIZON:
-		    case OFDPA_MPLS_L2_MULTICAST_SPLIT_HORIZON:
-		    case OFDPA_MPLS_1_1_HEAD_END_PROTECT:
-		    case OFDPA_MPLS_L2_TAG:
-		      break;
-
-		    default:
-		      OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-		                     "Invalid MPLS Forwarding Group Subtype!\r\n", 0);
-		  }
-
-		  break;
-
-		default:
-		  /* Invalid Group ID */
-		  /* this should never happen since group ID has been validated above */
-		  OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_ALWAYS,
-		                     "Unexpected Group ID in driver switch statement\r\n", 0);
-		  return OFDPA_E_UNAVAIL;                   
-	}
-
-
-  if (OFDPA_E_NONE != dpGroupGet(groupBucket->referenceGroupId, &group))
-  {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-                       "Group (0x%x) not present in Group Table!\r\n", groupBucket->referenceGroupId);
-		
-		pBukt->ptrRefGrpInst = NULL;
-  }
-  else{
-		pBukt->ptrRefGrpInst = group.ptrGrpInst;
-  }
-
-	
-
-	rv = dpBindBukt2Grp(groupBucket->ptrGrpInst,pBukt);
-	if(rv != OFDPA_E_NONE){
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-											 "Add bucket failed, rv = %d!\r\n", rv);
-	}
-
-	return rv;
-}
-
-
-
-
-OFDPA_ERROR_t indirectGroupBucketEntryDelete(uint32_t groupId, uint32_t bucketIndex)
-{
-
-	return OFDPA_E_NONE;
-}
-
-OFDPA_ERROR_t indirectGroupBucketsDeleteAll(uint32_t groupId)
-{
-
-	return OFDPA_E_NONE;
-}
-
-
-
-OFDPA_ERROR_t indirectGroupBucketEntryModify(ofdpaGroupBucketEntry_t *groupBucket)
-{
-	return OFDPA_E_NONE;
-}
-
-
-void grpPipeSubWorkCore(void *work)
-{
-	ofdpaPktCb_t *pPkt = ((ofdpaPcbMsg_t *)work)->pcb;
-	ofdpaGrpPipeNode_t * pGrp;
-	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
-	ofdpaAct_t *pAct = NULL;
-	int i;
-
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
-										"Receive work %p.\r\n",pPkt);
-
-	/* Check whether dst group instance is right */
-	if(pPkt->meta_data.pGrpInst == NULL){
-		return OFDPA_E_UNAVAIL;
-	}
-
-
-	pGrp = pPkt->meta_data.pGrpInst;
-	if(pGrp->this != pGrp){
-		return OFDPA_E_PARAM;
-	}
-
-	if(pGrp->actBukts[0] == NULL){
-
-		return OFDPA_E_INTERNAL;
-	}
-
-	for(i = 0 ; i < pGrp->actBukts[0]->numAct; i++){
-		pAct = &pGrp->actBukts[0]->act[i];
-		if(pAct->act == NULL){
-			break;
-		}
-		arg.data = pPkt;
-		pAct->act(pAct, &arg);
-	}
-
-}
-
-
-OFDPA_ERROR_t grpPipeSubWorDispatch(ofdpaPcbMsg_t *msg)
-{
-	OFDPA_ERROR_t rc;
-	rc =  tpool_add_work(grp_pipe_config.tpool, grpPipeSubWorkCore, msg);
 	return rc;
 }
 
-
-
-static OFDPA_ERROR_t indirectGrpPktProcess( ofdpaPcbMsg_t *msg)
-{
-	OFDPA_ERROR_t rc;
-	
-
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
-										"Receive packet %p.\r\n",msg->pcb);
-
-	rc = grpPipeSubWorDispatch(msg);
-	
-  return rc;
-}
-
-
-
-static OFDPA_ERROR_t indirectGrpPipeInPktRecv(struct timeval *timeout)
+static OFDPA_ERROR_t dpGrpPipeInPktRecv(struct timeval *timeout)
 {
   int pipeInPktSockFd;
   ofdpaPcbMsg_t msg;
   ssize_t recvBytes;
   int rv;
   int flags = 0;
+	ofdpaPktCb_t *pPkt;
+	ofdpaGrpPipeNode_t * pGrp;
+	dpGrpWork_t work;
 
 	
 
@@ -456,7 +156,25 @@ static OFDPA_ERROR_t indirectGrpPipeInPktRecv(struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	rv = indirectGrpPktProcess(&msg);
+
+
+	pPkt = msg.pcb;
+
+	/* Check whether dst group instance is right */
+	if(pPkt->meta_data.pGrpInst == NULL){
+		return OFDPA_E_UNAVAIL;
+	}
+
+
+	pGrp = pPkt->meta_data.pGrpInst;
+	if(pGrp->this != pGrp){
+		return OFDPA_E_PARAM;
+	}
+
+	work.pGrp = pPkt->meta_data.pGrpInst;
+	work.pPkt = pPkt;
+
+	rv = dpGrpSubWorkDispatch(&work);
 	if (rv != OFDPA_E_NONE)
 	{
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
@@ -473,7 +191,7 @@ static void grp_pipe_thread_core(void * arg)
 {
 	OFDPA_ERROR_t rv;
 
-	rv = dpPipeNodeSocketCreate(OFDPA_INDIRECT_GRP, &grp_pipe_config.nodeSock);
+	rv = dpPipeNodeSocketCreate(OFDPA_GROUP_TABLE, &grp_pipe_config.nodeSock);
 	if(rv != OFDPA_E_NONE){
     OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
                       "Failed to create socket %d. errno %s.\r\n",rv);
@@ -483,7 +201,7 @@ static void grp_pipe_thread_core(void * arg)
 
 	while(1){
 	
-		indirectGrpPipeInPktRecv(NULL);
+		dpGrpPipeInPktRecv(NULL);
 
 	}
 

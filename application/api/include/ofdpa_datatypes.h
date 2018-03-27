@@ -3759,7 +3759,6 @@ typedef struct ofdpaFlowTblInstruct_s
 
 typedef struct ofdpaGrpPipeNode_s 
 {
-  struct ofdpa_list_head          list;  	  
   void														*this;
   uint32_t                				grpId;			
   ofdpaGrpType_e          				grpType;     	

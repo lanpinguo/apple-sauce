@@ -102,6 +102,31 @@ typedef struct ofdpaGrpPipeNodeConfig_s
 
 }ofdpaGrpPipeNodeConfig_t;
 
+
+
+#define DP_ADD_ACTION_TO_BUCKET(pBukt,pAct) \
+{ \
+	rv = dpAddAct2Bukt(pBukt,pAct); \
+	if(rv != OFDPA_E_NONE){ \
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC, \
+											 "Add action failed, rv = %d!\r\n", rv); \
+		return rv; \
+	} \
+}while(0)
+
+
+typedef struct dpGrpWork_s
+{
+		ofdpaPktCb_t *pPkt;
+		ofdpaGrpPipeNode_t * pGrp;
+}dpGrpWork_t;
+
+
+/********************************** EXPPORT API **********************************************/
+OFDPA_ERROR_t dpGrpSubWorkDispatch(dpGrpWork_t	*work);
+
+
+
 #endif /* INCLUDE_DP_PIPE_GROUP_H */
 
 

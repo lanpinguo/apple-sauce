@@ -80,10 +80,7 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 	{.key = OFDPA_FLOW_TABLE_ID_VLAN , 					.sockPath = "/tmp/datapath_vlan_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT ,	.sockPath = "/tmp/datapath_mpls_l2_port_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_PCP_TRUST ,.sockPath = "/tmp/datapath_mpls_pcp_trust_table"},
-	{.key = OFDPA_INDIRECT_GRP					 ,			.sockPath = "/tmp/datapath_indirect_grp"},
-	{.key = OFDPA_ALL_GRP ,											.sockPath = "/tmp/datapath_all_grp"},
-	{.key = OFDPA_SELECT_GRP 				 ,					.sockPath = "/tmp/datapath_select_grp"},
-	{.key = OFDPA_FAST_FAILOVER_GRP , 					.sockPath = "/tmp/datapath_fast_failover_grp"},
+	{.key = OFDPA_GROUP_TABLE					 ,				.sockPath = "/tmp/datapath_group_table"},
 	{.key = OFDPA_INVALID_KEY , 								.sockPath = "INVALID"},
 				
 };
