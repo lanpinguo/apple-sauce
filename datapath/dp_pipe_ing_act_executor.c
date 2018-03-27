@@ -60,8 +60,8 @@ OFDPA_ERROR_t  executeIngActSetOnPkt(ofdpaPktCb_t *pcb)
 										 "Execute action failed,rc = %d \r\n",rc);
 					}
 				}				 
-				ofdpa_list_del_init(&pActSetHolder->head);
-				free(pActSetHolder);
+				ofdpa_list_del_init(&pcb->action_set);
+				
 			}
 			else{
 				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
