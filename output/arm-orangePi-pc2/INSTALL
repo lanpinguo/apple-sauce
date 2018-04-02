@@ -1,0 +1,95 @@
+       How to Install OF-DPA Binary
+       ----------------------------
+
+This document describes how to install OF-DPA binary provided
+in this package on the Saber2 SVK (BCM956260K).
+
+u-boot:
+======
+
+The Linux kernel provided with this package requires u-boot bootloader
+to be upgraded. These are the instructions to upgrade the uboot on
+the switch:
+
+ * Boot the switch and interrupt the U-Boot count-down by
+   hitting any key to stop auto boot.
+   Note: U-Boot has to be interrupted quickly, as it waits for only 3-5 seconds.
+         If autoboot was not stopped, reboot the board and try again.
+
+ * Upgrade the u-boot:
+     - Copy the u-boot.bin file to a tftp server
+       that the switch can access.
+     - Enter the following at u-boot (u-boot>) prompt:
+	1) setenv gatewayip xxx.xxx.xxx.xxx
+	   Where xxx.xxx.xxx.xxx is theP Address of gateway for access to the tftp server
+
+        2) dhcp 0x61008000 <serverip>:u-boot.bin
+
+	3) Erase on-board U-boot code and replace with new U-boot code
+		a) sf probe 0
+                b) sf erase 0x0 0xa0000
+                c) sf write 0x61008000 0x0 0xa0000
+		d) reset
+     - At this point the board should reboot and come up with the appropriate version
+       of U-boot.  The version should be:
+
+       U-Boot 2012.10 (Sep 17 2015 - 18:06:08)
+
+
+Linux kernel/rootfs Setup:
+==========================
+
+To load the Linux uImage via tftp, enter following commands
+at the "u-boot>" prompt:
+  Enter the following at => prompt.
+   1) setenv gatewayip xxx.xxx.xxx.xxx
+      Where xxx.xxx.xxx.xxx is the IP Address of gateway for access to the tftp server
+
+   2) Download the uImage
+        - dhcp <load-address> <server-ip>:<file-path>/sb2_uImage
+          Ex: dhcp 0x90000000 10.27.64.25:ofdpa/sb2/sb2_uImage
+
+   3) Set the appropriate boot arguments
+        - setenv bootargs "console=ttyS0,115200n8 maxcpus=1 mem=480M ubi.mtd=ncustfs"
+
+   4) Boot the uImage
+	- bootm <load-address>
+
+Once Linux starts, a login prompt will be displayed. The following username and
+password should be used to login:
+User: root
+Password: broadcom
+
+
+Downloading and running OF-DPA
+==============================
+
+* cd to target directory.
+
+* Download the SDK kernel modules and configuration files on the switch:
+  tftp -g -r <file_path>/linux-kernel-bde.ko <tftp_server_ip>
+  tftp -g -r <file_path>/linux-user-bde.ko <tftp_server_ip>
+
+* Download the OFDPA executables on the switch:
+  tftp -g -r <file_path>/librpc_client.so.1 <tftp_server_ip>
+  tftp -g -r <file_path>/ofdpa <tftp_server_ip>
+  chmod 755 ofdpa
+
+* Install RPC library
+  # mv librpc_client.so.1 /lib
+  # cd /lib
+  # ln -sf librpc_client.so.1 librpc_client.so
+
+* cd to target directory and start OFDPA executable as a background process:
+  #./ofdpa &
+
+
+Downloading and running example Client Applications
+==================================================
+* Change to the target directory and execute following
+  tftp -g -r <file_path>/client_xxxx <tftp_server_ip>
+
+  chmod 755 client_*
+
+* All the client programs can be started from the linux shell as any standard
+  linux application. Use '--help' option to display supported options.

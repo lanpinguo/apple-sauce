@@ -80,10 +80,7 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 	{.key = OFDPA_FLOW_TABLE_ID_VLAN , 					.sockPath = "/tmp/datapath_vlan_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT ,	.sockPath = "/tmp/datapath_mpls_l2_port_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_PCP_TRUST ,.sockPath = "/tmp/datapath_mpls_pcp_trust_table"},
-	{.key = OFDPA_INDIRECT_GRP					 ,			.sockPath = "/tmp/datapath_indirect_grp"},
-	{.key = OFDPA_ALL_GRP ,											.sockPath = "/tmp/datapath_all_grp"},
-	{.key = OFDPA_SELECT_GRP 				 ,					.sockPath = "/tmp/datapath_select_grp"},
-	{.key = OFDPA_FAST_FAILOVER_GRP , 					.sockPath = "/tmp/datapath_fast_failover_grp"},
+	{.key = OFDPA_GROUP_TABLE					 ,				.sockPath = "/tmp/datapath_group_table"},
 	{.key = OFDPA_INVALID_KEY , 								.sockPath = "INVALID"},
 				
 };
@@ -814,9 +811,9 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
   uint32_t count = 0;
 	int i;
 	ofdpaGroupBucketData_t	*pData = NULL;
-	ofdpaActionFuncOpt_t	ops;
+	ofdpaActPrintBuf_t 	ops;
 	ofdpaAct_t *pAct;
-	
+	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_PRETTY_PRINT};
 
   rc = ofdpaGroupTypeGet(bucketEntry->groupId, &groupType);
   if (rc != OFDPA_E_NONE)
@@ -937,7 +934,8 @@ OFDPA_ERROR_t dpGroupBucketEntryPrint(ofdpaGroupBucketEntry_t *bucketEntry, ofdp
 				if(pAct->act){
 					ops.buf = &buf->data[count];
 					ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
-					count += (pAct->act)(&ops,NULL,pAct->arg);
+					arg.data = &ops;
+					count += (pAct->act)(pAct,&arg);
 				}
 			} 																																											 
 			if (count >= OFDPA_PRETTY_MAX_LEN)																														 

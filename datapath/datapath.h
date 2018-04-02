@@ -110,10 +110,7 @@ struct PIPE_ENTRY_ADDR
 #define OFDPA_ING_ACT_EXECUTOR			(2UL<<40)  
 #define OFDPA_EGR_ACT_EXECUTOR			(3UL<<40)  
 
-#define OFDPA_INDIRECT_GRP					(1UL<<8)  
-#define OFDPA_ALL_GRP								(2UL<<8)  
-#define OFDPA_SELECT_GRP						(3UL<<8)
-#define OFDPA_FAST_FAILOVER_GRP			(4UL<<8)  
+#define OFDPA_GROUP_TABLE					(1UL<<8)  
 
 
 /* Flow Table Operation function prototype */

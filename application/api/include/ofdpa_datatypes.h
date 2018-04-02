@@ -451,7 +451,23 @@ typedef enum
 } OFDPA_FLOW_TABLE_ID_t;
 
 
-typedef  uint64_t (*ofdpaAct_f)(void *this,void *pcb, uint64_t arg);
+typedef struct ofdpaActPrintBuf_s
+{
+	uint8_t										*buf;
+	uint32_t									bufSize;
+}ofdpaActPrintBuf_t;
+
+
+typedef struct ofdpaActArg_s
+{
+#define ACT_OP_TYPE_PRETTY_PRINT			1
+#define ACT_OP_TYPE_EXECUTE						2
+	uint32_t 									type;
+	void											*data;
+}ofdpaActArg_t;
+
+
+typedef  uint64_t (*ofdpaAct_f)(void *this,ofdpaActArg_t *arg);
 
 typedef struct ofdpaAct_s 
 {
@@ -3699,15 +3715,6 @@ typedef enum {
 
 
 
-typedef struct ofdpaActionFuncOps_s
-{
-#define OP_PRETTY_PRINT			1
-	uint32_t 									ops;
-	void											*buf;
-	uint32_t									bufSize;
-}ofdpaActionFuncOpt_t;
-
-
 typedef struct ofdpaActBucket_s 
 {
   void    												*ptrRefGrpInst;
@@ -3752,7 +3759,6 @@ typedef struct ofdpaFlowTblInstruct_s
 
 typedef struct ofdpaGrpPipeNode_s 
 {
-  struct ofdpa_list_head          list;  	  
   void														*this;
   uint32_t                				grpId;			
   ofdpaGrpType_e          				grpType;     	
@@ -3774,6 +3780,7 @@ typedef struct ofdpa_MetaData_s
   uint32_t    mplsL2Port;               /**< For MPLS L2 VPN classification. */
   uint32_t    tunnelId;                 /**< For MPLS L2 VPN classification. */
   uint32_t    mplsType;               /**< MPLS Type value used in Set-field action */
+	void				*pGrpInst;
 }ofdpa_MetaData_t;
 
 
@@ -3801,9 +3808,8 @@ typedef struct ofdpaPkt_s
 
 typedef struct ofdpaPcbMsg_s
 {
-	uint64_t						dstObjectId;
-	ofdpaPktCb_t *pcb;
-	void								*pGroupInst;
+	uint64_t				dstObjectId;
+	ofdpaPktCb_t 		*pcb;
 } ofdpaPcbMsg_t;
 
 OFDPA_ASSERT(sizeof(ofdpaPktCb_t) < (RESERVED_BLOCK_SIZE - 64));

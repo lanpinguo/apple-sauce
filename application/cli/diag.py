@@ -433,6 +433,7 @@ if __name__ == "__main__":
 	server = Controller(switch='/tmp/datapath_port_manager')
 
 	server.start()
+	server.connect()
 	while True:
 		cmd = raw_input('cmd: ')
 		if cmd == 'exit':

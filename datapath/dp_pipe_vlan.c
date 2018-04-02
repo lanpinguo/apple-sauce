@@ -340,15 +340,20 @@ OFDPA_ERROR_t  executeActionOnPkt(ofdpaVlanPipeNode_t *pNode,ofdpaPktCb_t *pcb)
 	OFDPA_ERROR_t rv;
 	ofdpaActSetHolder_t	*pActSetHolder;
 	ofdpaActHolder_t			*pHolder; 
+	ofdpaAct_t	*pAct;
+	ofdpaActArg_t arg = {.type = ACT_OP_TYPE_EXECUTE};
+	
 
 	/* apply-action */
 	pHolder = pNode->instructions.apply_action;
 	if(pHolder){
 		for(i = 0; i < pHolder->numAct ; i++){
-			if(pHolder->act[i].act == NULL){
+			pAct = &pHolder->act[i];
+			if(pAct->act == NULL){
 				break;
 			}
-			rv = pHolder->act[i].act(pNode, pcb, pHolder->act[i].arg);
+			arg.data = pcb;
+			rv = pAct->act(pAct,&arg);
 			if(rv != OFDPA_E_NONE){
 				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
 													 "execute action faild, index=%d,rv=%d",i,rv);
@@ -539,7 +544,10 @@ OFDPA_ERROR_t vlanFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *
 	ofdpaVlanFlowEntry_t *flowData;
 	ofdpaVlanFlowMatch_t *match;
 	int i;
-	ofdpaActionFuncOpt_t	ops;
+	ofdpaActPrintBuf_t	ops;
+	ofdpaActArg_t	arg = {.type = ACT_OP_TYPE_PRETTY_PRINT};
+	ofdpaAct_t *pAct;
+
 	static char *mplsTypeSubTypeName[] =
 	{
 		[OFDPA_MPLS_TYPE_VPWS 				] = "VPWS",
@@ -549,6 +557,8 @@ OFDPA_ERROR_t vlanFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *
 		[OFDPA_MPLS_TYPE_L3_MULTICAST ] = "L3 Route Multicast",
 		[OFDPA_MPLS_TYPE_L3_PHP 			] = "L3 PHP",
 	};
+
+
 
 	if((flow == NULL) || (buf == NULL)){
 		return OFDPA_E_PARAM;
@@ -570,10 +580,12 @@ OFDPA_ERROR_t vlanFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *
 	for(i = 0; i < flowData->apply_cnt ; i ++){
 		if (count < OFDPA_PRETTY_MAX_LEN) 																														 
 		{ 
-			if(flowData->apply_actions[i].act){
+			pAct = &flowData->apply_actions[i];
+			if(pAct->act){
 				ops.buf = &buf->data[count];
 				ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
-				count += (flowData->apply_actions[i].act)(&ops,NULL,flowData->apply_actions[i].arg);
+				arg.data = &ops;
+				count += pAct->act(pAct,&arg);
 			}
 		} 																																											 
 		if (count >= OFDPA_PRETTY_MAX_LEN)																														 
@@ -586,10 +598,12 @@ OFDPA_ERROR_t vlanFlowEntryPrint(ofdpaFlowEntry_t *flow, ofdpaPrettyPrintBuf_t *
 	for(i = 0; i < flowData->write_cnt ; i ++){
 		if (count < OFDPA_PRETTY_MAX_LEN) 																														 
 		{ 
-			if(flowData->write_actions[i].act){
+			pAct = &flowData->write_actions[i];
+			if(pAct->act){
 				ops.buf = &buf->data[count];
 				ops.bufSize = OFDPA_PRETTY_MAX_LEN - count;
-				count += (flowData->write_actions[i].act)(&ops,NULL,flowData->write_actions[i].arg);
+				arg.data = &ops;
+				count += pAct->act(pAct,&arg);
 			}
 		} 																																											 
 		if (count >= OFDPA_PRETTY_MAX_LEN)																														 
