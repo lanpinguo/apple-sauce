@@ -1,0 +1,10 @@
+# -*- mode: makefile-gmake; -*-
+
+#FEATURE_LIST += BHH
+BCM_PHY_LIST = SERDES 54640E
+
+BCM_56334_A0 = 1
+BCM_56334_B0 = 1
+
+
+
