@@ -123,6 +123,8 @@ typedef struct dpGrpWork_s
 
 
 /********************************** EXPPORT API **********************************************/
+extern ofdpaGrpPipeNodeConfig_t grp_pipe_config;
+
 OFDPA_ERROR_t dpGrpSubWorkDispatch(dpGrpWork_t	*work);
 
 

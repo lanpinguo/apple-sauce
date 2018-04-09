@@ -215,7 +215,7 @@ class Controller(Thread):
 							 (self.switch, str(self.port)))
 			soc = self.active_connect()
 			if soc:
-				print("Connected to %s", self.switch)
+				#print("Connected to %s" % self.switch)
 				self.dbg_state = "running"
 				self.switch_socket = soc
 				self.wakeup()
