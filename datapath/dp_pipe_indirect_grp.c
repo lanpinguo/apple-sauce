@@ -339,6 +339,7 @@ void indirectGrpPktProcess( dpGrpWork_t *work)
 	ofdpaAct_t *pAct = NULL;
 	ofdpaActBucket_t *pBucket = NULL;
 	dpGrpWork_t newWork;
+	ofdpaPcbMsg_t msg;
 	int i;
 
 	
@@ -369,6 +370,16 @@ void indirectGrpPktProcess( dpGrpWork_t *work)
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
 												"Failed to dispatch new work. Error %d.\r\n", rv);
 			return ;
+		}
+	}
+	else{
+		
+		msg.dstObjectId = OFDPA_FLOW_TABLE_ID_EGRESS_VLAN;
+		msg.pcb = pPkt;
+		rv = datapathPipeMsgSend(grp_pipe_config.nodeSock ,&msg);
+		if(rv != OFDPA_E_NONE){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+							 "Failed to send msg, rv = %d\r\n",rv);
 		}
 	}
 

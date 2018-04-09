@@ -870,21 +870,19 @@ ADPL_ERROR_t ADPL_OfagentCxnAdd(adplAgentCxnParam_t * cfg ,uint32_t *of_cxn_id)
 		config.listen = 1;
 	}
 
-    if ( cfg->periodic_echo_ms != 0 )
-    {
-        config.periodic_echo_ms = cfg->periodic_echo_ms;
-    }
-    if ( cfg->reset_echo_count != 0 )
-    {
-        config.reset_echo_count = cfg->reset_echo_count;
-    }
-    if (cfg->pre_reset_echo_count != 0)
-    {
-        config.pre_reset_echo_count = cfg->pre_reset_echo_count;
-    }
+  if ( cfg->periodic_echo_ms != 0 )
+  {
+      config.periodic_echo_ms = cfg->periodic_echo_ms;
+  }
+  if ( cfg->reset_echo_count != 0 )
+  {
+      config.reset_echo_count = cfg->reset_echo_count;
+  }
+  if (cfg->pre_reset_echo_count != 0)
+  {
+      config.pre_reset_echo_count = cfg->pre_reset_echo_count;
+  }
 
-	/*leishenghua modify 20170724, 快速倒换周期大于openflow中断周期时，
-	快速倒换没有意义*/
 	if(config.pre_reset_echo_count >= config.reset_echo_count)
 	{
 		config.pre_reset_echo_count = 0;

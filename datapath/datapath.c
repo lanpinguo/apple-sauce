@@ -81,6 +81,7 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT ,	.sockPath = "/tmp/datapath_mpls_l2_port_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_PCP_TRUST ,.sockPath = "/tmp/datapath_mpls_pcp_trust_table"},
 	{.key = OFDPA_GROUP_TABLE					 ,				.sockPath = "/tmp/datapath_group_table"},
+	{.key = OFDPA_FLOW_TABLE_ID_EGRESS_VLAN ,		.sockPath = "/tmp/datapath_egr_vlan_table"},
 	{.key = OFDPA_INVALID_KEY , 								.sockPath = "INVALID"},
 				
 };
@@ -989,6 +990,7 @@ int datapathInit(void)
 	(void)mplsPcpTrust_pipe_init(0, NULL);
 	(void)ingActExecutor_pipe_init(0, NULL);
 	(void)group_pipe_init(0, NULL);
+	(void)egr_vlan_pipe_init(0, NULL);
 	(void)diag_init(0, NULL);
 	
   /* Initialize Port Table */

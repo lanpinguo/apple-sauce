@@ -3659,10 +3659,10 @@ struct OFDPA_L3_TYPE {
 OFDPA_ASSERT(sizeof(struct OFDPA_L3_TYPE) == 2);
 
 
-struct OFDPA_VLAN {
+typedef struct OFDPA_VLAN {
 	uint16_t									type; 
 	uint16_t									vid; 		
-};
+}ofdpaVlan_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_VLAN) == 4);
 
 

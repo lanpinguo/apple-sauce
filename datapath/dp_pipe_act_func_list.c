@@ -142,6 +142,9 @@ uint64_t ofdpaActSetQosIndex(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetVlanId(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
+	ofdpaVlan_t *vlan = NULL;
+
+	
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
@@ -149,7 +152,18 @@ uint64_t ofdpaActSetVlanId(void *this,ofdpaActArg_t *arg)
 
 		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"newVlanId = 0x%04x (VLAN %d)", (uint16_t)pObj->arg, pObj->arg	& OFDPA_VID_EXACT_MASK);
 
-	}										 
+	}				
+
+	
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+
+		if(pPkt->feilds[FEILD_VLAN_0].len > 0){
+			vlan = (pPkt->this + pPkt->feilds[FEILD_VLAN_0].offset);
+			vlan->vid = pObj->arg	& OFDPA_VID_EXACT_MASK;
+		}
+		
+	}	
 	return OFDPA_E_NONE;
 }
 
