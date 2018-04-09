@@ -3666,12 +3666,12 @@ typedef struct OFDPA_VLAN {
 OFDPA_ASSERT(sizeof(struct OFDPA_VLAN) == 4);
 
 
-struct OFDPA_MPLS {
+typedef struct OFDPA_MPLS {
 	uint32_t									label:20; 
 	uint32_t									exp:3; 
 	uint32_t									bos:1; 
 	uint32_t									ttl:8; 
-};
+}ofdpaMpls_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_MPLS) == 4);
 
 
@@ -3790,7 +3790,8 @@ typedef struct ofdpaPktCb_s
 	uint64_t								port; 	/* every bit indicate a port, physical port number range is 0~63 */
 	void 										*this;	/* pointer to self*/
 	uint32_t								len;		/* total len */
-	uint32_t								pkt_len;/* pkt len */
+	uint16_t								pkt_len;/* pkt len */
+	uint16_t								cur;		/* point current position in the packet */
 	struct OFDPA_PKT_FEILD 	feilds[FEILD_MAX];		/* destination mac address*/
 	ofdpa_MetaData_t				meta_data;
 	struct ofdpa_list_head	action_set;
