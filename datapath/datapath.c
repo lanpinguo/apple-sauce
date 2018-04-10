@@ -118,11 +118,13 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	
 
 	printf("\r\n %-15s = %016llx","port",pcb->port);
-	for(i = 0; i <= FEILD_MAX; i++){	
+	for(i = 0; i < FEILD_MAX; i++){	
 		printf(format,feild_name[i],\
 			(pcb->feilds[i].offset >= RESERVED_BLOCK_SIZE) ? \
 			(pcb->feilds[i].offset - RESERVED_BLOCK_SIZE) : pcb->feilds[i].offset);
 	}
+	
+	printf("\r\n");
 }
 
 
@@ -153,6 +155,8 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 				 isprint(p[i]) ? p[i] : '.');
 		 printf("%s\n", buf);
 	 }
+	 
+	 printf("\r\n");
  }
 
 

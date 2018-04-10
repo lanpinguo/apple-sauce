@@ -127,19 +127,16 @@ void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb);
 void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb);
 void * dpPktFeildIpParse(ofdpaPktCb_t *pcb);
 void * dpPktFeildMacParse(ofdpaPktCb_t *pcb);
-#define DP_GET_CUR_ADDR(pcb)	(pcb->this + pcb->cur)
 
 void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb)
 {
 	uint16_t *pFeild_16;
 	
 	if(pcb->feilds[FEILD_VLAN_0].len == 0){
-		pcb->feilds[FEILD_VLAN_0].offset = pcb->cur;
-		pcb->feilds[FEILD_VLAN_0].len = 4;
+		SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_VLAN_1].len == 0){
-		pcb->feilds[FEILD_VLAN_1].offset = pcb->cur;
-		pcb->feilds[FEILD_VLAN_1].len = 4;
+		SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,pcb->cur);
 	}
 	else{
 		return NULL;
@@ -166,39 +163,38 @@ void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb)
 void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 {
 	uint16_t *pFeild_16;
-
+	ofdpaMpls_t	*mpls;
 	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		pcb->feilds[FEILD_L3_TYPE].offset = pcb->cur;
-		pcb->feilds[FEILD_L3_TYPE].len = 2;
+		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
 		/* point new feild*/
 		pcb->cur += 2;
 	}
 
 	
 	if(pcb->feilds[FEILD_MPLS_0].len == 0){
-		pcb->feilds[FEILD_MPLS_0].offset = pcb->cur;
-		pcb->feilds[FEILD_MPLS_0].len = 4;
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_0,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_MPLS_1].len == 0){
-		pcb->feilds[FEILD_MPLS_1].offset = pcb->cur;
-		pcb->feilds[FEILD_MPLS_1].len = 4;
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_1,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_MPLS_2].len == 0){
-		pcb->feilds[FEILD_MPLS_2].offset = pcb->cur;
-		pcb->feilds[FEILD_MPLS_2].len = 4;
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_2,pcb->cur);
 	}
 	else{
 		return NULL;
+	}
+	
+	mpls = DP_GET_CUR_ADDR(pcb); 
+
+	if(!IS_MPLS_BOS(mpls)){
+		/* NOT bos, still parse as MPLS_TYPE: */
+		return dpPktFeildMplsParse;
 	}
 
 	pcb->cur += sizeof(ofdpaMpls_t);/* point new feild*/
 	pFeild_16 = DP_GET_CUR_ADDR(pcb); 
 	switch(*pFeild_16)
 	{
-		case VLAN_TYPE:
-			return dpPktFeildVlanParse;
-		case MPLS_TYPE:
-			return dpPktFeildMplsParse;
 		case IP_TYPE:
 			return dpPktFeildIpParse;
 		default:
@@ -210,8 +206,7 @@ void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 void * dpPktFeildIpParse(ofdpaPktCb_t *pcb)
 {
 	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		pcb->feilds[FEILD_L3_TYPE].offset = pcb->cur;
-		pcb->feilds[FEILD_L3_TYPE].len = 2;
+		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
 	}
 	return NULL;
 }
