@@ -388,8 +388,8 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 	ofdpaEgrVlanMatchKey_t	pktKey = {.pad = {0}};
 
 
+	dump_pkt(pcb->this, pcb->len);
 	dump_pcb(pcb);
-	dump_pkt((pcb->this + pcb->feilds[FEILD_SMAC].offset), pcb->pkt_len);
 
 
 	rv = egrVlanPktKeyCreate(pcb,&pktKey);
