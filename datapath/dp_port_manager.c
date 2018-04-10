@@ -121,6 +121,126 @@ void *getFeildVlan1(ofdpaPktCb_t *pcb)
 }
 
 
+
+typedef void * (*dp_pkt_feild_parse_fn)(ofdpaPktCb_t *pcb);
+void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb);
+void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb);
+void * dpPktFeildIpParse(ofdpaPktCb_t *pcb);
+void * dpPktFeildMacParse(ofdpaPktCb_t *pcb);
+
+void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb)
+{
+	uint16_t *pFeild_16;
+	
+	if(pcb->feilds[FEILD_VLAN_0].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,pcb->cur);
+	}
+	else if(pcb->feilds[FEILD_VLAN_1].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,pcb->cur);
+	}
+	else{
+		return NULL;
+	}
+
+
+	pcb->cur += sizeof(ofdpaVlan_t); /* point new feild*/
+	pFeild_16 = DP_GET_CUR_ADDR(pcb);
+	switch(*pFeild_16)
+	{
+		case VLAN_TYPE:
+			return dpPktFeildVlanParse;
+		case MPLS_TYPE:
+			return dpPktFeildMplsParse;
+		case IP_TYPE:
+			return dpPktFeildIpParse;
+		default:
+			return NULL;
+	}
+
+}
+
+
+void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
+{
+	uint16_t *pFeild_16;
+	ofdpaMpls_t	*mpls;
+	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
+		/* point new feild*/
+		pcb->cur += 2;
+	}
+
+	
+	if(pcb->feilds[FEILD_MPLS_0].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_0,pcb->cur);
+	}
+	else if(pcb->feilds[FEILD_MPLS_1].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_1,pcb->cur);
+	}
+	else if(pcb->feilds[FEILD_MPLS_2].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_MPLS_2,pcb->cur);
+	}
+	else{
+		return NULL;
+	}
+	
+	mpls = DP_GET_CUR_ADDR(pcb); 
+
+	if(!IS_MPLS_BOS(mpls)){
+		/* NOT bos, still parse as MPLS_TYPE: */
+		return dpPktFeildMplsParse;
+	}
+
+	pcb->cur += sizeof(ofdpaMpls_t);/* point new feild*/
+	pFeild_16 = DP_GET_CUR_ADDR(pcb); 
+	switch(*pFeild_16)
+	{
+		case IP_TYPE:
+			return dpPktFeildIpParse;
+		default:
+			return NULL;
+	}
+
+}
+
+void * dpPktFeildIpParse(ofdpaPktCb_t *pcb)
+{
+	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
+		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
+	}
+	return NULL;
+}
+
+void * dpPktFeildMacParse(ofdpaPktCb_t *pcb)
+{
+	uint16_t *pFeild_16;
+	
+
+	/* At default, the src mac and dst mac position is known */
+	
+	pcb->feilds[FEILD_DMAC].offset = pcb->cur;
+	pcb->feilds[FEILD_DMAC].len = 6;
+
+	pcb->feilds[FEILD_SMAC].offset = pcb->cur + 6;
+	pcb->feilds[FEILD_SMAC].len = 6;
+
+	pcb->cur += 12; /* point new feilds*/
+	pFeild_16 = DP_GET_CUR_ADDR(pcb);
+	switch(*pFeild_16)
+	{
+		case VLAN_TYPE:
+			return dpPktFeildVlanParse;
+		case MPLS_TYPE:
+			return dpPktFeildMplsParse;
+		case IP_TYPE:
+			return dpPktFeildIpParse;
+		default:
+			return NULL;
+	}
+
+}
+
+
 OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 {
 	OFDPA_ERROR_t	rc = OFDPA_E_NONE;
@@ -128,71 +248,31 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	struct OFDPA_L3_TYPE *l3_type;
 	uint16_t l3_type_offset = RESERVED_BLOCK_SIZE + 12;
 	uint64_t	*port = 0;
-
+	int i;
+	dp_pkt_feild_parse_fn parse_fn = NULL;
+	
 
 	/* pkt pre-parse */
 	pcb->this = pcb;
 	port			= (uint64_t *)pcb;
 	/*port that the pkt comes from*/
 	*port = (1<<2);
+	pcb->cur = RESERVED_BLOCK_SIZE;
 	
 	OFDPA_INIT_LIST_HEAD(&pcb->action_set);
 	
-	
-	vlan = (struct OFDPA_VLAN *)getFeildVlan0(pcb);
-	
-	if(vlan){
-		//printf("\r\ntype : %04x\r\n",vlan->type);
-		if((vlan->type == VLAN_TYPE)){
-			l3_type_offset = RESERVED_BLOCK_SIZE + 16;
-			SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,RESERVED_BLOCK_SIZE + 12);
-			vlan = (struct OFDPA_VLAN *)getFeildVlan1(pcb);
-			SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,\
-				(vlan->type ^ VLAN_TYPE) ? 0 : (l3_type_offset = RESERVED_BLOCK_SIZE + 20, RESERVED_BLOCK_SIZE + 16));
-		}
-	}
-	SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,l3_type_offset);
-	
-	l3_type = getFeild(pcb, FEILD_L3_TYPE);
-	
-	
-	//printf("\r\n eth_type: %04x\r\n",l3_type->type);
-	
-	//printf("\r\n mpls mask: %08x\r\n",REORDER32_L2B(1<<8));
-	
-	if(l3_type->type == IP_TYPE) {
-	
-	}
-	else if(l3_type->type == MPLS_TYPE){
-		struct OFDPA_MPLS *mpls;
-	
-		SET_FEILD_OFFSET(pcb, FEILD_MPLS_0, l3_type_offset + 2);
-		mpls = getFeild(pcb, FEILD_MPLS_0);
-		//printf("\r\n mpls0: %08x\r\n",*(uint32_t*)mpls);
-		if(IS_MPLS_BOS(mpls)){
-			SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 6);
+	parse_fn = dpPktFeildMacParse;
+	for(i = 0 ; i < FEILD_MAX; i++){
+		if(parse_fn != NULL){
+			parse_fn = parse_fn(pcb);
 		}
 		else{
-			SET_FEILD_OFFSET(pcb, FEILD_MPLS_1, l3_type_offset + 6);
-			mpls = getFeild(pcb, FEILD_MPLS_1);
-			//printf("\r\n mpls1: %08x\r\n",*(uint32_t*)mpls);
-			if(IS_MPLS_BOS(mpls)){
-				SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 10);
-			}
-			else {
-				SET_FEILD_OFFSET(pcb, FEILD_MPLS_2, l3_type_offset + 10);
-				mpls = getFeild(pcb, FEILD_MPLS_2);
-				//printf("\r\n mpls2: %08x",*(uint32_t*)mpls);
-				SET_FEILD_OFFSET(pcb, FEILD_CW, l3_type_offset + 14);
-				if(!IS_MPLS_BOS(mpls)){
-					rc = OFDPA_E_FORMAT;
-				}
-			}
+			break;
 		}
-	
 	}
-	else{
-		rc = OFDPA_NOT_IMPLEMENTED_YET;
+
+	if(i >= FEILD_MAX ){
+		rc =  OFDPA_NOT_IMPLEMENTED_YET;
 	}
 
 	return rc;

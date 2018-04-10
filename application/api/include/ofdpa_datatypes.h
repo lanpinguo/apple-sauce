@@ -3646,11 +3646,19 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 #define SET_FEILD_OFFSET(pcb,feild,val) \
 do { \
 	pcb->feilds[feild].offset = val;\
+	pcb->feilds[feild].len = feild##_LEN;\
 }\
 while(0)
 
 
 #define IS_MPLS_BOS(m) (((*(uint32_t*)m) & REORDER32_L2B(1<<8)) ? 1 : 0)
+
+#define DP_GET_CUR_ADDR(pcb)	(pcb->this + pcb->cur)
+
+#define DP_GET_FEILD_ADDR(pcb,feild)	(pcb->this + pcb->feilds[feild].offset)
+#define DP_IS_FEILD_VALID(pcb,feild)	(pcb->feilds[feild].len > 0 ? 1 : 0)
+#define DP_GET_FEILD(pcb,feild)	(DP_IS_FEILD_VALID(pcb,feild) ? DP_GET_FEILD_ADDR(pcb,feild) : NULL)
+																
 
 
 struct OFDPA_L3_TYPE {
@@ -3659,19 +3667,19 @@ struct OFDPA_L3_TYPE {
 OFDPA_ASSERT(sizeof(struct OFDPA_L3_TYPE) == 2);
 
 
-struct OFDPA_VLAN {
+typedef struct OFDPA_VLAN {
 	uint16_t									type; 
 	uint16_t									vid; 		
-};
+}ofdpaVlan_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_VLAN) == 4);
 
 
-struct OFDPA_MPLS {
+typedef struct OFDPA_MPLS {
 	uint32_t									label:20; 
 	uint32_t									exp:3; 
 	uint32_t									bos:1; 
 	uint32_t									ttl:8; 
-};
+}ofdpaMpls_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_MPLS) == 4);
 
 
@@ -3702,6 +3710,23 @@ enum{
 
 };
 
+enum{
+	FEILD_DMAC_LEN 		= 6,	/* destination mac address*/
+	FEILD_SMAC_LEN 		= 6,			/* source mac address */
+	FEILD_VLAN_0_LEN	= 4,
+	FEILD_VLAN_1_LEN	= 4,
+	FEILD_L3_TYPE_LEN	= 2,	/* layer 3 protocol type */
+	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
+	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
+	FEILD_MPLS_2_LEN	= 4,		/* mpls2 header */
+	FEILD_CW_LEN			= 4, 			/* mpls control word */
+	FEILD_DIP_LEN			= 4, 			/* destination IP address */
+	FEILD_SIP_LEN			= 4, 			/* source IP address */
+	FEILD_L4_TYPE_LEN	= 2,	/* layer 4 protocol type */
+	FEILD_L4_DP_LEN		= 2, 		/* layer 4 destination port */
+	FEILD_L4_SP_LEN		= 2, 		/* layer 4 source port */
+
+};
 
 typedef enum {
 	OFDPA_GRP_TYPE_INDIRECT = 0,
@@ -3790,7 +3815,8 @@ typedef struct ofdpaPktCb_s
 	uint64_t								port; 	/* every bit indicate a port, physical port number range is 0~63 */
 	void 										*this;	/* pointer to self*/
 	uint32_t								len;		/* total len */
-	uint32_t								pkt_len;/* pkt len */
+	uint16_t								pkt_len;/* pkt len */
+	uint16_t								cur;		/* point current position in the packet */
 	struct OFDPA_PKT_FEILD 	feilds[FEILD_MAX];		/* destination mac address*/
 	ofdpa_MetaData_t				meta_data;
 	struct ofdpa_list_head	action_set;

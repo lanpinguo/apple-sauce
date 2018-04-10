@@ -97,7 +97,9 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
             switch (oxm.header.object_id) {
                 case OF_OXM_VLAN_VID:
                     of_oxm_vlan_vid_value_get(&oxm.vlan_vid, &vlanId);
-                    vlanId &= (OFDPA_VID_PRESENT | OFDPA_VID_EXACT_MASK);
+                    vlanId &= (OFDPA_VID_EXACT_MASK);
+                    /*convert to big endian*/
+                    vlanId = REORDER16_L2B(vlanId);
                     IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetVlanId,vlanId);
                     *group_action_sf_bitmap |= IND_OFDPA_VLANID;
                     break;

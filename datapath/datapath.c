@@ -81,6 +81,7 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT ,	.sockPath = "/tmp/datapath_mpls_l2_port_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_PCP_TRUST ,.sockPath = "/tmp/datapath_mpls_pcp_trust_table"},
 	{.key = OFDPA_GROUP_TABLE					 ,				.sockPath = "/tmp/datapath_group_table"},
+	{.key = OFDPA_FLOW_TABLE_ID_EGRESS_VLAN ,		.sockPath = "/tmp/datapath_egr_vlan_table"},
 	{.key = OFDPA_INVALID_KEY , 								.sockPath = "INVALID"},
 				
 };
@@ -117,11 +118,13 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	
 
 	printf("\r\n %-15s = %016llx","port",pcb->port);
-	for(i = 0; i <= FEILD_MAX; i++){	
+	for(i = 0; i < FEILD_MAX; i++){	
 		printf(format,feild_name[i],\
 			(pcb->feilds[i].offset >= RESERVED_BLOCK_SIZE) ? \
 			(pcb->feilds[i].offset - RESERVED_BLOCK_SIZE) : pcb->feilds[i].offset);
 	}
+	
+	printf("\r\n");
 }
 
 
@@ -152,6 +155,8 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 				 isprint(p[i]) ? p[i] : '.');
 		 printf("%s\n", buf);
 	 }
+	 
+	 printf("\r\n");
  }
 
 
@@ -989,6 +994,7 @@ int datapathInit(void)
 	(void)mplsPcpTrust_pipe_init(0, NULL);
 	(void)ingActExecutor_pipe_init(0, NULL);
 	(void)group_pipe_init(0, NULL);
+	(void)egr_vlan_pipe_init(0, NULL);
 	(void)diag_init(0, NULL);
 	
   /* Initialize Port Table */
