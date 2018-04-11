@@ -118,6 +118,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
 
                 case OF_OXM_MPLS_LABEL:
                     of_oxm_mpls_label_value_get(&oxm.mpls_label, &tmp);
+                    tmp = REORDER32_L2B(((uint32_t)tmp)<< 12);
 										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsLabel,tmp);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_LABEL;
                     break;
@@ -148,24 +149,27 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 }
                 case OF_OXM_MPLS_BOS:
                 {
-                    uint8_t bos;
+                    uint32_t bos;
                     of_oxm_mpls_bos_value_get(&oxm.mpls_bos, &bos);
+                    bos = REORDER32_L2B(((uint32_t)bos)<< 8);
 										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsBos,bos);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_BOS;
                     break;
                 }
                 case OF_OXM_MPLS_TC:
                 {
-                    uint8_t tc;
+                    uint32_t tc;
                     of_oxm_mpls_tc_value_get(&oxm.mpls_tc, &tc);
+                    tc = REORDER32_L2B(((uint32_t)tc) << 9);
 										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsExp,tc);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_TC;
                     break;
                 }
                 case OF_OXM_OFDPA_MPLS_TTL:
                 {
-                    uint8_t ttl;
+                    uint32_t ttl;
                     of_oxm_ofdpa_mpls_ttl_value_get(&oxm.ofdpa_mpls_ttl, &ttl);
+                    ttl = REORDER32_L2B(((uint32_t)ttl));
 										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsTtl,ttl);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_TTL;
                     break;
@@ -204,6 +208,8 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t eth_type;
             of_action_push_vlan_ethertype_get(&act.push_vlan, &eth_type);
+						/*convert to big endian*/
+						eth_type = REORDER16_L2B(eth_type);
 						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushVlan,eth_type);
             *group_action_bitmap |= IND_OFDPA_PUSH_VLAN;
             break;
@@ -212,6 +218,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         {
             uint16_t ether_type;
             of_action_push_mpls_ethertype_get(&act.push_mpls, &ether_type);
+            ether_type = REORDER16_B2L(ether_type);
 						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActPushMplsHdr,ether_type);
             *group_action_bitmap |= IND_OFDPA_PUSH_MPLS;
             break;
