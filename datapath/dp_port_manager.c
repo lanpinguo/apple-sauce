@@ -258,7 +258,8 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	/*port that the pkt comes from*/
 	*port = (1<<2);
 	pcb->cur = RESERVED_BLOCK_SIZE;
-	
+	pcb->pool_tail = RESERVED_BLOCK_SIZE - 1;	/* point to the last byte*/
+	pcb->pool_head = sizeof(ofdpaPktCb_t);	/* point to the first byte*/
 	OFDPA_INIT_LIST_HEAD(&pcb->action_set);
 	
 	parse_fn = dpPktFeildMacParse;
@@ -274,6 +275,8 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	if(i >= FEILD_MAX ){
 		rc =  OFDPA_NOT_IMPLEMENTED_YET;
 	}
+
+	UPDATE_DATA_OFFSET(pcb,pcb->cur,pcb->pkt_len - (pcb->cur - pcb->pool_tail));
 
 	return rc;
 
