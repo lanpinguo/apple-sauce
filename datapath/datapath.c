@@ -112,16 +112,22 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 		"FEILD_MAX",
 	};
 
-	char *format = "\r\n %-15s = %d";
+	char *format = "\r\n %-15s = %5d, len = %5d";
 	int i = 0;
-
+	int base = 0;
 	
-
+	base = pcb->feilds[FEILD_DMAC].offset;
 	printf("\r\n %-15s = %016llx","port",pcb->port);
+	printf("\r\n %-15s = %5d","Base",base);
 	for(i = 0; i < FEILD_MAX; i++){	
-		printf(format,feild_name[i],\
-			(pcb->feilds[i].offset >= RESERVED_BLOCK_SIZE) ? \
-			(pcb->feilds[i].offset - RESERVED_BLOCK_SIZE) : pcb->feilds[i].offset);
+		if(pcb->feilds[i].len){
+			printf(format,feild_name[i], \
+							pcb->feilds[i].offset - base, \
+							pcb->feilds[i].len);
+		}
+		else {
+			printf("\r\n %-15s = %5s, len = %5s",feild_name[i],"--","--");
+		}
 	}
 	
 	printf("\r\n");
