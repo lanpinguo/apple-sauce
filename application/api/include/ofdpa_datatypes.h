@@ -3632,6 +3632,7 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 
 /* big endian to little endian */
 #define REORDER16_B2L(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
+#define REORDER32_B2L(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
 
 /* little endian to big endian */
 #define REORDER16_L2B(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
@@ -3656,6 +3657,7 @@ while(0)
 
 #define DP_L2_HDR_LEN					14
 #define DP_VLAN_HDR_LEN				4
+#define DP_MPLS_HDR_LEN				4
 
 #define UPDATE_DATA_OFFSET(pcb,val,l) \
 do { \
@@ -3695,10 +3697,7 @@ OFDPA_ASSERT(sizeof(struct OFDPA_VLAN) == 4);
 
 
 typedef struct OFDPA_MPLS {
-	uint32_t									label:20; 
-	uint32_t									exp:3; 
-	uint32_t									bos:1; 
-	uint32_t									ttl:8; 
+	uint32_t		mpls_head; 
 }ofdpaMpls_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_MPLS) == 4);
 

@@ -190,9 +190,45 @@ uint64_t ofdpaActPushVlan(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"newTpid = 0x%x", (uint16_t)pObj->arg);
+		return snprintf(pBuf->buf, pBuf->bufSize, \
+										ACT_PRINT_FMT_SPLIT_LINE"pushVlan(TPID = 0x%x)", \
+										REORDER16_B2L((uint16_t)pObj->arg));
+	}		
 
-	}										 
+
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaVlan_t *vlan = NULL;
+
+		/* Update packet length*/
+		pPkt->pkt_len += DP_VLAN_HDR_LEN;
+
+		
+		int newVlanBase = dpMallocMemFromPktPool(pPkt, DP_VLAN_HDR_LEN);
+		if(newVlanBase){
+			if(!DP_IS_FEILD_VALID(pPkt, FEILD_VLAN_0)){
+				SET_FEILD_OFFSET(pPkt, FEILD_VLAN_0,newVlanBase);
+				vlan = DP_GET_FEILD(pPkt,FEILD_VLAN_0);
+			}
+			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_VLAN_1)) {
+				SET_FEILD_OFFSET(pPkt, FEILD_VLAN_1,newVlanBase);
+				vlan = DP_GET_FEILD(pPkt,FEILD_VLAN_1);
+			}
+			else{
+				return OFDPA_E_INTERNAL;
+			}
+
+			if(vlan){
+				vlan->type = (uint16_t)pObj->arg;
+			}
+		}
+		else
+		{
+			return OFDPA_E_FAIL;
+		}
+	}	
+
 	return OFDPA_E_NONE;
 }
 
@@ -393,7 +429,26 @@ uint64_t ofdpaActSetDstMac(void *this,ofdpaActArg_t *arg)
 										pMac->addr[3],
 										pMac->addr[4],
 										pMac->addr[5]);
-	}										 
+	}
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMacAddr_t *pMac = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_DMAC)){
+			pMac = DP_GET_FEILD_ADDR(pPkt, FEILD_DMAC);
+		}
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(pMac){
+			memcpy(pMac,&pObj->arg,sizeof(ofdpaMacAddr_t)); 
+		}
+	}
+	
 	return OFDPA_E_NONE;
 }
 
@@ -415,6 +470,26 @@ uint64_t ofdpaActSetSrcMac(void *this,ofdpaActArg_t *arg)
 										pMac->addr[4],
 										pMac->addr[5]);
 	}										 
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMacAddr_t *pMac = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_SMAC)){
+			pMac = DP_GET_FEILD_ADDR(pPkt, FEILD_SMAC);
+		}
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(pMac){
+			memcpy(pMac,&pObj->arg,sizeof(ofdpaMacAddr_t)); 
+		}
+	}
+
+
 	return OFDPA_E_NONE;
 }
 
@@ -445,6 +520,8 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
 	OFDPA_ERROR_t rc = OFDPA_E_NONE;
+	int newL2HdrBase;
+
 	
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 										 "%p!\r\n", this);
@@ -457,8 +534,23 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 	
 	if(ACT_OP_TYPE_EXECUTE == arg->type){
 		ofdpaPktCb_t *pPkt = arg->data;
+		int pktStart = GET_PKT_START(pPkt);
+		CLEAN_FEILD_ALL(pPkt);
+		/* Update packet length*/
+		UPDATE_DATA_OFFSET(pPkt, pktStart, pPkt->pkt_len);
+		pPkt->pkt_len += DP_L2_HDR_LEN;
 		
+		newL2HdrBase = dpMallocMemFromPktPool(pPkt, DP_L2_HDR_LEN);
+		if(newL2HdrBase){
+			SET_FEILD_OFFSET(pPkt, FEILD_DMAC,newL2HdrBase);
+			SET_FEILD_OFFSET(pPkt, FEILD_SMAC,newL2HdrBase + 6);
+			SET_FEILD_OFFSET(pPkt, FEILD_L3_TYPE,newL2HdrBase + 12);
 
+		}
+		else
+		{
+			return OFDPA_E_FAIL;
+		}
 	}	
 
 
@@ -482,9 +574,50 @@ uint64_t ofdpaActPushMplsHdr(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushMplsHdr ");
+		return snprintf(pBuf->buf, pBuf->bufSize,\
+										ACT_PRINT_FMT_SPLIT_LINE"pushMplsHdr(0x%x) ",
+										REORDER16_B2L((uint16_t)pObj->arg));
 
-	}										 
+	}	
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		uint16_t *type = NULL;
+
+		/* Update packet length*/
+		pPkt->pkt_len += DP_MPLS_HDR_LEN;
+
+		
+		int newMplsBase = dpMallocMemFromPktPool(pPkt, DP_MPLS_HDR_LEN);
+		if(newMplsBase){
+			if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
+				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_0,newMplsBase);
+			}
+			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
+				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_1,newMplsBase);
+			}
+			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
+				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_2,newMplsBase);
+			}			
+			else{
+				return OFDPA_E_INTERNAL;
+			}
+
+			/* Update ethernet type*/
+			type = DP_GET_FEILD_ADDR(pPkt, FEILD_L3_TYPE);
+			if(type){
+				*type = (uint16_t)pObj->arg;
+			}
+			else{
+				return OFDPA_E_INTERNAL;
+			}
+		}
+		else
+		{
+			return OFDPA_E_FAIL;
+		}
+	}	
+	
 	return OFDPA_E_NONE;
 }
 
@@ -521,9 +654,37 @@ uint64_t ofdpaActSetMplsLabel(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsLabel = %d(0x%x) ",(uint32_t)pObj->arg,(uint32_t)pObj->arg);
+		return snprintf(pBuf->buf, pBuf->bufSize, \
+										ACT_PRINT_FMT_SPLIT_LINE"mplsLabel = %d(0x%x) ",\
+										REORDER32_B2L((uint32_t)pObj->arg)>>12,
+										REORDER32_B2L((uint32_t)pObj->arg)>>12);
 
-	}										 
+	}		
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMpls_t *mpls = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_2);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_1);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_0);
+		} 		
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(mpls){
+			mpls->mpls_head |=	(uint32_t)pObj->arg; 
+		}
+	}
+	
 	return OFDPA_E_NONE;
 }
 
@@ -535,9 +696,36 @@ uint64_t ofdpaActSetMplsBos(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsBOS = %d ",(uint8_t)pObj->arg);
+		return snprintf(pBuf->buf, pBuf->bufSize, \
+										ACT_PRINT_FMT_SPLIT_LINE"mplsBOS = %d ",\
+										REORDER32_B2L(((uint32_t)pObj->arg))>>8);
 
 	}										 
+
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMpls_t *mpls = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_2);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_1);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_0);
+		} 		
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(mpls){
+			mpls->mpls_head |=	(uint32_t)pObj->arg; 
+		}
+	}
 	return OFDPA_E_NONE;
 }
 
@@ -550,9 +738,38 @@ uint64_t ofdpaActSetMplsTtl(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsTTL = %d ",(uint8_t)pObj->arg);
+		return snprintf(pBuf->buf, pBuf->bufSize,\
+										ACT_PRINT_FMT_SPLIT_LINE"mplsTTL = %d ",\
+										REORDER32_B2L((uint32_t)pObj->arg) & 0xFF);
 
 	}										 
+
+
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMpls_t *mpls = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_2);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_1);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_0);
+		} 		
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(mpls){
+			mpls->mpls_head |=	(uint32_t)pObj->arg; 
+		}
+	}
+
+
 	return OFDPA_E_NONE;
 }
 
@@ -565,9 +782,36 @@ uint64_t ofdpaActSetMplsExp(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
 
-		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"mplsEXP = %d ",(uint8_t)pObj->arg);
+		return snprintf(pBuf->buf, pBuf->bufSize,\
+										ACT_PRINT_FMT_SPLIT_LINE"mplsEXP = %d ",\
+										REORDER32_B2L(((uint32_t)pObj->arg))>>9);
 
-	}										 
+	}	
+	
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		ofdpaMpls_t *mpls = NULL;
+		
+		/* Update packet length*/
+
+		if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_2);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_1);
+		}
+		else if(DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
+			mpls = DP_GET_FEILD_ADDR(pPkt, FEILD_MPLS_0);
+		} 		
+		else{
+			return OFDPA_E_INTERNAL;
+		}
+	
+		if(mpls){
+			mpls->mpls_head |=	(uint32_t)pObj->arg; 
+		}
+	}
+
 	return OFDPA_E_NONE;
 }
 
