@@ -161,6 +161,7 @@ uint32_t getPktLen(ofdpaPktCb_t *pcb);
 void *getFeild(ofdpaPktCb_t *pcb, int type);
 void dump_pcb(ofdpaPktCb_t *pcb);
 void dump_pkt(const char *_p, int len);
+int dpMallocMemFromPktPool(ofdpaPktCb_t *pcb, int len);
 OFDPA_ERROR_t datapathPipeMsgSend(int srcSockFd, ofdpaPcbMsg_t *msg);
 int datapathInit(void);
 struct PIPE_ENTRY_ADDR* datapathPipeTransferEntryGet(uint64_t key);
