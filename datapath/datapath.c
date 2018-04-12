@@ -98,9 +98,9 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 		"FEILD_VLAN_0",
 		"FEILD_VLAN_1",
 		"FEILD_L3_TYPE",	
+		"FEILD_MPLS_2", 	
+		"FEILD_MPLS_1", 	
 		"FEILD_MPLS_0",		
-		"FEILD_MPLS_1",		
-		"FEILD_MPLS_2",		
 		"FEILD_CW", 			
 		"FEILD_L3_HDR", 	/* layer 3 protocol header	*/
 		"FEILD_L4_HDR", 	/* layer 4 protocol header */
