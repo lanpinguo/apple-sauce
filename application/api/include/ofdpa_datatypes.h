@@ -3714,9 +3714,9 @@ enum{
 	FEILD_VLAN_0,
 	FEILD_VLAN_1,
 	FEILD_L3_TYPE,	/* layer 3 protocol type */
-	FEILD_MPLS_0,		/* mpls0 header */
+	FEILD_MPLS_2, 	/* mpls2 header */
 	FEILD_MPLS_1,		/* mpls1 header */
-	FEILD_MPLS_2,		/* mpls2 header */
+	FEILD_MPLS_0, 	/* mpls0 header */
 	FEILD_CW, 			/* mpls control word */
 	FEILD_L3_HDR, 	/* layer 3 protocol header  */
 	FEILD_L4_HDR,		/* layer 4 protocol header */
@@ -3732,9 +3732,9 @@ enum{
 	FEILD_VLAN_0_LEN	= 4,
 	FEILD_VLAN_1_LEN	= 4,
 	FEILD_L3_TYPE_LEN	= 2,	/* layer 3 protocol type */
-	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
-	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
 	FEILD_MPLS_2_LEN	= 4,		/* mpls2 header */
+	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
+	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
 	FEILD_CW_LEN			= 4, 			/* mpls control word */
 	FEILD_L3_HDR_LEN	= 20, 	/* layer 3 protocol header	*/
 	FEILD_L4_HDR_LEN	= 20, 	/* layer 4 protocol header */

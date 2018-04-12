@@ -765,6 +765,8 @@ uint64_t ofdpaActSetMplsTtl(void *this,ofdpaActArg_t *arg)
 		}
 	
 		if(mpls){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+												 "ttl = %p\r\n", pObj->arg);
 			mpls->mpls_head |=	(uint32_t)pObj->arg; 
 		}
 	}

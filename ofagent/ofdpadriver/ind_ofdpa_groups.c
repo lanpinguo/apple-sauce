@@ -169,7 +169,7 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
                 {
                     uint32_t ttl;
                     of_oxm_ofdpa_mpls_ttl_value_get(&oxm.ofdpa_mpls_ttl, &ttl);
-                    ttl = REORDER32_L2B(((uint32_t)ttl));
+                    ttl = REORDER32_L2B(ttl);
 										IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsTtl,ttl);
                     *group_action_sf_bitmap |= IND_OFDPA_MPLS_TTL;
                     break;
@@ -225,8 +225,9 @@ ind_ofdpa_translate_group_actions(of_list_action_t *actions,
         }
         case OF_ACTION_SET_MPLS_TTL:
         {
-            uint8_t ttl;
+            uint32_t ttl;
             of_action_set_mpls_ttl_mpls_ttl_get(&act.push_mpls, &ttl);
+						ttl = REORDER32_L2B(ttl);
 						IND_OFDPA_BUKT_ACT_APPEND(group_bucket,ofdpaActSetMplsTtl,ttl);
             *group_action_bitmap |= IND_OFDPA_SET_MPLS_TTL;
             break;
