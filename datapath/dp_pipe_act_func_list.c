@@ -641,7 +641,32 @@ uint64_t ofdpaActPushCw(void *this,ofdpaActArg_t *arg)
 
 		return snprintf(pBuf->buf, pBuf->bufSize, ACT_PRINT_FMT_SPLIT_LINE"pushCW ");
 
-	}										 
+	}		
+
+	
+	if(ACT_OP_TYPE_EXECUTE == arg->type){
+		ofdpaPktCb_t *pPkt = arg->data;
+		uint16_t *type = NULL;
+
+		/* Update packet length*/
+		pPkt->pkt_len += DP_MPLS_CW_LEN;
+
+		
+		int newMplsBase = dpMallocMemFromPktPool(pPkt, DP_MPLS_CW_LEN);
+		if(newMplsBase){
+			if(!DP_IS_FEILD_VALID(pPkt, FEILD_CW)){
+				SET_FEILD_OFFSET(pPkt, FEILD_CW,newMplsBase);
+			}
+			else{
+				return OFDPA_E_INTERNAL;
+			}
+
+		}
+		else
+		{
+			return OFDPA_E_FAIL;
+		}
+	}	
 	return OFDPA_E_NONE;
 }
 
@@ -681,6 +706,7 @@ uint64_t ofdpaActSetMplsLabel(void *this,ofdpaActArg_t *arg)
 		}
 	
 		if(mpls){
+			mpls->mpls_head &=	REORDER32_L2B(~(0xFFFFF << 12)) ; 
 			mpls->mpls_head |=	(uint32_t)pObj->arg; 
 		}
 	}
@@ -723,6 +749,7 @@ uint64_t ofdpaActSetMplsBos(void *this,ofdpaActArg_t *arg)
 		}
 	
 		if(mpls){
+			mpls->mpls_head &=	REORDER32_L2B(~(1 << 8)) ; 
 			mpls->mpls_head |=	(uint32_t)pObj->arg; 
 		}
 	}
@@ -765,8 +792,7 @@ uint64_t ofdpaActSetMplsTtl(void *this,ofdpaActArg_t *arg)
 		}
 	
 		if(mpls){
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-												 "ttl = %p\r\n", pObj->arg);
+			mpls->mpls_head &=	REORDER32_L2B(~0xFF) ; 
 			mpls->mpls_head |=	(uint32_t)pObj->arg; 
 		}
 	}
@@ -810,6 +836,7 @@ uint64_t ofdpaActSetMplsExp(void *this,ofdpaActArg_t *arg)
 		}
 	
 		if(mpls){
+			mpls->mpls_head &=	REORDER32_L2B(~(0x7 << 9)) ; 
 			mpls->mpls_head |=	(uint32_t)pObj->arg; 
 		}
 	}
