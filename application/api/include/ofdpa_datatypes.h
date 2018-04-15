@@ -3635,8 +3635,8 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 #define REORDER32_B2L(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
 
 /* little endian to big endian */
-#define REORDER16_L2B(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
-#define REORDER32_L2B(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
+#define REORDER16_L2B(v)			REORDER16_B2L(v)
+#define REORDER32_L2B(v)			REORDER32_B2L(v)
 
 
 #define VLAN_TYPE							REORDER16_L2B(0x8100)
@@ -3658,6 +3658,7 @@ while(0)
 #define DP_L2_HDR_LEN					14
 #define DP_VLAN_HDR_LEN				4
 #define DP_MPLS_HDR_LEN				4
+#define DP_MPLS_CW_LEN				4
 
 #define UPDATE_DATA_OFFSET(pcb,val,l) \
 do { \
