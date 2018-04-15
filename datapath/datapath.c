@@ -1019,6 +1019,7 @@ int datapathInit(void)
 	(void)ingActExecutor_pipe_init(0, NULL);
 	(void)group_pipe_init(0, NULL);
 	(void)egr_vlan_pipe_init(0, NULL);
+	(void)egrActExecutor_pipe_init(0, NULL);
 	(void)diag_init(0, NULL);
 	
   /* Initialize Port Table */
