@@ -334,8 +334,7 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 
 
 
-#define NETMAP_EXTRA_BUF(nifp, index, size)				\
-	((char *)(nifp) + ((index)*(size)))
+
 
 
 
@@ -377,7 +376,6 @@ void port_thread_core(void *argv)
 			nmd->req.nr_arg3);
 
 
-	//dump_pkt(NETMAP_EXTRA_BUF(nifp,nifp->ni_bufs_head,extraBufObjSize),16);
 	for(i = 0, m = nifp->ni_bufs_head; i < nmd->req.nr_arg3; i++){
 		D("index %d :", m);
 		pBuf = NETMAP_BUF(rxring,m);
