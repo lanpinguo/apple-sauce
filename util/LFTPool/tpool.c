@@ -56,7 +56,7 @@ enum {
 #define queue_offset(val)           ((val) & WORK_QUEUE_MASK)
 
 /* enough large for any system */
-#define MAX_THREAD_NUM  512
+#define MAX_THREAD_NUM  10
 
 typedef struct tpool_work {
     void               (*routine)(void *);
