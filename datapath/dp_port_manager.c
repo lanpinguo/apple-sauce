@@ -16,6 +16,7 @@
 /*   Purpose    :                                                       		*/
 /********************************************************************************/
 /********************************************************************************/
+#define DEBUG_NETMAP_USER
 
 #include <errno.h>
 #define _GNU_SOURCE	/* for CPU_SET() */
@@ -50,7 +51,7 @@
 
 
 //uint8_t ifname[64] = "netmap:eth1";
-uint8_t ifname[64] = "netmap:ens39";
+uint8_t ifname[64] = "netmap:eth1";
 
 
 ofdpaPortMngConfig_t		portMng;
@@ -333,6 +334,8 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 
 
 
+#define NETMAP_EXTRA_BUF(nifp, index, size)				\
+	((char *)(nifp) + ((index)*(size)))
 
 
 
@@ -342,30 +345,52 @@ void port_thread_core(void *argv)
 	struct pollfd 		pfd = { .events = POLLIN };
 	struct netmap_if 	*nifp;
 	struct netmap_ring 	*rxring;
-
+	struct netmap_ring 	*txring;
+	struct nmreq req;
+	uint8_t *pBuf;
 	int m;
 	int	rv;
 	int i;
 
 	
 
+	memset(&req, 0, sizeof(req));
+	req.nr_arg3 = 10;
 	
-	nmd = nm_open(ifname, NULL, 0, NULL);
+	nmd = nm_open(ifname, &req, 0, NULL);
 	if (nmd == NULL) {
 		D("Unable to open %s: %s", ifname, strerror(errno));
-		printf("Unable to open %s: %s", ifname, strerror(errno));
 		goto out;
 	}
 
+	D("mmap start at %p",nmd->mem);
+	
 	pfd.fd = nmd->fd;
 	nifp = nmd->nifp;
+	rxring = NETMAP_RXRING(nifp, 0);
 
+	D("nifp start at %p",nifp);
+
+
+	D("last extra buffer at %d, totalNum: %d", 
+			nifp->ni_bufs_head, 
+			nmd->req.nr_arg3);
+
+
+	//dump_pkt(NETMAP_EXTRA_BUF(nifp,nifp->ni_bufs_head,extraBufObjSize),16);
+	for(i = 0, m = nifp->ni_bufs_head; i < nmd->req.nr_arg3; i++){
+		D("index %d :", m);
+		pBuf = NETMAP_BUF(rxring,m);
+		dump_pkt(pBuf,16);
+		m = *(uint32_t*)pBuf;
+	}
+
+			
 	while(1) {
 		rv = poll(&pfd, 1, 2 * 1000) ;
 		if ((rv < 0) || (pfd.revents & POLLERR)) {
-
-		
-			printf("error rv=%d(%s)!!\r\n",rv,strerror(errno));
+	
+			D("error rv=%d(%s)!!\r\n",rv,strerror(errno));
 			goto out;
 		}
 
@@ -389,7 +414,7 @@ void port_thread_core(void *argv)
 	}
 
 out:
-	printf("error!!\r\n");
+	D("error!!\r\n");
 	return;	
 	
 }
