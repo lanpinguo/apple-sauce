@@ -56,19 +56,8 @@ flow_mod_err_msg_send(indigo_error_t indigo_err, of_version_t ver,
 void
 ind_core_unhandled_message(of_object_t *obj, indigo_cxn_id_t cxn_id)
 {
-    /* Modified by JiaoYong, 2016/11/12 控制器的bug，不应该下发这个请求
-    但不好改，设备上暂时注掉打印，到时候再放开*/
-    #if 0
     LOG_WARN("Unhandled message %s from cxn %d.",
              of_object_id_str[obj->object_id], cxn_id);
-    #else 
-    if((OF_METER_FEATURES_STATS_REQUEST != obj->object_id) 
-        && (OF_GROUP_FEATURES_STATS_REQUEST != obj->object_id))
-    {
-        LOG_WARN("Unhandled message %s from cxn %d.",
-             of_object_id_str[obj->object_id], cxn_id);
-    }
-    #endif
 
     /* Generate error message */
     indigo_cxn_send_error_reply(cxn_id, obj,
