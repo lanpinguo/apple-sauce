@@ -138,7 +138,7 @@ Info 774: Boolean within 'if' always evaluates to True
 Info 737: Loss of sign in promotion from int to unsigned int
 */
 
-#define OFDPA_DEBUG_PRINTF(__component, __verbosity, __format, ...)  ofdpaDebugPrintf(__FUNCTION__, __component, __verbosity, __format, __VA_ARGS__);
+#define OFDPA_DEBUG_PRINTF(__component, __verbosity, __format, ...)  ofdpaDebugPrintf(__FUNCTION__, __component, __verbosity, __format,##__VA_ARGS__);
 
 
 

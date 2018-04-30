@@ -60,7 +60,7 @@ extern "C"{
 #endif /* __cplusplus */
 
  OFDPA_ERROR_t dpNetmapMemFree(uint32_t index);
- OFDPA_ERROR_t dpNetmapMemMalloc(uint32_t len);
+ void * dpNetmapMemMalloc(u_int len, uint32_t *start, uint32_t *index);
  OFDPA_ERROR_t dpNetmapMemPoolInit(void* base,uint32_t size, uint32_t objSize);
 
 #ifdef __cplusplus

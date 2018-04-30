@@ -101,14 +101,14 @@ static struct dp_nm_obj_pool nm_pool;
 
 OFDPA_ERROR_t dpNetmapMemPoolInit(void* base,uint32_t size, uint32_t objSize)
 {
-	uint32 *bitmap;
+	uint32_t *bitmap;
 	uint32_t bitmap_slots;
 
 
 
 	if(base == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-			"base is null",0);
+			"base is null\r\n");
 		return OFDPA_E_PARAM;
 	}
 
@@ -116,7 +116,7 @@ OFDPA_ERROR_t dpNetmapMemPoolInit(void* base,uint32_t size, uint32_t objSize)
 	bitmap = calloc(1,bitmap_slots);
 	if(bitmap == NULL){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-			"malloc failed, size %d",size);
+			"malloc failed, size %d\r\n",size);
 		return OFDPA_E_PARAM;
 	}
 
@@ -145,14 +145,14 @@ dp_nm_obj_free(struct dp_nm_obj_pool *p, uint32_t j)
 
 	if (j >= p->objtotal) {
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-			"invalid index %u, max %u", j, p->objtotal);
+			"invalid index %u, max %u\r\n", j, p->objtotal);
 		return OFDPA_E_PARAM;
 	}
 	ptr = &p->bitmap[j / 32];
 	mask = (1 << (j % 32));
 	if (*ptr & mask) {
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-			"ouch, double free on buffer %d", j);
+			"ouch, double free on buffer %d\r\n", j);
 		return OFDPA_E_EXISTS;
 	} else {
 		*ptr |= mask;
@@ -175,12 +175,12 @@ dp_nm_obj_malloc(struct dp_nm_obj_pool *p, u_int len, uint32_t *start, uint32_t 
 	void *vaddr = NULL;
 
 	if (len > p->_objsize) {
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,"request size %d too large", len);
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,"request size %d too large\r\n", len);
 		return NULL;
 	}
 
 	if (p->objfree == 0) {
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,"no more %s objects",0);
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,"no more objects\r\n");
 		return NULL;
 	}
 	if (start)
@@ -200,7 +200,7 @@ dp_nm_obj_malloc(struct dp_nm_obj_pool *p, u_int len, uint32_t *start, uint32_t 
 		p->bitmap[i] &= ~mask; /* mark object as in use */
 		p->objfree--;
 
-		//vaddr = p->lut[i * 32 + j].vaddr;
+		vaddr = p->base + p->_objsize * (i * 32 + j);
 		if (index)
 			*index = i * 32 + j;
 	}
@@ -217,10 +217,9 @@ OFDPA_ERROR_t dpNetmapMemFree(uint32_t index)
 }
 
 
-OFDPA_ERROR_t dpNetmapMemMalloc(uint32_t len)
+void * dpNetmapMemMalloc(u_int len, uint32_t *start, uint32_t *index)
 {
-	//return dp_nm_obj_free(&nm_pool,index);
-	return OFDPA_E_NONE;
+	return dp_nm_obj_malloc(&nm_pool, len, start, index);
 }
 
 
