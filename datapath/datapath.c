@@ -90,7 +90,6 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 
 
-
  void dump_pcb(ofdpaPktCb_t *pcb)
 {
 	char *feild_name[] = {
@@ -99,32 +98,45 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 		"FEILD_VLAN_0",
 		"FEILD_VLAN_1",
 		"FEILD_L3_TYPE",	
+		"FEILD_MPLS_2", 	
+		"FEILD_MPLS_1", 	
 		"FEILD_MPLS_0",		
-		"FEILD_MPLS_1",		
-		"FEILD_MPLS_2",		
 		"FEILD_CW", 			
-		"FEILD_DIP", 			
-		"FEILD_SIP", 			
-		"FEILD_L4_TYPE",	
-		"FEILD_L4_DP", 		
-		"FEILD_L4_SP", 		
+		"FEILD_L3_HDR", 	/* layer 3 protocol header	*/
+		"FEILD_L4_HDR", 	/* layer 4 protocol header */
 		"FEILD_DATA", 	
 		"FEILD_MAX",
 	};
 
-	char *format = "\r\n %-15s = %d";
-	int i = 0;
-
+	char *format = "\r\n %-15s = %5d, len = %5d";
+	char *pBuf = NULL;
+	int i,j;
+	int base = 0;
 	
-
+	base = pcb->pool_tail;
+	pBuf = calloc(1,2048);
+	
 	printf("\r\n %-15s = %016llx","port",pcb->port);
-	for(i = 0; i < FEILD_MAX; i++){	
-		printf(format,feild_name[i],\
-			(pcb->feilds[i].offset >= RESERVED_BLOCK_SIZE) ? \
-			(pcb->feilds[i].offset - RESERVED_BLOCK_SIZE) : pcb->feilds[i].offset);
+	printf("\r\n %-15s = %5d","Base",base);
+	for(i = 0 , j = 0; i < FEILD_MAX; i++){	
+		if(pcb->feilds[i].len){
+			printf(format,feild_name[i], \
+							pcb->feilds[i].offset - base, \
+							pcb->feilds[i].len);
+			memcpy(&pBuf[j],DP_GET_FEILD_ADDR(pcb, i),pcb->feilds[i].len);	
+			j += pcb->feilds[i].len;
+		}
+		else {
+			printf("\r\n %-15s = %5s, len = %5s",feild_name[i],"--","--");
+		}
 	}
 	
 	printf("\r\n");
+	
+	dump_pkt(pBuf, pcb->pkt_len);
+
+	free(pBuf);
+
 }
 
 
@@ -160,7 +172,19 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
  }
 
 
+ int dpMallocMemFromPktPool(ofdpaPktCb_t *pcb, int len)
+ {
+
+		if((pcb->pool_tail - pcb->pool_head) < len){
+			return 0;
+		}
+
+		pcb->pool_tail -= len;
+
+		return (pcb->pool_tail);
  
+ }
+
  
  OFDPA_ERROR_t dpAddAct2Holder(ofdpaActHolder_t * pHolder , ofdpaAct_t *pAct)
  {
@@ -995,6 +1019,7 @@ int datapathInit(void)
 	(void)ingActExecutor_pipe_init(0, NULL);
 	(void)group_pipe_init(0, NULL);
 	(void)egr_vlan_pipe_init(0, NULL);
+	(void)egrActExecutor_pipe_init(0, NULL);
 	(void)diag_init(0, NULL);
 	
   /* Initialize Port Table */

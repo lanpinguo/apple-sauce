@@ -3,15 +3,15 @@
   Copyright (C), 2001-2011, Pure Co., Ltd.
 
  ******************************************************************************
-  File Name     : dp_pipe_ing_act_executor.h
+  File Name     : dp_nm_mem_user.h
   Version       : Initial Draft
   Author        : lanpinguo
-  Created       : 2018/3/1
+  Created       : 2018/4/28
   Last Modified :
-  Description   : egress action set executor header
+  Description   : dp_nm_mem_user.c header file
   Function List :
   History       :
-  1.Date        : 2018/3/1
+  1.Date        : 2018/4/28
     Author      : lanpinguo
     Modification: Created file
 
@@ -49,9 +49,9 @@
  * routines' implementations                    *
  *----------------------------------------------*/
 
+#ifndef __DP_NM_MEM_USER_H__
+#define __DP_NM_MEM_USER_H__
 
-#ifndef INCLUDE_DP_PIPE_EGR_ACT_EXECUTOR_H
-#define INCLUDE_DP_PIPE_EGR_ACT_EXECUTOR_H
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -59,20 +59,9 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 
-
-#include "ofdpa_list.h"
-
-
-
-typedef struct  ofdpaEgrActExecutorPipeNodeConfig_s
-{
-
-	uint32_t										max_entrys;
-	int 												nodeSock;
-	pthread_t 									nodeTid ;
-
-} ofdpaEgrActExecutorPipeNodeConfig_t;
-
+ OFDPA_ERROR_t dpNetmapMemFree(uint32_t index);
+ void * dpNetmapMemMalloc(u_int len, uint32_t *start, uint32_t *index);
+ OFDPA_ERROR_t dpNetmapMemPoolInit(void* base,uint32_t size, uint32_t objSize);
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -80,7 +69,5 @@ typedef struct  ofdpaEgrActExecutorPipeNodeConfig_s
 #endif
 #endif /* __cplusplus */
 
-#endif /* INCLUDE_DP_PIPE_EGR_ACT_EXECUTOR_H */
 
-
-
+#endif /* __DP_NM_MEM_USER_H__ */

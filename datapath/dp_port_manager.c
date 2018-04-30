@@ -16,6 +16,7 @@
 /*   Purpose    :                                                       		*/
 /********************************************************************************/
 /********************************************************************************/
+#define DEBUG_NETMAP_USER
 
 #include <errno.h>
 #define _GNU_SOURCE	/* for CPU_SET() */
@@ -50,7 +51,7 @@
 
 
 //uint8_t ifname[64] = "netmap:eth1";
-uint8_t ifname[64] = "netmap:ens39";
+uint8_t ifname[64] = "netmap:eth1";
 
 
 ofdpaPortMngConfig_t		portMng;
@@ -258,7 +259,8 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	/*port that the pkt comes from*/
 	*port = (1<<2);
 	pcb->cur = RESERVED_BLOCK_SIZE;
-	
+	pcb->pool_tail = RESERVED_BLOCK_SIZE - 1;	/* point to the last byte*/
+	pcb->pool_head = sizeof(ofdpaPktCb_t);	/* point to the first byte*/
 	OFDPA_INIT_LIST_HEAD(&pcb->action_set);
 	
 	parse_fn = dpPktFeildMacParse;
@@ -275,6 +277,8 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 		rc =  OFDPA_NOT_IMPLEMENTED_YET;
 	}
 
+	UPDATE_DATA_OFFSET(pcb,pcb->cur,pcb->pkt_len - (pcb->cur - pcb->pool_tail));
+
 	return rc;
 
 }
@@ -286,6 +290,8 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 	OFDPA_ERROR_t rc;
 	u_int cur, rx, n;
 	uint64_t b = 0;
+	uint32_t newBufIdx = 0;
+	void * newBuf = NULL;
 	ofdpaPktCb_t *pcb;
 	ofdpaPcbMsg_t msg;
 
@@ -313,11 +319,22 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 
 		//printf("\r\nl3_type_offset : %d\r\n",l3_type_offset);
 
-		if(rc == OFDPA_E_NONE){
+		newBuf = dpNetmapMemMalloc(slot->len,NULL,&newBufIdx);
+
+		
+		if((rc == OFDPA_E_NONE) && (newBuf != NULL)){
+			slot->buf_idx = newBufIdx;
+			/* report the buffer change. */
+			slot->flags |= NS_BUF_CHANGED;
+			
 			//dump_pcb(pcb);
 			msg.dstObjectId = OFDPA_FLOW_TABLE_ID_INGRESS_PORT;
 			msg.pcb = pcb;
 			datapathPipeMsgSend(portMng.nodeSock,&msg);
+		}
+		else{
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+				"faild to process pkt @ slot %d ,bufIdx %d \r\n",cur,slot->buf_idx);
 		}
 
 
@@ -333,36 +350,72 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 
 
 
+
 void port_thread_core(void *argv)
 {
+	OFDPA_ERROR_t rc;
 	struct nm_desc 		*nmd;
 	struct pollfd 		pfd = { .events = POLLIN };
 	struct netmap_if 	*nifp;
 	struct netmap_ring 	*rxring;
-
+	struct netmap_ring 	*txring;
+	struct nmreq req;
+	uint8_t *pBuf;
 	int m;
 	int	rv;
 	int i;
 
 	
 
+	memset(&req, 0, sizeof(req));
+	req.nr_arg3 = 10;
 	
-	nmd = nm_open(ifname, NULL, 0, NULL);
+	nmd = nm_open(ifname, &req, 0, NULL);
 	if (nmd == NULL) {
 		D("Unable to open %s: %s", ifname, strerror(errno));
-		printf("Unable to open %s: %s", ifname, strerror(errno));
 		goto out;
 	}
 
+	D("buf start at %p",nmd->buf_start);
+	D("buf size : %d",nmd->buf_end - nmd->buf_start);
+	
 	pfd.fd = nmd->fd;
 	nifp = nmd->nifp;
+	txring = NETMAP_RXRING(nifp, 0);
 
+	D("nifp start at %p",nifp);
+
+
+	D("last extra buffer at %d, totalNum: %d", 
+			nifp->ni_bufs_head, 
+			nmd->req.nr_arg3);
+
+
+	rc =  dpNetmapMemPoolInit(nmd->buf_start,nmd->buf_end - nmd->buf_start, txring->nr_buf_size);
+	if(rc != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+			"Netmap MemPool Init failed ");
+		return ;
+	}
+
+	for(i = 0, m = nifp->ni_bufs_head; i < nmd->req.nr_arg3; i++){
+		D("index %d :", m);
+		pBuf = NETMAP_BUF(txring,m);
+		dpNetmapMemFree(m);
+		if(rc != OFDPA_E_NONE){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+				"Netmap MemPool free failed, rc = %d ",rc);
+		}
+		//dump_pkt(pBuf,16);
+		m = *(uint32_t*)pBuf;
+	}
+
+			
 	while(1) {
 		rv = poll(&pfd, 1, 2 * 1000) ;
 		if ((rv < 0) || (pfd.revents & POLLERR)) {
-
-		
-			printf("error rv=%d(%s)!!\r\n",rv,strerror(errno));
+	
+			D("error rv=%d(%s)!!\r\n",rv,strerror(errno));
 			goto out;
 		}
 
@@ -386,7 +439,7 @@ void port_thread_core(void *argv)
 	}
 
 out:
-	printf("error!!\r\n");
+	D("error!!\r\n");
 	return;	
 	
 }

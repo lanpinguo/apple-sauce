@@ -3632,10 +3632,11 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 
 /* big endian to little endian */
 #define REORDER16_B2L(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
+#define REORDER32_B2L(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
 
 /* little endian to big endian */
-#define REORDER16_L2B(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
-#define REORDER32_L2B(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
+#define REORDER16_L2B(v)			REORDER16_B2L(v)
+#define REORDER32_L2B(v)			REORDER32_B2L(v)
 
 
 #define VLAN_TYPE							REORDER16_L2B(0x8100)
@@ -3650,6 +3651,28 @@ do { \
 }\
 while(0)
 
+#define GET_FEILD_OFFSET(pcb,feild) 	(pcb->feilds[feild].offset)
+#define GET_PKT_START(pcb) (pcb->pool_tail + 1)
+
+
+#define DP_L2_HDR_LEN					14
+#define DP_VLAN_HDR_LEN				4
+#define DP_MPLS_HDR_LEN				4
+#define DP_MPLS_CW_LEN				4
+
+#define UPDATE_DATA_OFFSET(pcb,val,l) \
+do { \
+	pcb->feilds[FEILD_DATA].offset = val;\
+	pcb->feilds[FEILD_DATA].len = l;\
+}\
+while(0)
+
+
+#define CLEAN_FEILD_ALL(pcb) \
+do { \
+	memset(&pcb->feilds[0],0,sizeof(pcb->feilds));\
+}\
+while(0)
 
 #define IS_MPLS_BOS(m) (((*(uint32_t*)m) & REORDER32_L2B(1<<8)) ? 1 : 0)
 
@@ -3675,10 +3698,7 @@ OFDPA_ASSERT(sizeof(struct OFDPA_VLAN) == 4);
 
 
 typedef struct OFDPA_MPLS {
-	uint32_t									label:20; 
-	uint32_t									exp:3; 
-	uint32_t									bos:1; 
-	uint32_t									ttl:8; 
+	uint32_t		mpls_head; 
 }ofdpaMpls_t;
 OFDPA_ASSERT(sizeof(struct OFDPA_MPLS) == 4);
 
@@ -3695,15 +3715,12 @@ enum{
 	FEILD_VLAN_0,
 	FEILD_VLAN_1,
 	FEILD_L3_TYPE,	/* layer 3 protocol type */
-	FEILD_MPLS_0,		/* mpls0 header */
+	FEILD_MPLS_2, 	/* mpls2 header */
 	FEILD_MPLS_1,		/* mpls1 header */
-	FEILD_MPLS_2,		/* mpls2 header */
+	FEILD_MPLS_0, 	/* mpls0 header */
 	FEILD_CW, 			/* mpls control word */
-	FEILD_DIP, 			/* destination IP address */
-	FEILD_SIP, 			/* source IP address */
-	FEILD_L4_TYPE,	/* layer 4 protocol type */
-	FEILD_L4_DP, 		/* layer 4 destination port */
-	FEILD_L4_SP, 		/* layer 4 source port */
+	FEILD_L3_HDR, 	/* layer 3 protocol header  */
+	FEILD_L4_HDR,		/* layer 4 protocol header */
 	FEILD_DATA, 		/* payload */
 	
 	FEILD_MAX
@@ -3716,15 +3733,12 @@ enum{
 	FEILD_VLAN_0_LEN	= 4,
 	FEILD_VLAN_1_LEN	= 4,
 	FEILD_L3_TYPE_LEN	= 2,	/* layer 3 protocol type */
-	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
-	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
 	FEILD_MPLS_2_LEN	= 4,		/* mpls2 header */
+	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
+	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
 	FEILD_CW_LEN			= 4, 			/* mpls control word */
-	FEILD_DIP_LEN			= 4, 			/* destination IP address */
-	FEILD_SIP_LEN			= 4, 			/* source IP address */
-	FEILD_L4_TYPE_LEN	= 2,	/* layer 4 protocol type */
-	FEILD_L4_DP_LEN		= 2, 		/* layer 4 destination port */
-	FEILD_L4_SP_LEN		= 2, 		/* layer 4 source port */
+	FEILD_L3_HDR_LEN	= 20, 	/* layer 3 protocol header	*/
+	FEILD_L4_HDR_LEN	= 20, 	/* layer 4 protocol header */
 
 };
 
@@ -3817,7 +3831,9 @@ typedef struct ofdpaPktCb_s
 	uint32_t								len;		/* total len */
 	uint16_t								pkt_len;/* pkt len */
 	uint16_t								cur;		/* point current position in the packet */
-	struct OFDPA_PKT_FEILD 	feilds[FEILD_MAX];		/* destination mac address*/
+	uint16_t								pool_tail;		/* the tail postion of the memory pool for packet increase */
+	uint16_t								pool_head;		/* the head postion of the memory pool for packet increase */
+	struct OFDPA_PKT_FEILD 	feilds[FEILD_MAX];		/* packet feild info */
 	ofdpa_MetaData_t				meta_data;
 	struct ofdpa_list_head	action_set;
 }ofdpaPktCb_t;

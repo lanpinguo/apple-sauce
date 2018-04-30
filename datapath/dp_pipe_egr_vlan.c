@@ -387,17 +387,17 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 	ofdpaEgrVlanPipeNode_t *pNode = NULL;
 	ofdpaEgrVlanMatchKey_t	pktKey = {.pad = {0}};
 
-
+#if 0
 	dump_pkt(pcb->this, pcb->len);
 	dump_pcb(pcb);
-
+#endif
 
 	rv = egrVlanPktKeyCreate(pcb,&pktKey);
 	if(rv != OFDPA_E_NONE){
 	
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "create search key failed!\r\n", 0);
-		return OFDPA_E_INTERNAL;
+		goto default_opt;
 	}
 
 	pNode = egrVlanEntryMatchFind(&pktKey);
@@ -411,7 +411,7 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 
 		if(pNode->instructions.gotoTableId < OFDPA_FLOW_TABLE_ID_VLAN){
 			/* the last ingress table, process the action set*/
-			msg.dstObjectId = OFDPA_ING_ACT_EXECUTOR;
+			msg.dstObjectId = OFDPA_EGR_ACT_EXECUTOR;
 		}
 		else{
 			msg.dstObjectId = pNode->instructions.gotoTableId;
@@ -430,6 +430,18 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
 						 "NO MACTCH in talbe [%d]\r\n",OFDPA_FLOW_TABLE_ID_VLAN);
 	}
+
+default_opt:
+	msg.dstObjectId = OFDPA_EGR_ACT_EXECUTOR;
+	msg.pcb = pcb;
+	rv = datapathPipeMsgSend(egr_vlan_pipe_config.nodeSock ,&msg);
+	if(rv != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+						 "Failed to send msg, rv = %d\r\n",rv);
+	
+		return OFDPA_E_PARAM;
+	}
+	
   return OFDPA_E_NONE;
 }
 
