@@ -76,6 +76,7 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 	{.key = OFDPA_PORT_MANAGER_ID , 						.sockPath = "/tmp/datapath_port_manager"},
 	{.key = OFDPA_ING_ACT_EXECUTOR , 						.sockPath = "/tmp/datapath_ing_act_executor"},
 	{.key = OFDPA_EGR_ACT_EXECUTOR , 						.sockPath = "/tmp/datapath_egr_act_executor"},
+	{.key = OFDPA_NODE_DEBUG_DIAG ,							.sockPath = "/tmp/datapath_node_debug_diag"},
 	{.key = OFDPA_FLOW_TABLE_ID_INGRESS_PORT , 	.sockPath = "/tmp/datapath_port_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_VLAN , 					.sockPath = "/tmp/datapath_vlan_table"},
 	{.key = OFDPA_FLOW_TABLE_ID_MPLS_L2_PORT ,	.sockPath = "/tmp/datapath_mpls_l2_port_table"},

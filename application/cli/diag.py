@@ -430,7 +430,7 @@ if __name__ == "__main__":
 	"""
 	self test
 	"""
-	server = Controller(switch='/tmp/datapath_port_manager')
+	server = Controller(switch='/tmp/datapath_node_debug_diag')
 
 	server.start()
 	server.connect()

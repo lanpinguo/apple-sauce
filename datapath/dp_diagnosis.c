@@ -76,10 +76,12 @@
 #include "ofdpa_util.h"
 #include "ofdpa_porting.h"
 #include "datapath.h"
-#include "dp_port_manager.h"
+#include "dp_diagnosis.h"
 
-static int portPipeInSock;
-static pthread_t diagTid ;
+
+
+static ofdpaDebugDiagConfig_t diag_config;
+
 
 typedef struct tstPkt_s
 {
@@ -100,13 +102,79 @@ tstPkt_t tstPkt = {
 };
 
 
+
+
+
+
+OFDPA_ERROR_t dpDiagPktRecv(ofdpaPcbMsg_t *msg, struct timeval *timeout)
+{
+  int pipeInPktSockFd;
+  ssize_t recvBytes;
+  int rv;
+  int flags = 0;
+
+  pipeInPktSockFd = diag_config.nodeSock;
+  if (pipeInPktSockFd < 0)
+  {
+    return OFDPA_E_FAIL;
+  }
+
+  if (timeout)
+  {
+    if ((timeout->tv_sec == 0) && (timeout->tv_usec == 0))
+    {
+      /* set socket to non-blocking for this read */
+      flags |= MSG_DONTWAIT;
+    }
+    else
+    {
+      /* blocking socket with a timeout */
+      rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, (char *)timeout,
+                      sizeof(struct timeval));
+      if (rv < 0)
+      {
+        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                          "Failed to set packet receive timeout. Error %d.\r\n", rv);
+        return OFDPA_E_FAIL;
+      }
+    }
+  }
+  else
+  {
+    /* blocking socket with no timeout. Make sure there is no timeout configured
+     * on the socket from previous call. */
+    rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, NULL, 0);
+  }
+
+  recvBytes = recvfrom(pipeInPktSockFd, msg, sizeof(*msg), flags, 0, 0);
+
+  if (recvBytes < 0)
+  {
+    if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
+    {
+      /* Normal if no packets waiting to be received and caller didn't block. */
+      return OFDPA_E_TIMEOUT;
+    }
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                      "Failed to receive packet. recvfrom() returned %d. errno %s.\r\n",
+                      recvBytes, strerror(errno));
+    return OFDPA_E_FAIL;
+  }
+
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+										"port manager rec %d\r\n",recvBytes);
+
+  return OFDPA_E_NONE;
+}
+
+
 static OFDPA_ERROR_t diagCmdProcess(struct timeval *timeout)
 {
 	OFDPA_ERROR_t	rc;
   ofdpaPcbMsg_t msg;
 	ofdpaPktCb_t *pcb;
 
-	rc = dpPortMngPktRecv(&msg, NULL);
+	rc = dpDiagPktRecv(&msg, NULL);
 
 	dump_pkt(&msg, sizeof(msg));
 
@@ -132,6 +200,14 @@ static OFDPA_ERROR_t diagCmdProcess(struct timeval *timeout)
 
 static void diag_thread_core(void * args)
 {
+	OFDPA_ERROR_t rv;
+
+	rv = dpPipeNodeSocketCreate(OFDPA_NODE_DEBUG_DIAG, &diag_config.nodeSock);
+	if(rv != OFDPA_E_NONE){
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
+                      "Failed to create socket %d. errno %s.\r\n",rv);
+		return;
+	}
 
 	while(1){
 	
@@ -147,7 +223,7 @@ int diag_init(int argc, char *argv[])
 {
 
 
-	diagTid = (pthread_t)dpaThreadCreate("dpDiag", 61, diag_thread_core, NULL);
+	diag_config.nodeTid = (pthread_t)dpaThreadCreate("dpDiag", 61, diag_thread_core, NULL);
 
 
 	return 0;

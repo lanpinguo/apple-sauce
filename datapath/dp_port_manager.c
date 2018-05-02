@@ -328,9 +328,11 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 			slot->flags |= NS_BUF_CHANGED;
 			
 			//dump_pcb(pcb);
+#if 0
 			msg.dstObjectId = OFDPA_FLOW_TABLE_ID_INGRESS_PORT;
 			msg.pcb = pcb;
 			datapathPipeMsgSend(portMng.nodeSock,&msg);
+#endif
 		}
 		else{
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,

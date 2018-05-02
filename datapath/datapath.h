@@ -109,6 +109,7 @@ struct PIPE_ENTRY_ADDR
 #define OFDPA_PORT_MANAGER_ID 			(1UL<<40)
 #define OFDPA_ING_ACT_EXECUTOR			(2UL<<40)  
 #define OFDPA_EGR_ACT_EXECUTOR			(3UL<<40)  
+#define OFDPA_NODE_DEBUG_DIAG						(4UL<<40)  
 
 #define OFDPA_GROUP_TABLE					(1UL<<8)  
 
