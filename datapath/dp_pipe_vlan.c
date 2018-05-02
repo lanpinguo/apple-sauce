@@ -380,19 +380,20 @@ OFDPA_ERROR_t  executeActionOnPkt(ofdpaVlanPipeNode_t *pNode,ofdpaPktCb_t *pcb)
 
 static OFDPA_ERROR_t vlanPktProcess( ofdpaPktCb_t *pcb)
 {
-	OFDPA_ERROR_t rv;
+	OFDPA_ERROR_t rc;
+	OFDPA_ERROR_t rc1;
 	ofdpaPcbMsg_t msg;
 	ofdpaVlanPipeNode_t *pNode = NULL;
 	ofdpaVlanMatchKey_t	pktKey = {.pad = {0}};
 
 
 
-	rv = vlanPktKeyCreate(pcb,&pktKey);
-	if(rv != OFDPA_E_NONE){
+	rc = vlanPktKeyCreate(pcb,&pktKey);
+	if(rc != OFDPA_E_NONE){
 	
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 											 "create search key failed!\r\n", 0);
-		return OFDPA_E_INTERNAL;
+		goto exception_proc;
 	}
 
 	pNode = vlanEntryMatchFind(&pktKey);
@@ -405,27 +406,30 @@ static OFDPA_ERROR_t vlanPktProcess( ofdpaPktCb_t *pcb)
 		executeActionOnPkt(pNode,pcb);
 
 		if(pNode->instructions.gotoTableId < OFDPA_FLOW_TABLE_ID_VLAN){
-			/* the last ingress table, process the action set*/
-			msg.dstObjectId = OFDPA_ING_ACT_EXECUTOR;
-		}
-		else{
-			msg.dstObjectId = pNode->instructions.gotoTableId;
-		}
-		msg.pcb = pcb;
-		rv = datapathPipeMsgSend(vlan_pipe_config.nodeSock ,&msg);
-		if(rv != OFDPA_E_NONE){
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-							 "Failed to send msg, rv = %d\r\n",rv);
-		
-			return OFDPA_E_PARAM;
+
+			goto exception_proc;
 		}
 
+		msg.dstObjectId = pNode->instructions.gotoTableId;
+		goto translate_pkt;
+
 	}
-	else {
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+					 "NO MACTCH in talbe [%d]\r\n",OFDPA_FLOW_TABLE_ID_VLAN);
+
+exception_proc:
+	/* the last ingress table, process the action set*/
+	msg.dstObjectId = OFDPA_PORT_MANAGER_ID;
+	rc = OFDPA_E_FAIL;
+translate_pkt:
+	msg.pcb = pcb;
+	rc1 = datapathPipeMsgSend(vlan_pipe_config.nodeSock ,&msg);
+	if(rc1 != OFDPA_E_NONE){
 		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-						 "NO MACTCH in talbe [%d]\r\n",OFDPA_FLOW_TABLE_ID_VLAN);
+						 "Failed to send msg, rv = %d\r\n",rc1);
 	}
-  return OFDPA_E_NONE;
+	
+  return rc;
 }
 
 

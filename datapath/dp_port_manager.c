@@ -328,11 +328,9 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 			slot->flags |= NS_BUF_CHANGED;
 			
 			//dump_pcb(pcb);
-#if 0
 			msg.dstObjectId = OFDPA_FLOW_TABLE_ID_INGRESS_PORT;
 			msg.pcb = pcb;
 			datapathPipeMsgSend(portMng.nodeSock,&msg);
-#endif
 		}
 		else{
 			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
@@ -357,14 +355,13 @@ void port_thread_core(void *argv)
 {
 	OFDPA_ERROR_t rc;
 	struct nm_desc 		*nmd;
-	struct pollfd 		pfd = { .events = POLLIN };
+	struct pollfd 		pfds[] = { {.events = POLLIN}, {.events = POLLIN}};
 	struct netmap_if 	*nifp;
 	struct netmap_ring 	*rxring;
 	struct netmap_ring 	*txring;
 	struct nmreq req;
 	uint8_t *pBuf;
 	int m;
-	int	rv;
 	int i;
 
 	
@@ -381,7 +378,8 @@ void port_thread_core(void *argv)
 	D("buf start at %p",nmd->buf_start);
 	D("buf size : %d",nmd->buf_end - nmd->buf_start);
 	
-	pfd.fd = nmd->fd;
+	pfds[0].fd = nmd->fd;
+	pfds[0].events = POLLIN;
 	nifp = nmd->nifp;
 	txring = NETMAP_RXRING(nifp, 0);
 
@@ -412,31 +410,64 @@ void port_thread_core(void *argv)
 		m = *(uint32_t*)pBuf;
 	}
 
+
+	pfds[1].fd = portMng.nodeSock;
+	pfds[1].events = POLLIN;
+
 			
 	while(1) {
-		rv = poll(&pfd, 1, 2 * 1000) ;
-		if ((rv < 0) || (pfd.revents & POLLERR)) {
 	
-			D("error rv=%d(%s)!!\r\n",rv,strerror(errno));
+		rc = poll(pfds, sizeof(pfds)/sizeof(struct pollfd), -1) ; /*wait forever*/
+#if 0
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+			"poll, rc = %d \r\n",rc);
+		for(i = 0 ; i < sizeof(pfds)/sizeof(struct pollfd); i ++){
+			printf("\r\npoll index [%d] result:\r\n",i);
+			printf("%-15s = %d\r\n","fd",pfds[i].fd );
+			printf("%-15s = 0x%08x\r\n","events",pfds[i].events );
+			printf("%-15s = 0x%08x\r\n","revents",pfds[i].revents );
+		}
+#endif
+		if ((rc < 0) || (pfds[0].revents & POLLERR)) {
+	
+			D("error rc=%d(%s)!!\r\n",rc,strerror(errno));
 			goto out;
 		}
 
-
+		if(pfds[0].revents & POLLIN){
 		
-		for (i = nmd->first_rx_ring; i <= nmd->last_rx_ring; i++) {
+			for (i = nmd->first_rx_ring; i <= nmd->last_rx_ring; i++) {
 
-			rxring = NETMAP_RXRING(nifp, i);
-			/* compute free space in the ring */
-			m = rxring->head + rxring->num_slots - rxring->tail;
-			if (m >= (int) rxring->num_slots)
-				m -= rxring->num_slots;
-			if (nm_ring_empty(rxring))
-				continue;
+				rxring = NETMAP_RXRING(nifp, i);
+				/* compute free space in the ring */
+				m = rxring->head + rxring->num_slots - rxring->tail;
+				if (m >= (int) rxring->num_slots)
+					m -= rxring->num_slots;
+				if (nm_ring_empty(rxring))
+					continue;
 
-			m = receive_packets(rxring, 512, 0, NULL);
+				m = receive_packets(rxring, 512, 0, NULL);
+			}
 		}
 
-
+		if(pfds[1].revents & POLLIN){
+		
+			OFDPA_ERROR_t rc;
+			ofdpaPcbMsg_t msg;
+			ofdpaPktCb_t *pcb;
+			uint32_t bufIdx;
+			
+			rc = dpPortMngPktRecv(&msg, NULL);
+			if(rc == OFDPA_E_NONE){
+				pcb 		= msg.pcb;
+				rxring = NETMAP_RXRING(nifp, nmd->first_rx_ring);
+				bufIdx 	= NETMAP_BUF_IDX(rxring,pcb->this);
+				rc = dpNetmapMemFree(bufIdx);
+				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+					"free slot buf @ buf_idx %d , rc = %d\r\n",bufIdx,rc);
+			}
+			//dump_pkt(&msg, sizeof(msg));
+		}
 
 	}
 
@@ -1272,45 +1303,12 @@ OFDPA_ERROR_t  dpPortQueueSchedSet(uint32_t port, int32_t mode,int32_t *weights)
 
 OFDPA_ERROR_t dpPortMngPktRecv(ofdpaPcbMsg_t *msg, struct timeval *timeout)
 {
-  int pipeInPktSockFd;
   ssize_t recvBytes;
   int rv;
   int flags = 0;
 
-  pipeInPktSockFd = portMng.nodeSock;
-  if (pipeInPktSockFd < 0)
-  {
-    return OFDPA_E_FAIL;
-  }
 
-  if (timeout)
-  {
-    if ((timeout->tv_sec == 0) && (timeout->tv_usec == 0))
-    {
-      /* set socket to non-blocking for this read */
-      flags |= MSG_DONTWAIT;
-    }
-    else
-    {
-      /* blocking socket with a timeout */
-      rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, (char *)timeout,
-                      sizeof(struct timeval));
-      if (rv < 0)
-      {
-        OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_ALWAYS,
-                          "Failed to set packet receive timeout. Error %d.\r\n", rv);
-        return OFDPA_E_FAIL;
-      }
-    }
-  }
-  else
-  {
-    /* blocking socket with no timeout. Make sure there is no timeout configured
-     * on the socket from previous call. */
-    rv = setsockopt(pipeInPktSockFd, SOL_SOCKET, SO_RCVTIMEO, NULL, 0);
-  }
-
-  recvBytes = recvfrom(pipeInPktSockFd, msg, sizeof(*msg), flags, 0, 0);
+  recvBytes = recvfrom(portMng.nodeSock, msg, sizeof(*msg), flags, 0, 0);
 
   if (recvBytes < 0)
   {
