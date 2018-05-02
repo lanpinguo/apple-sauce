@@ -455,13 +455,40 @@ void port_thread_core(void *argv)
 			OFDPA_ERROR_t rc;
 			ofdpaPcbMsg_t msg;
 			ofdpaPktCb_t *pcb;
+			struct netmap_slot *ts ;
 			uint32_t bufIdx;
+			uint32_t pktBufIdx;
+			uint32_t k;
+
 			
 			rc = dpPortMngPktRecv(&msg, NULL);
 			if(rc == OFDPA_E_NONE){
 				pcb 		= msg.pcb;
 				rxring = NETMAP_RXRING(nifp, nmd->first_rx_ring);
-				bufIdx 	= NETMAP_BUF_IDX(rxring,pcb->this);
+				pktBufIdx 	= NETMAP_BUF_IDX(rxring,pcb->this);
+				txring = NETMAP_TXRING(nifp, 0);
+
+				/* Check tx buffer space */
+				m = nm_ring_space(txring);
+				if(m < 1){
+					rc = dpNetmapMemFree(pktBufIdx);
+					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+						"tx fault,free slot buf @ buf_idx %d , rc = %d\r\n",pktBufIdx,rc);
+				}
+
+				/* ready to send*/
+				k = txring->cur;/* TX */
+				ts = &txring->slot[k];
+				bufIdx = ts->buf_idx;
+				ts->buf_idx = pktBufIdx;
+
+				/* report the buffer change. */
+				ts->flags |= NS_BUF_CHANGED;
+
+				k = nm_ring_next(txring, k);
+				txring->head = txring->cur = k;
+
+				
 				rc = dpNetmapMemFree(bufIdx);
 				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
 					"free slot buf @ buf_idx %d , rc = %d\r\n",bufIdx,rc);
