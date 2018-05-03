@@ -383,12 +383,14 @@ void port_thread_core(void *argv)
 	nifp = nmd->nifp;
 	txring = NETMAP_RXRING(nifp, 0);
 
-	D("nifp start at %p",nifp);
 
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
+										"nifp start at %p",nifp);
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
+										"last extra buffer at %d, totalNum: %d", 
+											nifp->ni_bufs_head, 
+											nmd->req.nr_arg3);
 
-	D("last extra buffer at %d, totalNum: %d", 
-			nifp->ni_bufs_head, 
-			nmd->req.nr_arg3);
 
 
 	rc =  dpNetmapMemPoolInit(nmd->buf_start,nmd->buf_end - nmd->buf_start, txring->nr_buf_size);
@@ -416,23 +418,21 @@ void port_thread_core(void *argv)
 
 			
 	while(1) {
-	
+
 		rc = poll(pfds, sizeof(pfds)/sizeof(struct pollfd), -1) ; /*wait forever*/
-#if 0
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-			"poll, rc = %d \r\n",rc);
-		for(i = 0 ; i < sizeof(pfds)/sizeof(struct pollfd); i ++){
-			printf("\r\npoll index [%d] result:\r\n",i);
-			printf("%-15s = %d\r\n","fd",pfds[i].fd );
-			printf("%-15s = 0x%08x\r\n","events",pfds[i].events );
-			printf("%-15s = 0x%08x\r\n","revents",pfds[i].revents );
-		}
-#endif
 		if ((rc < 0) || (pfds[0].revents & POLLERR)) {
-	
-			D("error rc=%d(%s)!!\r\n",rc,strerror(errno));
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
+				"error rc=%d(%s)!!\r\n",rc,strerror(errno));
 			goto out;
 		}
+#if 0
+				for(i = 0 ; i < sizeof(pfds)/sizeof(struct pollfd); i ++){
+					printf("\r\npoll index [%d] result:\r\n",i);
+					printf("%-15s = %d\r\n","fd",pfds[i].fd );
+					printf("%-15s = 0x%08x\r\n","events",pfds[i].events );
+					printf("%-15s = 0x%08x\r\n","revents",pfds[i].revents );
+				}
+#endif
 
 		if(pfds[0].revents & POLLIN){
 		
