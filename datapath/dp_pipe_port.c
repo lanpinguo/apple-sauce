@@ -96,7 +96,7 @@ static OFDPA_ERROR_t portPipeInPktProcess(struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"port ft rec %d\r\n",recvBytes);
 	msg.dstObjectId = OFDPA_FLOW_TABLE_ID_VLAN;
 	datapathPipeMsgSend(portPipeInSock,&msg);

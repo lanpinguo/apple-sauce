@@ -395,7 +395,7 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 	rv = egrVlanPktKeyCreate(pcb,&pktKey);
 	if(rv != OFDPA_E_NONE){
 	
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 											 "create search key failed!\r\n", 0);
 		goto default_opt;
 	}
@@ -427,7 +427,7 @@ static OFDPA_ERROR_t egrVlanPktProcess( ofdpaPktCb_t *pcb)
 
 	}
 	else {
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERBOSE,
 						 "NO MACTCH in talbe [%d]\r\n",OFDPA_FLOW_TABLE_ID_VLAN);
 	}
 
@@ -506,7 +506,7 @@ static OFDPA_ERROR_t egrVlanPipeInPktRecv(struct timeval *timeout)
   }
 
 	
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"egress vlan ft rec %d\r\n",recvBytes);
 	egrVlanPktProcess(msg.pcb);
 

@@ -262,7 +262,7 @@ OFDPA_ERROR_t mplsL2PortPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pNode->valid = 1;
 	mplsL2Port_pipe_config.count++;
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "mplsL2Port pipe flow add here!\r\n", 0);
 
 
@@ -325,9 +325,9 @@ void *mplsL2PortEntryMatchFind(struct ofdpaMplsL2PortPipeNodeConfig_s *mplsL2Por
 			pKeyMask 	= (uint64_t*)&pNode->match.keyMask;
 			unmatch 	= 0;
 			for(j = 0 ; j < sizeof(ofdpaMplsL2PortMatchKey_t)/sizeof(uint64_t); j++){
-
+				/*
 				printf("i = %d, j = %d, in = %016x , Key:Mask = %016x:%016x\r\n"
-								,i,j,pPktKey[j],pKey[j],pKeyMask[j]);
+								,i,j,pPktKey[j],pKey[j],pKeyMask[j]);*/
 								
 				if((pPktKey[j] & pKeyMask[j]) ^ pKey[j]){
 					unmatch = 1;
@@ -513,7 +513,7 @@ static OFDPA_ERROR_t mplsL2PortPipeInPktRecv(struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"mpls l2 port ft rec %d\r\n",recvBytes);
 	mplsL2PortPktProcess(msg.pcb);
 

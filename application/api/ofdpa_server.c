@@ -383,7 +383,7 @@ OFDPA_ERROR_t ofdpaGroupAdd(ofdpaGroupEntry_t *group)
     return OFDPA_E_PARAM;
   }
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "Add Group : 0x%08x!\r\n", group->groupId);
 
 
@@ -919,7 +919,7 @@ OFDPA_ERROR_t ofdpaGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 
 	/* For fast instert, save the time in searching group's instance */
 	groupBucket->ptrGrpInst = groupStats.ptrGrpInst;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "Add Group bucket to obj (%p) !\r\n", groupBucket->ptrGrpInst);
 
 

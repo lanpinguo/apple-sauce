@@ -85,29 +85,22 @@ OFDPA_ERROR_t  executeEgrActSetOnPkt(ofdpaPktCb_t *pcb)
 static OFDPA_ERROR_t egrActExecutorPktProcess( ofdpaPktCb_t *pcb)
 {
 	OFDPA_ERROR_t rc;
+	OFDPA_ERROR_t rc1;
 	ofdpaPcbMsg_t msg;
 
-
-	dump_pcb(pcb);
-
+	/*dump_pcb(pcb);*/
 
 	rc = executeEgrActSetOnPkt(pcb);
+	pcb->port = 3;
 
-	if((rc == OFDPA_E_NONE)&& (pcb->meta_data.pGrpInst != NULL)){
-		msg.dstObjectId = OFDPA_GROUP_TABLE;
-		msg.pcb = pcb;
-		rc = datapathPipeMsgSend(egr_act_executor_pipe_config.nodeSock ,&msg);
-		if(rc != OFDPA_E_NONE){
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
-							 "Failed to send msg, rv = %d\r\n",rc);
-		
-			return OFDPA_E_PARAM;
-		}
+	msg.dstObjectId = OFDPA_PORT_MANAGER_ID;
+	msg.pcb = pcb;
+	rc1 = datapathPipeMsgSend(egr_act_executor_pipe_config.nodeSock ,&msg);
+	if(rc1 != OFDPA_E_NONE){
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+						 "Failed to send msg, rv = %d\r\n",rc);
 	}
-	else{
-
-	}
-  return OFDPA_E_NONE;
+  return rc;
 }
 
 

@@ -94,7 +94,7 @@ uint64_t ofdpaActSetGrpId(void *this,ofdpaActArg_t *arg)
 	OFDPA_ERROR_t rc = OFDPA_E_NONE;
 
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -109,7 +109,7 @@ uint64_t ofdpaActSetGrpId(void *this,ofdpaActArg_t *arg)
 		
 		rc = dpGroupGet((uint32_t)pObj->arg, &group);
 		if(rc != OFDPA_E_NONE){
-			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 												 "group %d not found!\r\n", (uint32_t)pObj->arg);
 			pPkt->meta_data.pGrpInst = NULL;
 			return rc;
@@ -127,7 +127,7 @@ uint64_t ofdpaActSetGrpId(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetQosIndex(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -145,7 +145,7 @@ uint64_t ofdpaActSetVlanId(void *this,ofdpaActArg_t *arg)
 	ofdpaVlan_t *vlan = NULL;
 
 	
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -171,7 +171,7 @@ uint64_t ofdpaActSetVlanId(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetVlanId2(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -185,7 +185,7 @@ uint64_t ofdpaActSetVlanId2(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPushVlan(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -235,7 +235,7 @@ uint64_t ofdpaActPushVlan(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPushVlan2(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -249,7 +249,7 @@ uint64_t ofdpaActPushVlan2(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMetaDataOvid(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -266,7 +266,7 @@ uint64_t ofdpaActSetMetaDataTunId(void *this,ofdpaActArg_t *arg)
 	ofdpaAct_t *pObj = this;
 	ofdpaPktCb_t *pPkt;
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "arg = %lld \r\n", pObj->arg);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -285,7 +285,7 @@ uint64_t ofdpaActSetMetaDataTunId(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMetaDataVrf(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -302,7 +302,7 @@ uint64_t ofdpaActSetMetaDataMplsL2Port(void *this,ofdpaActArg_t *arg)
 	ofdpaAct_t *pObj = this;
 	ofdpaPktCb_t *pPkt;
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "arg = %lld \r\n", pObj->arg);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -327,7 +327,7 @@ uint64_t ofdpaActSetMetaDataMplsType(void *this,ofdpaActArg_t *arg)
 	ofdpaAct_t *pObj = this;
 	ofdpaPktCb_t *pPkt;
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "arg = %lld \r\n", pObj->arg);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -345,7 +345,7 @@ uint64_t ofdpaActSetMetaDataMplsType(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActIncClassBasedCounter(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -360,7 +360,7 @@ uint64_t ofdpaActIncClassBasedCounter(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActIdentifyOutPort(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -372,7 +372,7 @@ uint64_t ofdpaActIdentifyOutPort(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPopVlan(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -387,7 +387,7 @@ uint64_t ofdpaActPopVlan(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActAllowVlanTrans(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -400,7 +400,7 @@ uint64_t ofdpaActAllowVlanTrans(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActOamLmTxCount(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
@@ -416,7 +416,7 @@ uint64_t ofdpaActOamLmTxCount(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetDstMac(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -456,7 +456,7 @@ uint64_t ofdpaActSetDstMac(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetSrcMac(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -497,7 +497,7 @@ uint64_t ofdpaActSetSrcMac(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetLmepId(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -511,7 +511,7 @@ uint64_t ofdpaActSetLmepId(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActIncColorBasedCount(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	return OFDPA_E_NONE;
 }
@@ -523,7 +523,7 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 	int newL2HdrBase;
 
 	
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -561,7 +561,7 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetTpid(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	return OFDPA_E_NONE;
 }
@@ -569,7 +569,7 @@ uint64_t ofdpaActSetTpid(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPushMplsHdr(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -625,7 +625,7 @@ uint64_t ofdpaActPushMplsHdr(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetEtherType(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	return OFDPA_E_NONE;
 }
@@ -634,7 +634,7 @@ uint64_t ofdpaActSetEtherType(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActPushCw(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -674,7 +674,7 @@ uint64_t ofdpaActPushCw(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMplsLabel(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -717,7 +717,7 @@ uint64_t ofdpaActSetMplsLabel(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMplsBos(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -760,7 +760,7 @@ uint64_t ofdpaActSetMplsBos(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMplsTtl(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -805,7 +805,7 @@ uint64_t ofdpaActSetMplsTtl(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMplsExp(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -848,7 +848,7 @@ uint64_t ofdpaActSetMplsExp(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActCpyMplsExpOutwards(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -862,7 +862,7 @@ uint64_t ofdpaActCpyMplsExpOutwards(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetRemarkTableId(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -876,7 +876,7 @@ uint64_t ofdpaActSetRemarkTableId(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActCpyMplsTtlOutwards(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -890,7 +890,7 @@ uint64_t ofdpaActCpyMplsTtlOutwards(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetVlanPcp(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -904,7 +904,7 @@ uint64_t ofdpaActSetVlanPcp(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetVlanDei(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -917,7 +917,7 @@ uint64_t ofdpaActSetVlanDei(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetDscp(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -931,7 +931,7 @@ uint64_t ofdpaActSetDscp(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetMplsExpRemarkTable(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;
@@ -945,7 +945,7 @@ uint64_t ofdpaActSetMplsExpRemarkTable(void *this,ofdpaActArg_t *arg)
 uint64_t ofdpaActSetPcpPriRemarkTable(void *this,ofdpaActArg_t *arg)
 {
 	ofdpaAct_t *pObj = this;
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "%p!\r\n", this);
 	if(ACT_OP_TYPE_PRETTY_PRINT == arg->type){
 		ofdpaActPrintBuf_t *pBuf = arg->data;

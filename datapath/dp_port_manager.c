@@ -252,7 +252,6 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	int i;
 	dp_pkt_feild_parse_fn parse_fn = NULL;
 	
-
 	/* pkt pre-parse */
 	pcb->this = pcb;
 	port			= (uint64_t *)pcb;
@@ -306,6 +305,9 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 	for (rx = 0; rx < limit; rx++) {
 		struct netmap_slot *slot = &ring->slot[cur];
 		char *p = NETMAP_BUF(ring, slot->buf_idx);
+
+
+		memset(p,0,sizeof(ofdpaPktCb_t));
 
 		*bytes += slot->len;
 
@@ -371,12 +373,11 @@ void port_thread_core(void *argv)
 	
 	nmd = nm_open(ifname, &req, 0, NULL);
 	if (nmd == NULL) {
-		D("Unable to open %s: %s", ifname, strerror(errno));
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+			"Unable to open %s: %s", ifname, strerror(errno));
 		goto out;
 	}
 
-	D("buf start at %p",nmd->buf_start);
-	D("buf size : %d",nmd->buf_end - nmd->buf_start);
 	
 	pfds[0].fd = nmd->fd;
 	pfds[0].events = POLLIN;
@@ -384,6 +385,9 @@ void port_thread_core(void *argv)
 	txring = NETMAP_RXRING(nifp, 0);
 
 
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
+										"buf start at %p, size %d",nmd->buf_start,
+										nmd->buf_end - nmd->buf_start);
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										"nifp start at %p",nifp);
 	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
@@ -401,7 +405,6 @@ void port_thread_core(void *argv)
 	}
 
 	for(i = 0, m = nifp->ni_bufs_head; i < nmd->req.nr_arg3; i++){
-		D("index %d :", m);
 		pBuf = NETMAP_BUF(txring,m);
 		dpNetmapMemFree(m);
 		if(rc != OFDPA_E_NONE){
@@ -468,12 +471,16 @@ void port_thread_core(void *argv)
 				pktBufIdx 	= NETMAP_BUF_IDX(rxring,pcb->this);
 				txring = NETMAP_TXRING(nifp, 0);
 
+				/*dump_pcb(pcb);*/
+
+
 				/* Check tx buffer space */
 				m = nm_ring_space(txring);
-				if(m < 1){
+				if((m < 1) || (pcb->port == 0)){
 					rc = dpNetmapMemFree(pktBufIdx);
 					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
-						"tx fault,free slot buf @ buf_idx %d , rc = %d\r\n",pktBufIdx,rc);
+						"drop packet,free slot buf @ buf_idx %d , port = %016x\r\n",pktBufIdx,pcb->port);
+					continue;	
 				}
 
 				/* ready to send*/
@@ -481,16 +488,18 @@ void port_thread_core(void *argv)
 				ts = &txring->slot[k];
 				bufIdx = ts->buf_idx;
 				ts->buf_idx = pktBufIdx;
-
+				ts->len = pcb->pkt_len;
 				/* report the buffer change. */
 				ts->flags |= NS_BUF_CHANGED;
 
 				k = nm_ring_next(txring, k);
 				txring->head = txring->cur = k;
+				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
+					"tx pkt, len = %d\r\n",ts->len);
 
 				
 				rc = dpNetmapMemFree(bufIdx);
-				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+				OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 					"free slot buf @ buf_idx %d , rc = %d\r\n",bufIdx,rc);
 			}
 			//dump_pkt(&msg, sizeof(msg));
@@ -499,7 +508,8 @@ void port_thread_core(void *argv)
 	}
 
 out:
-	D("error!!\r\n");
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+		"error, rc = %d\r\n",rc);
 	return;	
 	
 }
@@ -1350,7 +1360,7 @@ OFDPA_ERROR_t dpPortMngPktRecv(ofdpaPcbMsg_t *msg, struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"port manager rec %d\r\n",recvBytes);
 
   return OFDPA_E_NONE;

@@ -169,7 +169,7 @@ OFDPA_ERROR_t vlanPipeFlowAdd(ofdpaFlowEntry_t *flow_node)
 	pNode->valid = 1;
 	vlan_pipe_config.count++;
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "vlan pipe flow add here!\r\n", 0);
 
 
@@ -391,7 +391,7 @@ static OFDPA_ERROR_t vlanPktProcess( ofdpaPktCb_t *pcb)
 	rc = vlanPktKeyCreate(pcb,&pktKey);
 	if(rc != OFDPA_E_NONE){
 	
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 											 "create search key failed!\r\n", 0);
 		goto exception_proc;
 	}
@@ -414,11 +414,11 @@ static OFDPA_ERROR_t vlanPktProcess( ofdpaPktCb_t *pcb)
 		goto translate_pkt;
 
 	}
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 					 "NO MACTCH in talbe [%d]\r\n",OFDPA_FLOW_TABLE_ID_VLAN);
 
 exception_proc:
-	/* the last ingress table, process the action set*/
+	pcb->port = 0; /* drop the packet*/
 	msg.dstObjectId = OFDPA_PORT_MANAGER_ID;
 	rc = OFDPA_E_FAIL;
 translate_pkt:
@@ -493,7 +493,7 @@ static OFDPA_ERROR_t vlanPipeInPktRecv(struct timeval *timeout)
   }
 
 	
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"vlan ft rec %d\r\n",recvBytes);
 	vlanPktProcess(msg.pcb);
 

@@ -323,7 +323,7 @@ static OFDPA_ERROR_t mplsPcpTrustPipeInPktRecv(struct timeval *timeout)
     return OFDPA_E_FAIL;
   }
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"mpls pcp trust ft rec %d\r\n",recvBytes);
 	mplsPcpTrustPktProcess(msg.pcb);
 

@@ -91,7 +91,7 @@ OFDPA_ERROR_t indirectGroupAdd(ofdpaGroupEntry_t *group)
 		return OFDPA_E_PARAM;
 	}
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 										 "Add new indirect Group 0x%08x \r\n", group->groupId);
 
 	pNew = dpGrpNodeMalloc(OFDPA_GRP_TYPE_INDIRECT,1);
@@ -99,7 +99,7 @@ OFDPA_ERROR_t indirectGroupAdd(ofdpaGroupEntry_t *group)
 		pNew->grpId = group->groupId;
 		group->ptrGrpInst = pNew;
 		
-		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERBOSE,
+		OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 											 "New group 0x%08x node added!\r\n", group->groupId);
 		return OFDPA_E_NONE;
 	}
@@ -285,7 +285,7 @@ OFDPA_ERROR_t indirectGroupBucketEntryAdd(ofdpaGroupBucketEntry_t *groupBucket)
 
   if (OFDPA_E_NONE != dpGroupGet(groupBucket->referenceGroupId, &group))
   {
-    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+    OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
                        "Group (0x%x) not present in Group Table!\r\n", groupBucket->referenceGroupId);
 		
 		pBukt->ptrRefGrpInst = NULL;
@@ -344,7 +344,7 @@ void indirectGrpPktProcess( dpGrpWork_t *work)
 
 	
 
-	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_BASIC,
+	OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_DATAPATH, OFDPA_DEBUG_VERY_VERBOSE,
 										"Receive packet %p.\r\n",work->pPkt);
 
 	pPkt = work->pPkt;
