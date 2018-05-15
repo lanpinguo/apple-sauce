@@ -3629,7 +3629,7 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 #endif /* __cplusplus */
 
 #define RESERVED_BLOCK_SIZE		256
-
+#define PKT_FRAGS_NUM_MAX			8
 /* big endian to little endian */
 #define REORDER16_B2L(v)			((((v)>>8)&0xFF)|(((v)<<8)&0xFF00))
 #define REORDER32_B2L(v)			((((v)>>24)&0xFF)|(((v)>>8)&0xFF00)|(((v)<<24)&0xFF000000)|(((v)<<8)&0xFF0000))
@@ -3678,6 +3678,7 @@ while(0)
 #define DP_VLAN_HDR_LEN				4
 #define DP_MPLS_HDR_LEN				4
 #define DP_MPLS_CW_LEN				4
+#define DP_MPLS_DOMAIN_MAX		(DP_MPLS_HDR_LEN * 3 + DP_MPLS_CW_LEN)
 
 #define UPDATE_DATA_OFFSET(pcb,val,l) \
 do { \
@@ -3729,17 +3730,18 @@ struct OFDPA_PKT_FEILD {
 };
 
 enum{
-	FEILD_DMAC = 0,	/* destination mac address*/
-	FEILD_SMAC,			/* source mac address */
-	FEILD_VLAN_0,
-	FEILD_VLAN_1,
-	FEILD_L3_TYPE,	/* layer 3 protocol type */
+	FEILD_L2_DMAC = 0,	/* destination mac address*/
+	FEILD_L2_SMAC,			/* source mac address */
+	FEILD_L2_VLAN_0,
+	FEILD_L2_VLAN_1,
+	FEILD_L2_TYPE,	/* layer 3 protocol type */
 	FEILD_L2_HDR, 	/* layer 2 protocol header */
 
 	FEILD_MPLS_2, 	/* mpls2 header */
 	FEILD_MPLS_1,		/* mpls1 header */
 	FEILD_MPLS_0, 	/* mpls0 header */
-	FEILD_CW, 			/* mpls control word */
+	FEILD_MPLS_CW, 	/* mpls control word */
+	FEILD_MPLS, 		/* MPLS protocol header */
 	
 	FEILD_DATA, 		/* payload */
 	
@@ -3748,15 +3750,15 @@ enum{
 };
 
 enum{
-	FEILD_DMAC_LEN 		= 6,	/* destination mac address*/
-	FEILD_SMAC_LEN 		= 6,			/* source mac address */
-	FEILD_VLAN_0_LEN	= 4,
-	FEILD_VLAN_1_LEN	= 4,
-	FEILD_L3_TYPE_LEN	= 2,	/* layer 3 protocol type */
+	FEILD_L2_DMAC_LEN 		= 6,	/* destination mac address*/
+	FEILD_L2_SMAC_LEN 		= 6,			/* source mac address */
+	FEILD_L2_VLAN_0_LEN	= 4,
+	FEILD_L2_VLAN_1_LEN	= 4,
+	FEILD_L2_TYPE_LEN	= 2,	/* layer 3 protocol type */
 	FEILD_MPLS_2_LEN	= 4,		/* mpls2 header */
 	FEILD_MPLS_1_LEN	= 4,		/* mpls1 header */
 	FEILD_MPLS_0_LEN	= 4,		/* mpls0 header */
-	FEILD_CW_LEN			= 4, 			/* mpls control word */
+	FEILD_MPLS_CW_LEN			= 4, 			/* mpls control word */
 	FEILD_L3_HDR_LEN	= 20, 	/* layer 3 protocol header	*/
 	FEILD_L4_HDR_LEN	= 20, 	/* layer 4 protocol header */
 
@@ -3853,6 +3855,7 @@ typedef struct ofdpaPktCb_s
 	uint16_t								cur;		/* point current position in the packet */
 	uint16_t								pool_tail;		/* the tail postion of the memory pool for packet increase */
 	uint16_t								pool_head;		/* the head postion of the memory pool for packet increase */
+	uint8_t								 	frags[PKT_FRAGS_NUM_MAX];		/* frags that will used by nic */
 	struct OFDPA_PKT_FEILD 	feilds[FEILD_MAX];		/* packet feild info */
 	ofdpa_MetaData_t				meta_data;
 	struct ofdpa_list_head	action_set;

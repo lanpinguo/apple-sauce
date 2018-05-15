@@ -166,6 +166,7 @@ void ofdpaDebugComponentResetAll(void);
 
 int ofdpaDebugVerbositySet(ofdpaDebugLevels_t verbosity);
 ofdpaDebugLevels_t ofdpaDebugVerbosityGet(void);
+void debugInfoEnable(int level);
 
 char *ofdpaMacAddrToString(ofdpaMacAddr_t *mac, char *buffer);
 

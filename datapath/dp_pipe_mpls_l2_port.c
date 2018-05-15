@@ -281,7 +281,7 @@ OFDPA_ERROR_t mplsL2PortMatchKeyCreate(ofdpaPktCb_t *pcb,ofdpaMplsL2PortMatchKey
 	}
 
 	
-	pEtherType = (uint16_t *)getFeild(pcb, FEILD_L3_TYPE);
+	pEtherType = (uint16_t *)getFeild(pcb, FEILD_L2_TYPE);
 	if(pEtherType ==  NULL){
 		return OFDPA_E_FAIL;
 	}

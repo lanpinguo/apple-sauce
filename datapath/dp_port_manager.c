@@ -136,11 +136,11 @@ void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb)
 {
 	uint16_t *pFeild_16;
 	
-	if(pcb->feilds[FEILD_VLAN_0].len == 0){
-		SET_FEILD(pcb,FEILD_VLAN_0,pcb->cur);
+	if(pcb->feilds[FEILD_L2_VLAN_0].len == 0){
+		SET_FEILD(pcb,FEILD_L2_VLAN_0,pcb->cur);
 	}
-	else if(pcb->feilds[FEILD_VLAN_1].len == 0){
-		SET_FEILD(pcb,FEILD_VLAN_1,pcb->cur);
+	else if(pcb->feilds[FEILD_L2_VLAN_1].len == 0){
+		SET_FEILD(pcb,FEILD_L2_VLAN_1,pcb->cur);
 	}
 	else{
 		return NULL;
@@ -168,8 +168,8 @@ void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 {
 	uint16_t *pFeild_16;
 	ofdpaMpls_t	*mpls;
-	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		SET_FEILD(pcb,FEILD_L3_TYPE,pcb->cur);
+	if(pcb->feilds[FEILD_L2_TYPE].len == 0){
+		SET_FEILD(pcb,FEILD_L2_TYPE,pcb->cur);
 		/* point new feild*/
 		pcb->cur += 2;
 	}
@@ -209,8 +209,8 @@ void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 
 void * dpPktFeildIpParse(ofdpaPktCb_t *pcb)
 {
-	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		SET_FEILD(pcb,FEILD_L3_TYPE,pcb->cur);
+	if(pcb->feilds[FEILD_L2_TYPE].len == 0){
+		SET_FEILD(pcb,FEILD_L2_TYPE,pcb->cur);
 	}
 	return NULL;
 }
@@ -222,11 +222,11 @@ void * dpPktFeildMacParse(ofdpaPktCb_t *pcb)
 
 	/* At default, the src mac and dst mac position is known */
 	
-	pcb->feilds[FEILD_DMAC].offset = pcb->cur;
-	pcb->feilds[FEILD_DMAC].len = 6;
+	pcb->feilds[FEILD_L2_DMAC].offset = pcb->cur;
+	pcb->feilds[FEILD_L2_DMAC].len = 6;
 
-	pcb->feilds[FEILD_SMAC].offset = pcb->cur + 6;
-	pcb->feilds[FEILD_SMAC].len = 6;
+	pcb->feilds[FEILD_L2_SMAC].offset = pcb->cur + 6;
+	pcb->feilds[FEILD_L2_SMAC].len = 6;
 
 	pcb->cur += 12; /* point new feilds*/
 	pFeild_16 = DP_GET_CUR_ADDR(pcb);
@@ -318,6 +318,11 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 		pcb = (ofdpaPktCb_t *)p;
 		pcb->len	= slot->len + RESERVED_BLOCK_SIZE;
 		pcb->pkt_len = (slot->len > 2048 - RESERVED_BLOCK_SIZE) ? 2048 - RESERVED_BLOCK_SIZE : slot->len;
+		pcb->frags[0] = FEILD_L2_HDR;
+		pcb->frags[1] = FEILD_MPLS;
+		pcb->frags[2] = FEILD_DATA;
+
+		
 		rc = dpPktPreParse(pcb);
 		
 		if (dump)

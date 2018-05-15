@@ -91,7 +91,7 @@ void *findMatchMplsPcpTrustNode(ofdpaMplsPcpTrustPipeNodeConfig_t *mpls_pcp_trus
 	int i;
 	struct OFDPA_VLAN *vlan;
 	
-	vlan = (struct OFDPA_VLAN *)getFeild(pcb, FEILD_VLAN_0);
+	vlan = (struct OFDPA_VLAN *)getFeild(pcb, FEILD_L2_VLAN_0);
 	if(vlan ==  NULL){
 		return NULL;
 	}

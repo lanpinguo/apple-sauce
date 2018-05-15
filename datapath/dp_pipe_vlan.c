@@ -254,7 +254,7 @@ OFDPA_ERROR_t vlanPktKeyCreate(ofdpaPktCb_t *pcb,ofdpaVlanMatchKey_t *key)
 	uint16_t	 *pEtherType;
 	struct OFDPA_VLAN *vlan;
 	
-	vlan = (struct OFDPA_VLAN *)getFeild(pcb, FEILD_VLAN_0);
+	vlan = (struct OFDPA_VLAN *)getFeild(pcb, FEILD_L2_VLAN_0);
 	if(vlan ==  NULL){
 		return OFDPA_E_PARAM;
 	}

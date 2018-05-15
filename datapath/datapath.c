@@ -107,18 +107,19 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
  void dump_pcb(ofdpaPktCb_t *pcb)
 {
 	char *feild_name[] = {
-		"FEILD_DMAC",	
-		"FEILD_SMAC",			
-		"FEILD_VLAN_0",
-		"FEILD_VLAN_1",
-		"FEILD_L3_TYPE",	
+		"FEILD_L2_DMAC",	
+		"FEILD_L2_SMAC",			
+		"FEILD_L2_VLAN_0",
+		"FEILD_L2_VLAN_1",
+		"FEILD_L2_TYPE",	
 		"FEILD_L2_HDR", 	/* layer 4 protocol header */
 		"FEILD_MPLS_2", 	
 		"FEILD_MPLS_1", 	
 		"FEILD_MPLS_0",		
-		"FEILD_CW", 			
-		"FEILD_DATA", 	
-		"FEILD_MAX",
+		"FEILD_MPLS_CW", 			
+		"FEILD_MPLS", 		/* MPLS protocol header */
+		"FEILD_DATA", 		/* payload */
+		"FEILD_MAX"
 	};
 
 #define PKT_MAX_LEN 		2048	
@@ -138,19 +139,23 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	
 	printf("\r\n %-15s = %016llx","port",pcb->port);
 	printf("\r\n %-15s = %5d","Base",base);
-	for(i = FEILD_L2_HDR , j = 0; i < FEILD_MAX; i++){	
-		if(pcb->feilds[i].len){
-			printf(format,feild_name[i], \
-							pcb->feilds[i].offset - base, \
-							pcb->feilds[i].len);
-			if((j + pcb->feilds[i].len )> PKT_MAX_LEN - 1 ){
+	for(i = 0 , j = 0; i < PKT_FRAGS_NUM_MAX; i++){	
+		int feild = pcb->frags[i];
+		if(feild == 0){
+			break;
+		}
+		if(pcb->feilds[feild].len){
+			printf(format,feild_name[feild], \
+							pcb->feilds[feild].offset - base, \
+							pcb->feilds[feild].len);
+			if((feild + pcb->feilds[feild].len )> PKT_MAX_LEN - 1 ){
 				break;
 			}				
-			memcpy(&pBuf[j],DP_GET_FEILD_ADDR(pcb, i),pcb->feilds[i].len);	
-			j += pcb->feilds[i].len;
+			memcpy(&pBuf[j],DP_GET_FEILD_ADDR(pcb, feild),pcb->feilds[feild].len);	
+			j += pcb->feilds[feild].len;
 		}
 		else {
-			printf("\r\n %-15s = %5s, len = %5s",feild_name[i],"--","--");
+			printf("\r\n %-15s = %5s, len = %5s",feild_name[feild],"--","--");
 		}
 	}
 	
@@ -1034,6 +1039,7 @@ int datapathInit(void)
 
 	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
 
+	debugInfoEnable(OFDPA_DEBUG_VERY_VERBOSE);
 
 	
 	(void)dpPipeNodeSocketsAddrCreate();

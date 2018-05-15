@@ -317,6 +317,19 @@ void level2DebugInfoEnable(void)
 	(void)ofdpaDebugVerbositySet(OFDPA_DEBUG_VERBOSE);
 }
 
+void debugInfoEnable(int level)
+{
+	unsigned char j;
+
+	for (j = OFDPA_COMPONENT_FIRST; j < OFDPA_COMPONENT_MAX; j++)
+	{
+		ofdpaDebugComponentEnable(j);
+	}
+
+	(void)ofdpaDebugVerbositySet(level);
+}
+
+
 int ofdpaDebugComponentIsEnabled(ofdpaComponentIds_t component)
 {
   int index = ofdpaComponentIndexGet(component);
