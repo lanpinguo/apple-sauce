@@ -51,7 +51,7 @@
 
 
 //uint8_t ifname[64] = "netmap:eth1";
-uint8_t ifname[64] = "netmap:eth1";
+uint8_t ifname[64] = "netmap:eth0";
 
 
 ofdpaPortMngConfig_t		portMng;
@@ -72,14 +72,17 @@ dump_payload(const char *_p, int len, struct netmap_ring *ring, int cur)
 	char buf[128];
 	int i, j, i0;
 	const unsigned char *p = (const unsigned char *)_p;
-
+	int final_len;
 	/* get the length in ASCII of the length of the packet. */
 
 	printf("ring %p cur %5d [buf %6d flags 0x%04x len %5d]\n",
 		ring, cur, ring->slot[cur].buf_idx,
 		ring->slot[cur].flags, len);
-
-	dump_pkt(p,len);
+	final_len = len;
+	if(len > 1500){
+		final_len = 1500;
+	}
+	dump_pkt(p,final_len);
 
 
 }
@@ -134,10 +137,10 @@ void * dpPktFeildVlanParse(ofdpaPktCb_t *pcb)
 	uint16_t *pFeild_16;
 	
 	if(pcb->feilds[FEILD_VLAN_0].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_VLAN_0,pcb->cur);
+		SET_FEILD(pcb,FEILD_VLAN_0,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_VLAN_1].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_VLAN_1,pcb->cur);
+		SET_FEILD(pcb,FEILD_VLAN_1,pcb->cur);
 	}
 	else{
 		return NULL;
@@ -166,20 +169,20 @@ void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 	uint16_t *pFeild_16;
 	ofdpaMpls_t	*mpls;
 	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
+		SET_FEILD(pcb,FEILD_L3_TYPE,pcb->cur);
 		/* point new feild*/
 		pcb->cur += 2;
 	}
 
 	
 	if(pcb->feilds[FEILD_MPLS_0].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_MPLS_0,pcb->cur);
+		SET_FEILD(pcb,FEILD_MPLS_0,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_MPLS_1].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_MPLS_1,pcb->cur);
+		SET_FEILD(pcb,FEILD_MPLS_1,pcb->cur);
 	}
 	else if(pcb->feilds[FEILD_MPLS_2].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_MPLS_2,pcb->cur);
+		SET_FEILD(pcb,FEILD_MPLS_2,pcb->cur);
 	}
 	else{
 		return NULL;
@@ -207,7 +210,7 @@ void * dpPktFeildMplsParse(ofdpaPktCb_t *pcb)
 void * dpPktFeildIpParse(ofdpaPktCb_t *pcb)
 {
 	if(pcb->feilds[FEILD_L3_TYPE].len == 0){
-		SET_FEILD_OFFSET(pcb,FEILD_L3_TYPE,pcb->cur);
+		SET_FEILD(pcb,FEILD_L3_TYPE,pcb->cur);
 	}
 	return NULL;
 }
@@ -242,6 +245,7 @@ void * dpPktFeildMacParse(ofdpaPktCb_t *pcb)
 }
 
 
+
 OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 {
 	OFDPA_ERROR_t	rc = OFDPA_E_NONE;
@@ -258,8 +262,8 @@ OFDPA_ERROR_t dpPktPreParse(ofdpaPktCb_t *pcb)
 	/*port that the pkt comes from*/
 	*port = (1<<2);
 	pcb->cur = RESERVED_BLOCK_SIZE;
-	pcb->pool_tail = RESERVED_BLOCK_SIZE - 1;	/* point to the last byte*/
-	pcb->pool_head = sizeof(ofdpaPktCb_t);	/* point to the first byte*/
+	pcb->pool_tail = dpGet32BitsAlignedValue(RESERVED_BLOCK_SIZE - 4);	/* point to the last 4 byte*/
+	pcb->pool_head = dpGet32BitsAlignedValue(sizeof(ofdpaPktCb_t));	/* point to the first byte*/
 	OFDPA_INIT_LIST_HEAD(&pcb->action_set);
 	
 	parse_fn = dpPktFeildMacParse;
@@ -312,12 +316,12 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 		*bytes += slot->len;
 
 		pcb = (ofdpaPktCb_t *)p;
-		pcb->len	= slot->len;
-		pcb->pkt_len	= slot->len - RESERVED_BLOCK_SIZE;
+		pcb->len	= slot->len + RESERVED_BLOCK_SIZE;
+		pcb->pkt_len = (slot->len > 2048 - RESERVED_BLOCK_SIZE) ? 2048 - RESERVED_BLOCK_SIZE : slot->len;
 		rc = dpPktPreParse(pcb);
 		
 		if (dump)
-			dump_payload(p, slot->len, ring, cur);
+			dump_payload(p + RESERVED_BLOCK_SIZE, slot->len, ring, cur);
 
 		//printf("\r\nl3_type_offset : %d\r\n",l3_type_offset);
 
@@ -348,6 +352,42 @@ receive_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes
 }
 
 
+
+
+static int
+receive_host_packets(struct netmap_ring *ring, u_int limit, int dump, uint64_t *bytes)
+{
+	OFDPA_ERROR_t rc;
+	u_int cur, rx, n;
+	uint64_t b = 0;
+	uint32_t newBufIdx = 0;
+	void * newBuf = NULL;
+	ofdpaPktCb_t *pcb;
+	ofdpaPcbMsg_t msg;
+
+	
+	if (bytes == NULL)
+		bytes = &b;
+
+	cur = ring->cur;
+	n = nm_ring_space(ring);
+	if (n < limit)
+		limit = n;
+	for (rx = 0; rx < limit; rx++) {
+		struct netmap_slot *slot = &ring->slot[cur];
+		char *p = NETMAP_BUF(ring, slot->buf_idx);
+		
+		if (dump){
+			OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+				"host ring recv %d \r\n", cur);
+			dump_payload(p, slot->len, ring, cur);
+		}
+		cur = nm_ring_next(ring, cur);
+	}
+	ring->head = ring->cur = cur;
+
+	return (rx);
+}
 
 
 
@@ -438,6 +478,7 @@ void port_thread_core(void *argv)
 #endif
 
 		if(pfds[0].revents & POLLIN){
+			int dump = 0;
 		
 			for (i = nmd->first_rx_ring; i <= nmd->last_rx_ring; i++) {
 
@@ -449,9 +490,24 @@ void port_thread_core(void *argv)
 				if (nm_ring_empty(rxring))
 					continue;
 
-				m = receive_packets(rxring, 512, 0, NULL);
+				m = receive_packets(rxring, 512, dump, NULL);
 			}
+
+#if 0
+			/* Process host rx ring*/
+			rxring = NETMAP_RXRING(nifp, i);
+			/* compute free space in the ring */
+			m = rxring->head + rxring->num_slots - rxring->tail;
+			if (m >= (int) rxring->num_slots)
+				m -= rxring->num_slots;
+			if (!nm_ring_empty(rxring)){
+				m = receive_host_packets(rxring, 512, dump, NULL);
+			}
+#endif
+			
 		}
+
+
 
 		if(pfds[1].revents & POLLIN){
 		
@@ -471,17 +527,19 @@ void port_thread_core(void *argv)
 				pktBufIdx 	= NETMAP_BUF_IDX(rxring,pcb->this);
 				txring = NETMAP_TXRING(nifp, 0);
 
-				/*dump_pcb(pcb);*/
+				//dump_pcb(pcb);
 
 
 				/* Check tx buffer space */
 				m = nm_ring_space(txring);
 				if((m < 1) || (pcb->port == 0)){
 					rc = dpNetmapMemFree(pktBufIdx);
-					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_BASIC,
+					OFDPA_DEBUG_PRINTF(OFDPA_COMPONENT_API, OFDPA_DEBUG_VERY_VERBOSE,
 						"drop packet,free slot buf @ buf_idx %d , port = %016x\r\n",pktBufIdx,pcb->port);
 					continue;	
 				}
+
+				dump_pcb(pcb);
 
 				/* ready to send*/
 				k = txring->cur;/* TX */

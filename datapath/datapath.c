@@ -91,6 +91,19 @@ struct PIPE_ENTRY_ADDR pipe_entrys[] = {
 ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 
 
+ inline int dpGet32BitsAlignedValue(int value)
+ {
+	 int a,b;
+ 
+	 a = value / 4;
+	 b = value % 4;
+	 return (b == 0) ? value :	(a + 1) * 4;
+ 
+ }
+
+
+
+
  void dump_pcb(ofdpaPktCb_t *pcb)
 {
 	char *feild_name[] = {
@@ -99,31 +112,40 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 		"FEILD_VLAN_0",
 		"FEILD_VLAN_1",
 		"FEILD_L3_TYPE",	
+		"FEILD_L2_HDR", 	/* layer 4 protocol header */
 		"FEILD_MPLS_2", 	
 		"FEILD_MPLS_1", 	
 		"FEILD_MPLS_0",		
 		"FEILD_CW", 			
-		"FEILD_L3_HDR", 	/* layer 3 protocol header	*/
-		"FEILD_L4_HDR", 	/* layer 4 protocol header */
 		"FEILD_DATA", 	
 		"FEILD_MAX",
 	};
 
+#define PKT_MAX_LEN 		2048	
 	char *format = "\r\n %-15s = %5d, len = %5d";
 	char *pBuf = NULL;
-	int i,j;
+	int i,j,len;
 	int base = 0;
-	
 	base = pcb->pool_tail;
-	pBuf = calloc(1,2048);
+	pBuf = calloc(1,PKT_MAX_LEN);
+	
+	if(pcb->pkt_len > PKT_MAX_LEN){
+		len = PKT_MAX_LEN;
+	}
+	else{
+		len = pcb->pkt_len;
+	}
 	
 	printf("\r\n %-15s = %016llx","port",pcb->port);
 	printf("\r\n %-15s = %5d","Base",base);
-	for(i = 0 , j = 0; i < FEILD_MAX; i++){	
+	for(i = FEILD_L2_HDR , j = 0; i < FEILD_MAX; i++){	
 		if(pcb->feilds[i].len){
 			printf(format,feild_name[i], \
 							pcb->feilds[i].offset - base, \
 							pcb->feilds[i].len);
+			if((j + pcb->feilds[i].len )> PKT_MAX_LEN - 1 ){
+				break;
+			}				
 			memcpy(&pBuf[j],DP_GET_FEILD_ADDR(pcb, i),pcb->feilds[i].len);	
 			j += pcb->feilds[i].len;
 		}
@@ -133,8 +155,7 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 	}
 	
 	printf("\r\n");
-	
-	dump_pkt(pBuf, pcb->pkt_len);
+	dump_pkt(pBuf, len);
 
 	free(pBuf);
 
@@ -175,12 +196,16 @@ ofdpaTblPipeNode_t pipe_tbl_nodes[256];
 
  int dpMallocMemFromPktPool(ofdpaPktCb_t *pcb, int len)
  {
+		int actual_len;
 
-		if((pcb->pool_tail - pcb->pool_head) < len){
+
+		actual_len = dpGet32BitsAlignedValue(len);
+		
+		if((pcb->pool_tail - pcb->pool_head) < actual_len){
 			return 0;
 		}
 
-		pcb->pool_tail -= len;
+		pcb->pool_tail -= actual_len;
 
 		return (pcb->pool_tail);
  

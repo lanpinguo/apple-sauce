@@ -200,19 +200,22 @@ uint64_t ofdpaActPushVlan(void *this,ofdpaActArg_t *arg)
 	if(ACT_OP_TYPE_EXECUTE == arg->type){
 		ofdpaPktCb_t *pPkt = arg->data;
 		ofdpaVlan_t *vlan = NULL;
+		int vlanInsertPoint;
+		uint16_t old_l3_type, *l3_type;
 
 		/* Update packet length*/
 		pPkt->pkt_len += DP_VLAN_HDR_LEN;
 
 		
-		int newVlanBase = dpMallocMemFromPktPool(pPkt, DP_VLAN_HDR_LEN);
-		if(newVlanBase){
+		vlanInsertPoint = GET_FEILD_OFFSET(pPkt, FEILD_L3_TYPE);
+		old_l3_type = *((uint16_t*)DP_GET_FEILD(pPkt,FEILD_L3_TYPE)); 
+		if(vlanInsertPoint){
 			if(!DP_IS_FEILD_VALID(pPkt, FEILD_VLAN_0)){
-				SET_FEILD_OFFSET(pPkt, FEILD_VLAN_0,newVlanBase);
+				SET_FEILD(pPkt, FEILD_VLAN_0,vlanInsertPoint);
 				vlan = DP_GET_FEILD(pPkt,FEILD_VLAN_0);
 			}
 			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_VLAN_1)) {
-				SET_FEILD_OFFSET(pPkt, FEILD_VLAN_1,newVlanBase);
+				SET_FEILD(pPkt, FEILD_VLAN_1,vlanInsertPoint);
 				vlan = DP_GET_FEILD(pPkt,FEILD_VLAN_1);
 			}
 			else{
@@ -220,7 +223,11 @@ uint64_t ofdpaActPushVlan(void *this,ofdpaActArg_t *arg)
 			}
 
 			if(vlan){
+				SET_FEILD(pPkt, FEILD_L3_TYPE,vlanInsertPoint + DP_VLAN_HDR_LEN);
+				INC_FEILD_LEN(pPkt, FEILD_L2_HDR,DP_VLAN_HDR_LEN);
+				l3_type = DP_GET_FEILD(pPkt, FEILD_L3_TYPE);
 				vlan->type = (uint16_t)pObj->arg;
+				*l3_type = old_l3_type;
 			}
 		}
 		else
@@ -538,13 +545,16 @@ uint64_t ofdpaActPushL2Hdr(void *this,ofdpaActArg_t *arg)
 		CLEAN_FEILD_ALL(pPkt);
 		/* Update packet length*/
 		UPDATE_DATA_OFFSET(pPkt, pktStart, pPkt->pkt_len);
-		pPkt->pkt_len += DP_L2_HDR_LEN;
-		
-		newL2HdrBase = dpMallocMemFromPktPool(pPkt, DP_L2_HDR_LEN);
+		pPkt->pkt_len += DP_L2_HDR_LEN_MIN;
+
+		/* allocate room according to the maximum length*/
+		newL2HdrBase = dpMallocMemFromPktPool(pPkt, DP_L2_HDR_LEN_MAX);
 		if(newL2HdrBase){
-			SET_FEILD_OFFSET(pPkt, FEILD_DMAC,newL2HdrBase);
-			SET_FEILD_OFFSET(pPkt, FEILD_SMAC,newL2HdrBase + 6);
-			SET_FEILD_OFFSET(pPkt, FEILD_L3_TYPE,newL2HdrBase + 12);
+			SET_FEILD_OFFSET(pPkt, FEILD_L2_HDR,newL2HdrBase);
+			SET_FEILD_LEN(pPkt, FEILD_L2_HDR,DP_L2_HDR_LEN_MIN);
+			SET_FEILD(pPkt, FEILD_DMAC,newL2HdrBase);
+			SET_FEILD(pPkt, FEILD_SMAC,newL2HdrBase + 6);
+			SET_FEILD(pPkt, FEILD_L3_TYPE,newL2HdrBase + 12);
 
 		}
 		else
@@ -591,13 +601,13 @@ uint64_t ofdpaActPushMplsHdr(void *this,ofdpaActArg_t *arg)
 		int newMplsBase = dpMallocMemFromPktPool(pPkt, DP_MPLS_HDR_LEN);
 		if(newMplsBase){
 			if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_0)){
-				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_0,newMplsBase);
+				SET_FEILD(pPkt, FEILD_MPLS_0,newMplsBase);
 			}
 			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_1)){
-				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_1,newMplsBase);
+				SET_FEILD(pPkt, FEILD_MPLS_1,newMplsBase);
 			}
 			else if(!DP_IS_FEILD_VALID(pPkt, FEILD_MPLS_2)){
-				SET_FEILD_OFFSET(pPkt, FEILD_MPLS_2,newMplsBase);
+				SET_FEILD(pPkt, FEILD_MPLS_2,newMplsBase);
 			}			
 			else{
 				return OFDPA_E_INTERNAL;
@@ -655,7 +665,7 @@ uint64_t ofdpaActPushCw(void *this,ofdpaActArg_t *arg)
 		int newMplsBase = dpMallocMemFromPktPool(pPkt, DP_MPLS_CW_LEN);
 		if(newMplsBase){
 			if(!DP_IS_FEILD_VALID(pPkt, FEILD_CW)){
-				SET_FEILD_OFFSET(pPkt, FEILD_CW,newMplsBase);
+				SET_FEILD(pPkt, FEILD_CW,newMplsBase);
 			}
 			else{
 				return OFDPA_E_INTERNAL;

@@ -3644,18 +3644,37 @@ unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
 #define IP_TYPE								REORDER16_L2B(0x0800)
 
 
-#define SET_FEILD_OFFSET(pcb,feild,val) \
+#define SET_FEILD(pcb,feild,val) \
 do { \
 	pcb->feilds[feild].offset = val;\
 	pcb->feilds[feild].len = feild##_LEN;\
 }\
 while(0)
 
+#define INC_FEILD_LEN(pcb,feild,val) \
+do { \
+	pcb->feilds[feild].len += val;\
+}\
+while(0)
+
+
+#define SET_FEILD_LEN(pcb,feild,val) \
+do { \
+	pcb->feilds[feild].len = val;\
+}\
+while(0)
+
+#define SET_FEILD_OFFSET(pcb,feild,val) \
+do { \
+	pcb->feilds[feild].offset = val;\
+}\
+while(0)
+
 #define GET_FEILD_OFFSET(pcb,feild) 	(pcb->feilds[feild].offset)
-#define GET_PKT_START(pcb) (pcb->pool_tail + 1)
+#define GET_PKT_START(pcb) (pcb->feilds[0].offset)
 
-
-#define DP_L2_HDR_LEN					14
+#define DP_L2_HDR_LEN_MAX			22 /* DA + SA + VLAN0 + VLAN1 + TYPE*/
+#define DP_L2_HDR_LEN_MIN					14
 #define DP_VLAN_HDR_LEN				4
 #define DP_MPLS_HDR_LEN				4
 #define DP_MPLS_CW_LEN				4
@@ -3715,12 +3734,13 @@ enum{
 	FEILD_VLAN_0,
 	FEILD_VLAN_1,
 	FEILD_L3_TYPE,	/* layer 3 protocol type */
+	FEILD_L2_HDR, 	/* layer 2 protocol header */
+
 	FEILD_MPLS_2, 	/* mpls2 header */
 	FEILD_MPLS_1,		/* mpls1 header */
 	FEILD_MPLS_0, 	/* mpls0 header */
 	FEILD_CW, 			/* mpls control word */
-	FEILD_L3_HDR, 	/* layer 3 protocol header  */
-	FEILD_L4_HDR,		/* layer 4 protocol header */
+	
 	FEILD_DATA, 		/* payload */
 	
 	FEILD_MAX

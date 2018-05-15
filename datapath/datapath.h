@@ -155,7 +155,7 @@ typedef struct ofdpaPipeTblNode_s
 	} \
 }while(0)
 
-
+inline int dpGet32BitsAlignedValue(int value);
 OFDPA_ERROR_t dpFlowTblPipeNodeRegister(OFDPA_FLOW_TABLE_ID_t 	tableId,ofdpaTblPipeNodeOps_t *ops);
 
 uint32_t getPktLen(ofdpaPktCb_t *pcb);
