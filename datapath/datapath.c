@@ -1039,7 +1039,7 @@ int datapathInit(void)
 
 	memset(pipe_tbl_nodes,0,sizeof(ofdpaTblPipeNode_t));
 
-	debugInfoEnable(OFDPA_DEBUG_VERY_VERBOSE);
+	//debugInfoEnable(OFDPA_DEBUG_VERY_VERBOSE);
 
 	
 	(void)dpPipeNodeSocketsAddrCreate();
