@@ -55,7 +55,7 @@ $(ofagentapp_executable).dbg: $(application_archive) $(ofagent_driver_archive) $
 	$(CC) $(CFLAGS) -o $@ \
 		$(OFDPA_LDFLAGS) -Wl,--relax -Wl,--start-group $^ $(version_file) -Wl,--end-group \
 		-lrt -lm -I$(SDK)/include -Wl,-Bstatic $(OSLIBS_STATIC) \
-		-Wl,-Bdynamic -lc  $(OSLIBS)
+		-Wl,-Bdynamic -lc $(OSLIBS) -lreadline -lcurses
 
 
 

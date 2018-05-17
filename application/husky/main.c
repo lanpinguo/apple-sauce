@@ -1,21 +1,56 @@
-/********************************************************************************/
-/*   @@BEGAIN_INTERNAL_LEGAL@@                                          		*/
-/*                                                                      		*/
-/*                   Copyright(C) Description                           		*/
-/* Raisecom  Science & Technology Development Co.,Ltd. Beijing, China   		*/
-/*     Unpublished work-rights reserved under the China Copyright Act.  		*/
-/*     Use,duplication, or disclosure by the government is subject to   		*/
-/*     restrictions set forth in the CDTT commercial license agreement. 		*/
-/*                                                                      		*/
-/*   @@END_INTERNAL_LEGAL@@                                             		*/
-/***********************************************************************		*/
-/*   Filename 	:main.c                                           			    */
-/*   Author    	:HuShouqiang                                         			  */
-/*   Date       :2015-12-24                                           			*/
-/*   Version   	:1.0                                                    		*/
-/*   Purpose    :                                                       		*/
-/********************************************************************************/
-/********************************************************************************/
+/******************************************************************************
+
+  Copyright (C), 2001-2011, Pure Co., Ltd.
+
+ ******************************************************************************
+  File Name     : main.c
+  Version       : Initial Draft
+  Author        : lanpinguo
+  Created       : 2018/5/17
+  Last Modified :
+  Description   : app main entry
+  Function List :
+              main
+              print_version
+              rpc_server_start
+  History       :
+  1.Date        : 2018/5/17
+    Author      : lanpinguo
+    Modification: Created file
+
+******************************************************************************/
+
+/*----------------------------------------------*
+ * external variables                           *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * external routine prototypes                  *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * internal routine prototypes                  *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * project-wide global variables                *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * module-wide global variables                 *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * constants                                    *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * macros                                       *
+ *----------------------------------------------*/
+
+/*----------------------------------------------*
+ * routines' implementations                    *
+ *----------------------------------------------*/
 
 #include <errno.h>
 #include <stdio.h>
@@ -55,64 +90,33 @@
 #include "rpcsrv_task.h"
 
 
+#include <readline/readline.h>
+#include <readline/history.h>
+#include "commands.h"
+#include "readinput.h"
+
+void level2DebugInfoEnable(void);
+
 #define DEFAULT_PORT        6633
 
-const char *argp_program_version = "ofagent service v1.1";
+#define VERSION							"1.0"
 
-/* The options we understand. */
-static struct argp_option options[] =
-{
-  { "add",               'a',       "IP",     0, "Add a controller to switch",                   0 },
-  { "port",              'p',       "PORT",   0, "socket port",                                  0 },
-  { "delete",            'd',       "ID",     0, "delete a controller from switch.",             0 },
-  { "list",              'l',       0,        0, "Lists the current controller configuration.",  0 },
-  { 0 }
-};
+
+#define PROMPT "Pure> "
+
+volatile int done;
+extern int multiline;
+extern char* last_tmpfile;
+extern COMMAND commands[];
 
 
 
 
-/* Parse a single option. */
-static error_t parse_opt(int key, char *arg, struct argp_state *state)
-{
-	struct in_addr ip_addr;
-  uint32_t      port;
-  int32_t       cxnid;
-
-  
-  switch (key)
-  {
-    case 'a': 
-      break;
-
-    case 'p':                           
-    
-      break;
-
-    case 'd':
-      break;
-
-    case 'l':
-      break;
-
-    case ARGP_KEY_ARG:
-      argp_error(state, "Invalid argument\"%s\"", arg);
-      //printf("argument\"%s\"",arg);
-      break;
-
-    case ARGP_KEY_NO_ARGS:
-      break;
-
-    case ARGP_KEY_END:
-      break;
-
-    default:
-      return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
+void print_version() {
+	fprintf(stdout, "ofagent service, version %s\n", VERSION);
+	//fprintf(stdout, "%s\n", RCSID);
+	fprintf(stdout, "compile time: %s, %s\n", __DATE__, __TIME__);
 }
-
-
 
 
 
@@ -141,40 +145,14 @@ int datapathInit(void);
 
 int main(int argc, char *argv[])
 {
-  int i;
   int rc;
-  char client_name[] = "ofdpa controller cli";
-  char docBuffer[1000];
-  char argsDocBuffer[300];
-  int idle_time = 0;
-
-  /* Our argp parser. */
-  struct argp argp =
-  {
-    .args_doc = argsDocBuffer,
-    .doc      = docBuffer,
-    .options  = options,
-    .parser   = parse_opt,
-  };
+  //int idle_time = 0;
+	HIST_ENTRY* hent;
+	char* cmd, *cmdline, *cmdstart;
+	int i, j;
 
 
-  strcpy(argsDocBuffer, "[IP] [PORT]");
-
-  strcpy(docBuffer, "Add a controller connection to switch.\vDefault values:\n");
-  i = strlen(docBuffer);
-  i += sprintf(&docBuffer[i], "PORT     = %d\n", DEFAULT_PORT);
-  i += sprintf(&docBuffer[i], "\n");
-
-
-
-  
-
-  /* Parse our arguments; every option seen by `parse_opt' will be reflected in
-     `arguments'. */
-  argp_parse(&argp, argc, argv, 0, 0, 0);
-
-
-  
+ 
   /* Initialize ofagent State machine */
   ADPL_Init();  
 
@@ -182,19 +160,98 @@ int main(int argc, char *argv[])
 
 	level2DebugInfoEnable();
 
-
-	//ofdbInit();
-
-  
+ 
   rpc_server_start();
   
   while(1)
   {
-    sleep(2);
+    //sleep(2);
     //printf("\r\nidle task is running \r\n");
-    idle_time++;
-  }
+    //idle_time++;
 
+		/* get the command from user */
+		cmdline = readline(PROMPT);
+	
+		/* EOF -> exit */
+		if (cmdline == NULL) {
+			done = 1;
+			cmdline = strdup ("quit");
+		}
+	
+		/* empty line -> wait for another command */
+		if (*cmdline == 0) {
+			free(cmdline);
+			continue;
+		}
+	
+		/* Isolate the command word. */
+		for (i = 0; cmdline[i] && whitespace (cmdline[i]); i++);
+		cmdstart = cmdline + i;
+		for (j = 0; cmdline[i] && !whitespace (cmdline[i]); i++, j++);
+		cmd = strndup(cmdstart, j);
+	
+		/* parse the command line */
+		for (i = 0; commands[i].name; i++) {
+			if (strcmp(cmd, commands[i].name) == 0) {
+				break;
+			}
+		}
+	
+		/* execute the command if any valid specified */
+		if (commands[i].name) {
+			if (where_history() < history_length) {
+				hent = history_get(where_history()+1);
+				if (hent == NULL) {
+					ERROR("main", "Internal error (%s:%d).", __FILE__, __LINE__);
+					return EXIT_FAILURE;
+				}
+				commands[i].func((const char*)cmdstart, hent->timestamp, stdout, stdin);
+			} else {
+				commands[i].func((const char*)cmdstart, NULL, stdout, stdin);
+			}
+		} else {
+			/* if unknown command specified, tell it to user */
+			fprintf(stdout, "%s: no such command, type 'help' for more information.\n", cmd);
+		}
+	
+		hent = history_get(history_length);
+		/* whether to save the last command */
+		if (hent == NULL || strcmp(hent->line, cmdline) != 0) {
+			add_history(cmdline);
+			hent = history_get(history_length);
+			if (hent == NULL) {
+				ERROR("main", "Internal error (%s:%d).", __FILE__, __LINE__);
+				return EXIT_FAILURE;
+			}
+			if (last_tmpfile != NULL) {
+				free(hent->timestamp);
+				hent->timestamp = strdup(last_tmpfile);
+			}
+	
+		/* whether to at least replace the tmpfile of the command from the history with this new one */
+		} else if (last_tmpfile != NULL && (hent = current_history()) != NULL && strlen(hent->timestamp) != 0) {
+			free(hent->timestamp);
+			hent->timestamp = strdup(last_tmpfile);
+		}
+	
+		free(last_tmpfile);
+		last_tmpfile = NULL;
+		free(cmdline);
+		free(cmd);
+	}
+	
+	store_config();
+	
+	clear_history();
+	free(history_list());
+	
+	/* cannot call, causes invalid free (seriously readline?), but would free ~650 kb */
+	//rl_discard_keymap(rl_get_keymap_by_name("emacs"));
+	rl_discard_keymap(rl_get_keymap_by_name("vi-insert"));
+	
+	rl_expand_prompt(NULL);
+	rl_free(rl_prompt);
+	
 }
 
 
